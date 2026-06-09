@@ -1,0 +1,90 @@
+/* learn.css — influence constellation */
+.learn-head{max-width:1180px;margin:0 auto;padding:46px 48px 10px}
+.learn-h1{font-family:var(--sans);font-weight:700;font-size:40px;line-height:1.06;letter-spacing:-.026em;
+  color:var(--ink);margin:18px 0 0;max-width:20ch}
+.learn-h1 .em{font-family:var(--serif);font-style:italic;font-weight:400}
+.learn-lede{font-family:var(--sans);font-size:16.5px;line-height:1.55;color:var(--muted);margin:16px 0 0;max-width:62ch}
+
+/* graph stage */
+.lg-stage{max-width:1280px;margin:18px auto 0;padding:0 24px}
+.lg-wrap{position:relative;width:100%;height:min(74vh,720px);min-height:560px;
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  background:
+    radial-gradient(80% 70% at 50% 42%, #FCFBF8 0%, var(--paper) 60%, var(--paper-2) 100%);}
+.lg-canvas{position:absolute;left:0;top:0;pointer-events:none}
+
+/* cluster labels */
+.lg-cluster{position:absolute;transform:translate(-50%,-50%);font-family:var(--mono);font-size:12px;
+  font-weight:500;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;pointer-events:none;z-index:1;
+  display:flex;align-items:center;gap:8px;opacity:.92}
+.lg-cluster-dot{width:7px;height:7px;border-radius:50%}
+.lg-cluster-sub{color:var(--faint);text-transform:none;letter-spacing:.02em;font-weight:400;font-size:11px}
+
+/* nodes */
+.lg-node{position:absolute;left:0;top:0;z-index:3;display:inline-flex;align-items:center;gap:8px;
+  padding:7px 13px 7px 11px;border:1px solid var(--line);border-radius:999px;background:#FBFAF7;cursor:grab;
+  font-family:var(--mono);transition:border-color .18s,box-shadow .18s,opacity .22s,background .18s,transform .05s;
+  box-shadow:0 1px 0 rgba(21,20,15,.02);will-change:transform}
+.lg-node:active{cursor:grabbing}
+.lg-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 16%,transparent)}
+.lg-label{font-size:13px;color:var(--ink-2);letter-spacing:-.01em;white-space:nowrap;font-weight:400}
+.lg-node.hub{padding:9px 16px 9px 13px;background:#fff;border-color:rgba(21,20,15,.2)}
+.lg-node.hub .lg-label{font-weight:600;color:var(--ink);font-size:13.5px}
+.lg-node.hub .lg-dot{width:10px;height:10px}
+.lg-node:hover{border-color:var(--c);box-shadow:0 8px 22px -8px color-mix(in srgb,var(--c) 50%,transparent)}
+.lg-node.active{border-color:var(--c);background:#fff;
+  box-shadow:0 10px 26px -8px color-mix(in srgb,var(--c) 55%,transparent);z-index:5}
+.lg-node.active .lg-label{color:var(--ink)}
+.lg-node.neighbor{border-color:color-mix(in srgb,var(--c) 55%,var(--line));z-index:4}
+.lg-node.dim{opacity:.32}
+.lg-node.selected{outline:2px solid var(--c);outline-offset:2px}
+
+/* legend / filter */
+.lg-legend{position:absolute;left:18px;top:16px;z-index:8;display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  background:rgba(251,250,247,.78);backdrop-filter:blur(6px);border:1px solid var(--line-2);border-radius:8px;padding:7px 10px}
+.lg-legend-k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:2px}
+.lg-leg-btn{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  background:transparent;border:1px solid transparent;border-radius:5px;padding:4px 9px;cursor:pointer;transition:all .16s}
+.lg-leg-btn:hover{color:var(--ink);border-color:var(--line)}
+.lg-leg-btn.on{color:var(--ink);border-color:var(--ink);background:#fff}
+.lg-leg-mark{width:9px;height:9px;border-radius:50%}
+.lg-leg-mark.m-thinker{background:#15140F}
+.lg-leg-mark.m-book{background:transparent;border:1.5px solid #15140F;border-radius:1px}
+.lg-leg-mark.m-video{background:#15140F;border-radius:1px;clip-path:polygon(0 0,100% 50%,0 100%)}
+.lg-leg-mark.m-idea{background:transparent;border:1.5px solid #15140F}
+
+/* node type marks (override dot shape per type) */
+.lg-node.t-book .lg-dot{border-radius:2px}
+.lg-node.t-video .lg-dot{border-radius:1px;clip-path:polygon(0 0,100% 50%,0 100%)}
+.lg-node.t-idea .lg-dot{background:transparent;border:2px solid var(--c);box-shadow:none}
+
+.lg-hint{position:absolute;right:16px;bottom:14px;z-index:8;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--faint);pointer-events:none}
+
+/* detail panel */
+.lg-panel{position:absolute;top:0;right:0;height:100%;width:368px;max-width:84%;z-index:9;
+  background:rgba(251,250,247,.96);backdrop-filter:blur(10px);border-left:1px solid var(--line);
+  transform:translateX(100%);transition:transform .34s cubic-bezier(.4,0,.15,1);box-shadow:-24px 0 60px -30px rgba(21,20,15,.35)}
+.lg-panel.open{transform:translateX(0)}
+.lg-panel-in{padding:30px 30px 30px;height:100%;overflow-y:auto;position:relative}
+.lg-close{position:absolute;top:18px;right:20px;width:30px;height:30px;border:1px solid var(--line);border-radius:50%;
+  background:#fff;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;transition:all .16s}
+.lg-close:hover{color:var(--ink);border-color:var(--ink)}
+.lg-p-type{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;margin-bottom:14px}
+.lg-p-mark{width:8px;height:8px;border-radius:50%}
+.lg-p-name{font-family:var(--sans);font-weight:700;font-size:25px;line-height:1.12;letter-spacing:-.02em;color:var(--ink);margin:0 0 16px}
+.lg-p-note{font-family:var(--serif);font-size:17px;line-height:1.52;color:var(--ink-2);margin:0 0 26px;font-weight:300}
+.lg-p-conn-k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
+  margin-bottom:12px;padding-top:18px;border-top:1px solid var(--line)}
+.lg-p-conn{display:flex;flex-wrap:wrap;gap:8px}
+.lg-chip{font-family:var(--mono);font-size:12px;color:var(--ink-2);background:#fff;border:1px solid var(--line);
+  border-radius:999px;padding:6px 13px;cursor:pointer;transition:all .16s}
+.lg-chip:hover{border-color:var(--ink);color:var(--ink);transform:translateY(-1px)}
+
+@media(max-width:760px){
+  .learn-h1{font-size:30px}
+  .lg-wrap{height:78vh}
+  .lg-label{font-size:12px}
+  .learn-head,.topbar,.pfoot{padding-left:22px;padding-right:22px}
+}

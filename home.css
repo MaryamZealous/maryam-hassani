@@ -1,0 +1,128 @@
+  :root{
+    --paper:#FAF9F5;
+    --paper-2:#F3F1EA;
+    --ink:#15140F;
+    --ink-2:#3A382F;
+    --muted:#6E6B60;
+    --faint:#9A9789;
+    --line:rgba(21,20,15,0.13);
+    --line-2:rgba(21,20,15,0.07);
+    --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --sans:"Helvetica Neue", Helvetica, Arial, sans-serif;
+    --serif:"Newsreader", Georgia, serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#f0eee9}
+
+  /* ---- shared landing primitives ---- */
+  .lp{position:relative;width:100%;height:100%;background:var(--paper);color:var(--ink);
+      overflow:hidden;display:flex;flex-direction:column}
+  .lp .fractal{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .lp-top{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;
+      padding:30px 56px 0}
+  .lp-sig{font-family:var(--mono);font-size:15px;font-weight:500;letter-spacing:.02em;color:var(--ink);white-space:nowrap}
+  .lp-meta{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--faint);white-space:nowrap}
+  .lp-rule{position:relative;z-index:3;height:1px;background:var(--line);margin:26px 56px 0}
+  .lp-foot{position:relative;z-index:3;margin-top:auto;display:flex;align-items:center;
+      justify-content:space-between;padding:0 56px 26px;font-family:var(--mono);font-size:11.5px;
+      color:var(--faint);letter-spacing:.03em}
+  .lp-foot .dot{width:6px;height:6px;border-radius:50%;background:#6f9e6a;display:inline-block;
+      margin-right:7px;vertical-align:middle}
+
+  /* button: bordered chip with sublabel */
+  .navlink{display:block;text-decoration:none;color:inherit;border:1px solid var(--ink);
+      background:transparent;transition:background .18s ease,color .18s ease,transform .18s ease}
+  .navlink:hover{background:var(--ink);color:var(--paper);transform:translateY(-2px)}
+  .navlink .nl-row{display:flex;align-items:center;justify-content:space-between;gap:18px}
+  .navlink .nl-k{font-family:var(--mono);font-weight:500;letter-spacing:.02em}
+  .navlink .nl-arrow{font-family:var(--mono);transition:transform .18s ease}
+  .navlink:hover .nl-arrow{transform:translateX(4px)}
+  .navlink .nl-sub{font-family:var(--mono);color:var(--muted);transition:color .18s ease}
+  .navlink:hover .nl-sub{color:rgba(250,249,245,.7)}
+
+  /* ===== A · NATIVE MONO ===== */
+  .a-body{position:relative;z-index:3;flex:1;display:grid;grid-template-columns:1fr 0.92fr;
+      gap:40px;padding:46px 56px 0;align-items:start}
+  .a-lead{font-family:var(--mono);font-weight:400;font-size:27px;line-height:1.42;letter-spacing:-.01em;
+      color:var(--ink);max-width:18ch;margin:0 0 26px}
+  .a-lead b{font-weight:500}
+  .a-lead .q{color:var(--ink)}
+  .a-lead .tail{color:var(--muted)}
+  .a-p{font-family:var(--mono);font-size:13px;line-height:1.72;color:var(--ink-2);margin:0 0 16px;max-width:46ch}
+  .a-p.dim{color:var(--muted)}
+  .a-right{display:flex;flex-direction:column;gap:14px;padding-top:6px}
+  .a-rk{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+      color:var(--faint);margin-bottom:2px}
+  .a-body .navlink{padding:18px 20px;border-radius:2px}
+  .a-body .nl-k{font-size:18px}
+  .a-body .nl-arrow{font-size:16px}
+  .a-body .nl-sub{font-size:12px;line-height:1.5;margin-top:9px;max-width:34ch}
+
+  /* ===== B · EDITORIAL SANS ===== */
+  .b-lp{background:var(--paper)}
+  .b-body{position:relative;z-index:3;flex:1;display:grid;grid-template-columns:1.05fr 0.95fr;
+      gap:56px;padding:30px 64px 0;align-items:center}
+  .b-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:24px}
+  .b-lead{font-family:var(--sans);font-weight:700;font-size:46px;line-height:1.04;letter-spacing:-.025em;
+      color:var(--ink);margin:0 0 8px}
+  .b-lead .amp{font-family:var(--serif);font-style:italic;font-weight:400}
+  .b-sub{font-family:var(--sans);font-size:16px;line-height:1.45;color:var(--muted);margin:0 0 30px;
+      max-width:30ch;font-weight:400}
+  .b-p{font-family:var(--sans);font-size:14.5px;line-height:1.62;color:var(--ink-2);margin:0 0 15px;
+      max-width:42ch;font-weight:400}
+  .b-p.dim{color:var(--muted)}
+  .b-cta{display:flex;gap:14px;margin-top:30px}
+  .b-cta .navlink{flex:1;padding:16px 18px;border-radius:3px;border-color:var(--ink)}
+  .b-cta .nl-k{font-family:var(--sans);font-weight:700;font-size:16px;letter-spacing:0}
+  .b-cta .nl-arrow{font-size:15px}
+  .b-cta .nl-sub{font-family:var(--sans);font-size:12.5px;line-height:1.45;margin-top:8px;max-width:26ch}
+  .b-stage{position:relative;align-self:stretch;display:flex;align-items:center;justify-content:center;
+      padding:24px 0}
+  .b-frame{position:relative;width:100%;height:78%;border:1px solid var(--line);background:var(--paper-2);
+      border-radius:4px;overflow:hidden}
+  .b-frame .fractal{position:absolute;inset:0}
+  .b-flabel{position:absolute;left:14px;bottom:12px;z-index:2;font-family:var(--mono);font-size:10.5px;
+      letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  .b-fcount{position:absolute;right:14px;top:12px;z-index:2;font-family:var(--mono);font-size:10.5px;
+      color:var(--faint)}
+
+  /* ===== C · FRACTAL HERO ===== */
+  .c-lp{background:radial-gradient(120% 80% at 50% 8%, #FCFBF7 0%, var(--paper) 55%, var(--paper-2) 100%)}
+  .c-stage{position:relative;z-index:3;flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:10px 56px 0}
+  .c-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:26px;display:flex;align-items:center;gap:12px}
+  .c-eyebrow::before,.c-eyebrow::after{content:"";width:26px;height:1px;background:var(--line)}
+  .c-lead{font-family:var(--sans);font-weight:700;font-size:40px;line-height:1.08;letter-spacing:-.02em;
+      color:var(--ink);margin:0 0 22px;max-width:20ch}
+  .c-lead .q{font-family:var(--serif);font-style:italic;font-weight:400}
+  .c-p{font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--ink-2);margin:0 auto 16px;max-width:58ch}
+  .c-p.dim{color:var(--muted)}
+  .c-cta{display:flex;gap:16px;margin-top:34px}
+  .c-cta .navlink{padding:15px 26px;border-radius:2px}
+  .c-cta .nl-row{flex-direction:column;align-items:flex-start;gap:4px}
+  .c-cta .nl-top{display:flex;align-items:center;gap:10px}
+  .c-cta .nl-k{font-family:var(--mono);font-size:16px;font-weight:500}
+  .c-cta .nl-sub{font-size:11.5px;text-align:left;max-width:26ch}
+  /* "what is a fractal?" trigger (top-right) */
+  .c-disc-btn{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+      border:1px solid var(--line);background:#FBFAF7;border-radius:2px;padding:8px 14px;cursor:pointer;
+      display:inline-flex;align-items:center;gap:11px;white-space:nowrap;transition:color .18s,border-color .18s,background .18s}
+  .c-disc-btn:hover{color:var(--ink);border-color:var(--ink);background:#fff}
+  .c-disc-sign{font-size:14px;line-height:1;transition:transform .28s ease;display:inline-block}
+  .c-disc-btn.on{color:var(--ink);border-color:var(--ink)}
+  .c-disc-btn.on .c-disc-sign{transform:rotate(45deg)}
+
+  /* Fractal Mode: dim the page, cursor becomes a living fractal */
+  .fm-overlay{position:absolute;inset:0;z-index:60;cursor:none;overflow:hidden;
+      background:radial-gradient(130% 130% at 50% 45%, rgba(16,16,13,.70), rgba(8,8,6,.92))}
+  .fm-canvas{position:absolute;inset:0;width:100%;height:100%}
+  .fm-caption{position:absolute;left:56px;bottom:60px;max-width:400px;z-index:2;pointer-events:none}
+  .fm-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(247,245,239,.5);margin-bottom:13px}
+  .fm-t{font-family:var(--serif);font-style:italic;font-size:23px;line-height:1.4;color:rgba(247,245,239,.94);margin:0;font-weight:400}
+  .fm-t b{font-style:normal;font-weight:500;font-family:var(--sans)}
+  .fm-formula{display:inline-block;margin-top:18px;font-family:var(--mono);font-size:12px;color:rgba(247,245,239,.62);
+      border:1px solid rgba(247,245,239,.22);border-radius:2px;padding:4px 10px;letter-spacing:.02em}
+  .fm-exit{position:absolute;right:56px;bottom:64px;z-index:2;font-family:var(--mono);font-size:10.5px;
+      letter-spacing:.12em;text-transform:uppercase;color:rgba(247,245,239,.4);pointer-events:none}

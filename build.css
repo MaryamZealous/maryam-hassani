@@ -1,0 +1,59 @@
+/* build.css — Build page specifics */
+.build-hero{padding:74px 0 8px}
+.build-h1{font-family:var(--sans);font-weight:700;font-size:50px;line-height:1.05;letter-spacing:-.028em;
+  color:var(--ink);margin:22px 0 0;max-width:17ch}
+.build-h1 .em{font-family:var(--serif);font-style:italic;font-weight:400}
+.build-lede{font-family:var(--sans);font-size:18px;line-height:1.55;color:var(--muted);
+  margin:22px 0 0;max-width:54ch;font-weight:400}
+
+.sec-label{display:flex;align-items:baseline;justify-content:space-between;margin:64px 0 22px;
+  padding-bottom:14px;border-bottom:1px solid var(--line)}
+.sec-label .t{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.sec-label .n{font-family:var(--mono);font-size:12px;color:var(--faint)}
+
+/* featured project */
+.feat{display:grid;grid-template-columns:1.35fr 1fr;gap:48px;align-items:center}
+.feat-frame{display:block;text-decoration:none;border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  background:#0A0E12;box-shadow:0 24px 60px -28px rgba(21,20,15,.5);transition:transform .25s ease,box-shadow .25s ease;
+  transform:translateZ(0)}
+.feat-frame:hover{transform:translateY(-5px);box-shadow:0 34px 74px -26px rgba(27,58,176,.42)}
+.feat-chrome{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0E141B;border-bottom:1px solid rgba(255,255,255,.06)}
+.feat-chrome .d{width:10px;height:10px;border-radius:50%;background:#2A323C}
+.feat-chrome .u{margin-left:12px;font-family:var(--mono);font-size:11px;color:#6A7686;letter-spacing:.02em}
+.feat-shot{position:relative;display:block;width:100%;aspect-ratio:1440/900;overflow:hidden}
+.feat-shot img{width:100%;display:block}
+.feat-shot .enter{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(10,14,18,0);opacity:0;transition:opacity .25s ease,background .25s ease}
+.feat-frame:hover .enter{opacity:1;background:rgba(10,14,18,.34)}
+.feat-shot .enter span{font-family:var(--mono);font-size:13px;letter-spacing:.06em;color:#fff;
+  border:1px solid rgba(255,255,255,.7);border-radius:3px;padding:11px 20px;background:rgba(10,14,18,.5)}
+
+.feat-meta .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);margin-bottom:14px}
+.feat-meta h3{font-family:var(--sans);font-weight:700;font-size:29px;line-height:1.1;letter-spacing:-.02em;color:var(--ink);margin:0 0 16px}
+.feat-meta p{font-family:var(--sans);font-size:15px;line-height:1.62;color:var(--ink-2);margin:0 0 14px;max-width:42ch}
+.feat-meta p.dim{color:var(--muted)}
+.feat-tags{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 26px}
+.feat-tags span{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);
+  border:1px solid var(--line);border-radius:2px;padding:5px 10px;background:#FBFAF7}
+.feat-cta{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--mono);
+  font-size:14px;font-weight:500;letter-spacing:.02em;color:var(--paper);background:var(--ink);
+  border:1px solid var(--ink);border-radius:3px;padding:13px 22px;transition:background .18s,transform .18s}
+.feat-cta:hover{background:var(--blue);border-color:var(--blue);transform:translateY(-2px)}
+.feat-cta .arr{transition:transform .18s ease}
+.feat-cta:hover .arr{transform:translateX(4px)}
+.note{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.02em;margin-top:14px}
+
+/* upcoming / placeholder row */
+.soon{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:4px}
+.soon-card{border:1px dashed var(--line);border-radius:6px;padding:24px;background:transparent;min-height:150px;
+  display:flex;flex-direction:column;justify-content:space-between}
+.soon-card .s-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.soon-card .s-t{font-family:var(--serif);font-size:21px;font-style:italic;color:var(--muted);line-height:1.25}
+.soon-card .s-n{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.1em}
+
+@media(max-width:880px){
+  .feat{grid-template-columns:1fr;gap:30px}
+  .build-h1{font-size:38px}
+  .soon{grid-template-columns:1fr}
+  .page,.topbar,.pfoot{padding-left:26px;padding-right:26px}
+}
