@@ -66,9 +66,18 @@ async function postToken(fields) {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
-  if (!r.ok) throw new Error("acled oauth " + r.status);
-  const j = await r.json();
-  if (!j || !j.access_token) throw new Error("acled oauth: no access_token");
+  const txt = await r.text();
+  if (!r.ok) {
+    const e = new Error("oauth_failed");
+    e.stage = "oauth"; e.status = r.status; e.detail = txt.slice(0, 300);
+    throw e;
+  }
+  let j; try { j = JSON.parse(txt); } catch (_) { j = null; }
+  if (!j || !j.access_token) {
+    const e = new Error("oauth_no_token");
+    e.stage = "oauth"; e.status = r.status; e.detail = txt.slice(0, 300);
+    throw e;
+  }
   TOKEN = {
     access: j.access_token,
     refresh: j.refresh_token || TOKEN.refresh,
@@ -102,14 +111,29 @@ exports.handler = async function () {
       const fresh = await getToken(email, password);
       r = await fetch(url, { headers: { Authorization: `Bearer ${fresh}` } });
     }
-    if (!r.ok) throw new Error("acled read " + r.status);
-
-    const j = await r.json();
+    const txt = await r.text();
+    if (!r.ok) {
+      const e = new Error("read_failed");
+      e.stage = "read"; e.status = r.status; e.detail = txt.slice(0, 300);
+      throw e;
+    }
+    let j; try { j = JSON.parse(txt); } catch (_) { j = null; }
     const events = (j && j.data) ? j.data.length : 0;
     // map raw event volume to the dashboard's "GPS jamming events / week" proxy
     const gpsjam = Math.max(2, Math.round(events / 4));
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, events, gpsjam, since, ts: Date.now() }) };
   } catch (e) {
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: false, error: String(e) }) };
+    return {
+      statusCode: 200, headers: CORS,
+      body: JSON.stringify({
+        ok: false,
+        stage: e.stage || "unknown",
+        status: e.status || null,
+        error: e.message || String(e),
+        detail: e.detail || null,
+        // safe env diagnostics (never exposes the password value)
+        env: { email_set: !!email, email: email || null, password_set: !!password },
+      }),
+    };
   }
 };
