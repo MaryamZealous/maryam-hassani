@@ -11,12 +11,17 @@ function magBand(d) {
 
 /* ---------- "what changed" strip ---------------------------------------- */
 function WhatChanged() {
+  const live = RD.headline.live, struct = RD.headline.structural;
+  const hz = RD.chokepoints.find((c) => c.id === "hormuz");
+  const ro = RD.indicators.find((i) => i.id === "romembrane");
+  const brent = RD.indicators.find((i) => i.id === "brent");
+  const lsd = +(live.value - live.prev).toFixed(1);
   const items = [
-    { label: "Live Stress", v: "+2.5", dir: "up", note: "gap to baseline narrowing", src: "acled" },
-    { label: "Logistics", v: "−4.2", dir: "down", note: "Hormuz transits collapsed", src: "ais" },
-    { label: "Hormuz", v: "−96%", dir: "down", note: "5 of 138 vessels/day", src: "ais" },
-    { label: "RO stock", v: "−1 day", dir: "down", note: "now 47 of 75-day buffer", src: "curated" },
-    { label: "Brent", v: "+4%", dir: "up", note: "$93.09 / barrel", src: "yfinance" },
+    { label: "Live Stress", v: (lsd > 0 ? "+" : "") + lsd, dir: lsd >= 0 ? "up" : "down", note: "vs yesterday's baseline", src: "acled" },
+    { label: "Logistics", v: "−4.2", dir: "down", note: "Hormuz transits depressed", src: "ais" },
+    { label: "Hormuz", v: "−" + hz.drop + "%", dir: "down", note: hz.vessels + " of " + hz.baseline + " transit calls/day", src: "ais" },
+    { label: "RO stock", v: "−1 day", dir: "down", note: "now " + ro.value + " of 75-day buffer", src: "curated" },
+    { label: "Brent", v: (brent.delta > 0 ? "+" : "") + brent.delta + "%", dir: brent.delta >= 0 ? "up" : "down", note: brent.value + " / barrel", src: "yfinance" },
   ];
   return (
     <Panel title="What changed since yesterday" icon="spark" label="24-HOUR DELTA"
@@ -62,6 +67,58 @@ function GapBar() {
   );
 }
 
+/* ---------- Driver attribution: what's pulling the score down, by feed ---- */
+function DriverTrace() {
+  const drivers = (RD.headline.live.drivers || []).slice().sort((a, b) => (b.real - a.real) || (b.v - a.v));
+  const maxV = Math.max(0.1, ...drivers.map((d) => d.v));
+  const liveN = drivers.filter((d) => !d.modelled).length;
+  if (!drivers.length) return null;
+  // two states: a connected live feed (LIVE) or the curated modelled input (MODEL).
+  const stateOf = (d) => d.modelled ? "model" : "live";
+  const META = {
+    live:  { badge: "LIVE",  cls: "on",    sub: "live feed" },
+    model: { badge: "MODEL", cls: "model", sub: "modelled severity" },
+  };
+  return (
+    <Panel title="What's moving the score right now" icon="book" label="LIVE DRIVER ATTRIBUTION"
+      right={<span className="helper" style={{ marginLeft: "auto" }}>{liveN} of {drivers.length} drivers on a connected live feed</span>}>
+      <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
+        The gap below baseline is the sum of named drags. Each row shows its point contribution and how it is sourced:
+        <span style={{ color: "var(--good)", fontWeight: 600 }}> LIVE</span> (a connected feed, moving on its own as the world changes) or
+        <span style={{ color: "var(--muted)", fontWeight: 600 }}> MODEL</span> (a curated severity judgement with no real-time numeric feed). This is the honest line between what the system measures and what it estimates.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+        {drivers.map((d, i) => {
+          const w = Math.round((d.v / maxV) * 100);
+          const calm = !d.modelled && d.v < 0.05;
+          const st = stateOf(d); const m = META[st];
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ minWidth: 188, display: "flex", flexDirection: "column", gap: 1 }}>
+                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{d.k}</span>
+                <span className="helper" style={{ fontSize: 10 }}>{m.sub}</span>
+              </div>
+              <span className={`live-badge ${m.cls}`} title={m.sub}>{m.badge}</span>
+              <div className="bar-track" style={{ flex: 1, height: 7 }}>
+                <div className="bar-fill" style={{ width: Math.max(w, calm ? 0 : 2) + "%", background: st === "live" ? "var(--good)" : "var(--faint)" }}></div>
+              </div>
+              {calm
+                ? <span className="mono" style={{ fontSize: 11, minWidth: 50, textAlign: "right", color: "var(--good)" }}>watching</span>
+                : <span className="mono down" style={{ fontSize: 13, minWidth: 50, textAlign: "right" }}>−{d.v.toFixed(1)}</span>}
+              <span style={{ minWidth: 92 }}><SourceTag src={d.src} /></span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="helper" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+        Feeds — <b>maritime throughput</b>: IMF PortWatch satellite AIS · <b>sea state</b>: Open-Meteo · <b>trade-route news</b>: GDELT ·
+        <b> energy-market stress</b>: Brent &amp; gas · <b>counterpart risk</b>: OFAC / OpenSanctions. The residual Guinea/EGA bauxite
+        drag is the one <b>MODEL</b> input — a curated, easing severity judgement with no real-time numeric feed, so it is never shown as live.
+      </div>
+    </Panel>
+  );
+}
+
 /* ---------- Overview ----------------------------------------------------- */
 function OverviewView({ go }) {
   return (
@@ -70,8 +127,8 @@ function OverviewView({ go }) {
         <div className="view-title">The gap is the signal</div>
         <div className="view-sub">
           A <b>baseline and its live deviation</b>, not two independent readings. <b>Structural Resilience</b> is the
-          slow-moving ceiling — your fundamentals, exposure net of the capacity to absorb and adapt. <b>Live Stress</b>
-          is that ceiling <i>minus</i> today's acute drag, and can never exceed it: you can't be more resilient mid-crisis
+          slow-moving ceiling — your fundamentals, exposure net of the capacity to absorb and adapt. <b>Live Stress</b> is
+          that ceiling <i>minus</i> today's acute drag, and can never exceed it: you can't be more resilient mid-crisis
           than your fundamentals allow. The <b>gap</b> between them is the real signal — wide gap = acute crisis; narrow = operating near baseline.
         </div>
       </div>
@@ -82,6 +139,8 @@ function OverviewView({ go }) {
       </div>
 
       <GapBar />
+
+      <div style={{ marginTop: 16 }}><DriverTrace /></div>
 
       <div style={{ marginBottom: 16 }}><WhatChanged /></div>
 
@@ -151,12 +210,12 @@ function ProvenanceLedger() {
   const live = RD.headline.live, structural = RD.headline.structural;
   const choke = RD.chokepoints.map((c) => ({
     signal: c.name, src: "ais",
-    observed: `${c.vessels} vessels/day`,
+    observed: `${c.vessels} transit calls/day`,
     series: c.spark || null,
-    ref: `${c.baseline}/day · 90-day median`,
+    ref: `${c.baseline}/day · 12-month norm`,
     transform: `1 − ${c.vessels}/${c.baseline} → −${c.drop}%`,
-    feeds: "Maritime throughput (~75% of drag)",
-    assume: "Judged against this strait's own 90-day median, never an absolute count. Chokepoint pressure feeds the acute-drag term only — it never moves the structural baseline.",
+    feeds: "Maritime throughput (largest single driver)",
+    assume: "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm, never an absolute count. Chokepoint pressure feeds the acute-drag term only — it never moves the structural baseline.",
   }));
   const shk = RD.shocks.filter((s) => s.id === "guinea").map((s) => ({
     signal: s.name, src: s.src,
@@ -189,11 +248,15 @@ function ProvenanceLedger() {
       assumption: r.assume,
     });
   };
+  const drv = (k) => { const d = (RD.headline.live.drivers || []).find((x) => x.k === k); return d ? d.v : 0; };
+  const throughDrag = drv("Maritime throughput");
+  const residDrag = drv("Residual shock (Guinea)");
+  const acuteDrag = (structural.value - live.value);
   const trail = [
-    [`Live Stress ${live.value.toFixed(1)}`, `Structural ceiling ${structural.value} − Acute drag ${(structural.value - live.value).toFixed(1)}`, 0],
-    [`Acute drag ${(structural.value - live.value).toFixed(1)}`, "Maritime throughput (→ −5.6) + non-maritime shocks (→ −1.9)", 1],
-    ["Maritime throughput", "AIS · " + RD.chokepoints.map((c) => `${({ hormuz: "Hormuz", redsea: "Red Sea", suez: "Suez" })[c.id] || c.name} ${c.vessels}/${c.baseline}`).join(", ") + " — embeds escalation", 2],
-    ["Non-maritime shocks", "ACLED · Guinea bauxite −15 (the only shock not already in vessel counts)", 2],
+    [`Live Stress ${live.value.toFixed(1)}`, `Structural ceiling ${structural.value} − Acute drag ${acuteDrag.toFixed(1)}`, 0],
+    [`Acute drag ${acuteDrag.toFixed(1)}`, `Maritime throughput (−${throughDrag.toFixed(1)}) + sea state, news, markets & sanctions + residual Guinea shock (−${residDrag.toFixed(1)})`, 1],
+    ["Maritime throughput", "IMF PortWatch · " + RD.chokepoints.map((c) => `${({ hormuz: "Hormuz", redsea: "Red Sea", suez: "Suez" })[c.id] || c.name} ${c.vessels}/${c.baseline}`).join(", ") + " — embeds escalation", 2],
+    ["Residual shock", "ACLED · Guinea bauxite (settled May 2026, easing) — the only shock not already in transit counts", 2],
   ];
   return (
     <Panel title="Source & provenance ledger" icon="book" label="EVERY NUMBER, TRACEABLE" style={{ marginTop: 16 }}>
@@ -248,6 +311,78 @@ function ProvenanceLedger() {
     </Panel>
   );
 }
+/* ---------- Real trade-route news (GDELT) -------------------------------- */
+function TradeRouteNews() {
+  const news = (LIVE.real && LIVE.real.news) || RD.convergence._news || null;
+  const live = LIVE.real && LIVE.real.status && LIVE.real.status.gdelt === "live";
+  const AREAS = [
+    { id: "hormuz", label: "Strait of Hormuz" },
+    { id: "redsea", label: "Bab-el-Mandeb / Red Sea" },
+    { id: "suez", label: "Suez Canal" },
+    { id: "general", label: "Global trade disruption" },
+  ];
+  const fmtDate = (s) => {
+    if (!s) return "";
+    const m = String(s).match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/);
+    if (!m) return "";
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]));
+    const mins = Math.round((Date.now() - d.getTime()) / 60000);
+    if (mins < 60) return mins + "m ago";
+    if (mins < 1440) return Math.round(mins / 60) + "h ago";
+    return Math.round(mins / 1440) + "d ago";
+  };
+  const band = (sc) => sc >= 0.66 ? "critical" : sc >= 0.33 ? "high" : sc > 0.05 ? "moderate" : "good";
+  // pick the area with the most pressure to feature its headlines
+  const ranked = AREAS.map((a) => ({ ...a, d: news && news[a.id] })).filter((a) => a.d);
+  const featured = ranked.slice().sort((a, b) => (b.d.score || 0) - (a.d.score || 0))[0];
+
+  return (
+    <Panel title="Trade-route news monitor" icon="globe" label="GDELT · CLOSURE / CONFLICT COVERAGE" style={{ marginTop: 16 }}
+      right={<span style={{ marginLeft: "auto" }}><SourceTag src="gdelt" /></span>}>
+      <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
+        With no free real-time vessel feed, <b>news is the early detector for trade-route disruption</b>. GDELT scans world
+        media every 15 minutes; a surge of closure or conflict coverage above each route's normal volume registers as
+        <b> news pressure</b> and adds live drag to the score before throughput data would ever confirm it.
+      </p>
+      {!news ? (
+        <div className="helper" style={{ padding: "18px 0" }}>
+          Connecting to GDELT… <span className="muted">live trade-route headlines appear here once the news feed is connected.</span>
+        </div>
+      ) : (
+        <div className="grid cols-2" style={{ gridTemplateColumns: "0.85fr 1.15fr", gap: 16, alignItems: "start" }}>
+          {/* pressure by route */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+            <span className="label">News pressure by route</span>
+            {AREAS.map((a) => {
+              const d = news[a.id]; if (!d) return null;
+              const pct = Math.round((d.score || 0) * 100);
+              return (
+                <div key={a.id} className={`band-${band(d.score || 0)}`} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, minWidth: 150 }}>{a.label}</span>
+                  <div className="bar-track" style={{ flex: 1, height: 6 }}><div className="bar-fill" style={{ width: pct + "%" }}></div></div>
+                  <span className="mono" style={{ fontSize: 11.5, minWidth: 64, textAlign: "right", color: "var(--muted)" }}>{d.vol} articles</span>
+                </div>
+              );
+            })}
+            <div className="helper" style={{ marginTop: 4 }}>Pressure = how far 2-day coverage runs above each route's normal volume (2× normal = full pressure).</div>
+          </div>
+          {/* featured headlines */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <span className="label">Latest — {featured ? featured.label : ""}</span>
+            {featured && featured.d.headlines && featured.d.headlines.length ? featured.d.headlines.map((h, i) => (
+              <a key={i} href={h.url} target="_blank" rel="noopener noreferrer" className="news-row">
+                <span className="news-dot"></span>
+                <span className="news-title">{h.title}</span>
+                <span className="news-meta">{h.domain}{fmtDate(h.seendate) ? " · " + fmtDate(h.seendate) : ""}</span>
+              </a>
+            )) : <div className="helper" style={{ padding: "10px 0" }}>No above-normal coverage on the featured route right now — a quiet feed is itself a signal.</div>}
+          </div>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 function ThreatsView() {
   return (
     <div className="view fade-in">
@@ -256,7 +391,7 @@ function ThreatsView() {
         <div className="view-sub">Chokepoint pressure, converging shocks and leading indicators — the fast-moving inputs to the Live Stress score.</div>
       </div>
 
-      <Panel title="Maritime chokepoints" icon="globe" label="VESSEL TRANSITS vs. 90-DAY BASELINE" style={{ marginBottom: 16 }}>
+      <Panel title="Maritime chokepoints" icon="globe" label="TRANSIT CALLS/DAY vs. 12-MONTH NORM" style={{ marginBottom: 16 }}>
         <div className="grid cols-3">
           {RD.chokepoints.map((c) => {
             const pct = Math.round((c.vessels / c.baseline) * 100);
@@ -264,27 +399,42 @@ function ThreatsView() {
               <div key={c.id} className={`band-${c.band}`} style={{ padding: 16, border: "1px solid var(--line)", borderRadius: "var(--radius-lg)", background: "var(--panel-2)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                   <span style={{ fontWeight: 600, fontSize: 13, fontFamily: "var(--font-display)" }}>{c.name}</span>
-                  <BandTag score={c.band === "critical" ? 30 : c.band === "high" ? 50 : 80} />
+                  <BandTag score={c.band === "critical" ? 30 : c.band === "high" ? 50 : c.band === "moderate" ? 67 : 82} />
                 </div>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                   <span className="mono" style={{ fontSize: 30, fontWeight: 600 }}>{c.vessels}</span>
-                  <span className="muted mono" style={{ fontSize: 13 }}>/ {c.baseline} normal</span>
+                  <span className="muted mono" style={{ fontSize: 13 }}>/ {c.baseline} {c.real ? "norm" : "normal"}</span>
                   <span className="mono down" style={{ marginLeft: "auto", fontSize: 13 }}>−{c.drop}%</span>
                 </div>
                 <div className="bar-track" style={{ margin: "12px 0 10px", height: 6 }}><div className="bar-fill" style={{ width: pct + "%" }}></div></div>
                 <div className="helper">{c.note}</div>
+                {c.real && c.asof && (
+                  <div className="helper" style={{ marginTop: 6, color: "var(--good)" }}>Real transit calls/day · 7-day avg vs 12-month norm · IMF PortWatch, as of {c.asof}</div>
+                )}
+                {c.sea && c.sea.wave != null && (
+                  <div className="helper" style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--good)" }}></span>
+                      Sea state <b style={{ color: "var(--ink)" }}>{c.sea.wave.toFixed(1)} m</b>
+                      {c.sea.wind != null && <> · wind <b style={{ color: "var(--ink)" }}>{Math.round(c.sea.wind)} kn</b></>}
+                    </span>
+                    <SourceTag src="meteo" />
+                  </div>
+                )}
                 <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <SourceTag src="ais" />
                   <Fx payload={{
                     kicker: "Chokepoint pressure", title: c.name,
-                    text: `Pressure is the drop in daily transits versus this chokepoint's own 90-day baseline of ${c.baseline} vessels/day. Today: ${c.vessels}/day, a ${c.drop}% fall.`,
-                    formula: "Pressure  =  1 − (today's transits / 90-day baseline)",
+                    text: `Pressure is the drop in daily transits versus this chokepoint's own ${c.real ? "12-month busy-period norm" : "90-day baseline"} of ${c.baseline} transit calls/day. Today: ${c.vessels}/day, a ${c.drop}% fall.`,
+                    formula: c.real ? "Pressure  =  1 − (7-day avg transits / 12-month norm)" : "Pressure  =  1 − (today's transits / 90-day baseline)",
                     inputs: [
-                      { k: "Today", v: c.vessels + " vessels/day", src: "ais" },
-                      { k: "Baseline", v: c.baseline + " vessels/day (median)", src: "ais" },
-                      { k: "Contribution", v: "feeds 60% of Live Stress" },
+                      { k: c.real ? "Current (7-day avg)" : "Today", v: c.vessels + " transit calls/day", src: "ais" },
+                      { k: c.real ? "12-month norm (90th pct)" : "Baseline", v: c.baseline + " transit calls/day", src: "ais" },
+                      c.real ? { k: "Source", v: "IMF PortWatch · satellite AIS · as of " + c.asof } : { k: "Contribution", v: "largest single driver of Live Stress" },
                     ],
-                    assumption: "A quiet strait and a busy one are judged on their own normal — absolute counts are never compared across chokepoints.",
+                    assumption: c.real
+                      ? "Real IMF PortWatch transit calls (satellite AIS on ~90,000 ships), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm (90th percentile). A sustained collapse still reads as a real drop rather than quietly becoming the new normal."
+                      : "A quiet strait and a busy one are judged on their own normal — absolute counts are never compared across chokepoints.",
                   }} />
                 </div>
               </div>
@@ -369,6 +519,8 @@ function ThreatsView() {
         </Panel>
       </div>
 
+      <TradeRouteNews />
+
       <ProvenanceLedger />
     </div>
   );
@@ -410,7 +562,8 @@ function CascadeView() {
 function ScenariosView() {
   const [pick, setPick] = useState("combined");
   const scn = RD.scenarios.find((s) => s.id === pick);
-  const after = (47.0 + scn.overall).toFixed(1);
+  const baseLive = RD.headline.live.value;
+  const after = (baseLive + scn.overall).toFixed(1);
 
   return (
     <div className="view fade-in">
@@ -439,7 +592,7 @@ function ScenariosView() {
           <Panel title="Impact on the national score" icon="gauge"
             right={<span className="label" style={{ marginLeft: "auto" }}>{scn.name.toUpperCase()}</span>}>
             <div style={{ display: "flex", alignItems: "center", gap: 22, marginBottom: 18 }}>
-              <div className="kpi"><span className="kpi-v mono">47.0</span><span className="kpi-l">Baseline live stress</span></div>
+              <div className="kpi"><span className="kpi-v mono">{baseLive.toFixed(1)}</span><span className="kpi-l">Baseline live stress</span></div>
               <Icon name="arrowRight" size={20} style={{ color: "var(--faint)" }} />
               <div className="kpi"><span className="kpi-v mono" style={{ color: scn.overall < 0 ? "var(--crit)" : "var(--ink)" }}>{after}</span><span className="kpi-l">Under this scenario</span></div>
               <div style={{ marginLeft: "auto", textAlign: "right" }}>

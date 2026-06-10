@@ -1,0 +1,15 @@
+# Netlify configuration for maryam-hassani
+# Static site + serverless functions that proxy the real data feeds.
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Friendly path: the platform also answers at /resilience-intelligence-system
+[[redirects]]
+  from = "/resilience-intelligence-system"
+  to = "/resilience-intelligence-system/index.html"
+  status = 200

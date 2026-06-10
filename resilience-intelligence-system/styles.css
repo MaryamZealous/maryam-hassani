@@ -108,7 +108,10 @@ a{color:inherit}
 .live-dot::after{content:"";position:absolute;inset:-3px;border-radius:50%;
   background:var(--good);opacity:.3;animation:ping 2.4s ease-out infinite}
 @keyframes ping{0%{transform:scale(.6);opacity:.5}100%{transform:scale(2.2);opacity:0}}
-.live-chip .mono{color:var(--ink);font-size:10.5px}
+.live-chip .mono{color:var(--ink);font-size:10.5px;white-space:nowrap}
+.live-dot.sim{background:var(--muted)}
+.live-dot.sim::after{display:none}
+.live-chip.sim{opacity:.72}
 
 /* illustrative badge */
 .illus-badge{display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:20px;
@@ -278,6 +281,22 @@ a{color:inherit}
 .indi-delta{font-family:var(--font-mono);font-size:11px;min-width:54px;text-align:right}
 .up{color:var(--good)} .down{color:var(--crit)} .flat{color:var(--muted)}
 .indi-delta.warnup{color:var(--high)}
+
+/* ---------- live/sim badge + news monitor -------------------------------- */
+.live-badge{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.08em;
+  padding:2px 6px;border-radius:4px;border:1px solid var(--line);color:var(--faint);
+  background:var(--panel-2);min-width:38px;text-align:center}
+.live-badge.on{color:var(--good);border-color:color-mix(in srgb,var(--good) 45%,transparent);
+  background:color-mix(in srgb,var(--good) 12%,transparent)}
+.live-badge.deploy{color:var(--high);border-color:color-mix(in srgb,var(--high) 45%,transparent);
+  background:color-mix(in srgb,var(--high) 12%,transparent)}
+.live-badge.model{color:var(--muted);border-style:dashed}
+.news-row{display:flex;align-items:baseline;gap:9px;padding:8px 10px;border:1px solid var(--line);
+  border-radius:var(--radius);background:var(--panel-2);text-decoration:none;transition:border-color .15s,background .15s}
+.news-row:hover{border-color:var(--line-2);background:var(--panel-3)}
+.news-dot{width:5px;height:5px;border-radius:50%;background:var(--high);flex:0 0 auto;transform:translateY(-1px)}
+.news-title{flex:1;font-size:12.5px;line-height:1.4;color:var(--ink);font-weight:500}
+.news-meta{font-size:10px;color:var(--faint);font-family:var(--font-mono);white-space:nowrap;flex:0 0 auto}
 
 /* ---------- chips / pills ------------------------------------------------ */
 .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;

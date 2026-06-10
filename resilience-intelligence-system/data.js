@@ -40,14 +40,14 @@ window.RD = (function () {
       name: "Live Stress Resilience",
       tag: "Daily · capped by baseline",
       horizon: "24h",
-      formula: "Structural ceiling (54.5)  −  Acute drag (7.5)",
-      cap: { at: 54.5, label: "ceiling = baseline 54.5", lead: "Capped by your baseline", body: "— live resilience can't exceed the structural ceiling (54.5). It sits 7.5 below it today: the cost of active disruption. As it clears, live recovers TOWARD the ceiling, never through it." },
+      formula: "Structural ceiling  −  today's acute drag (live)",
+      cap: { at: 54.5, label: "ceiling = baseline 54.5", lead: "Capped by your baseline", body: "— live resilience can't exceed the structural ceiling (54.5). It sits below it by the size of today's acute drag — the cost of active disruption. As it clears, live recovers TOWARD the ceiling, never through it." },
       explain: "How resilient the system is to the pressure happening RIGHT NOW — expressed as a DEVIATION below the structural ceiling, not a free-floating number. On a calm day it would sit AT the ceiling (54.5); live disruption pushes it down. Maritime disruption is counted ONCE, through measured vessel throughput — which already embeds escalation, since carriers reroute in response to it. The gap between this and the ceiling is the real headline signal: wide gap = acute crisis; narrow gap = operating near your fundamentals.",
       inputs: [
-        { k: "Structural ceiling", v: "54.5 (today's maximum)", src: "curated" },
-        { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez vessels vs baseline — embeds escalation → −5.6", src: "ais" },
-        { k: "Non-maritime shocks", v: "Residual Guinea/EGA bauxite drag (settled May 2026, easing; not in vessel counts) → −1.9", src: "acled" },
-        { k: "Live = 54.5 − 7.5", v: "47.0", src: "curated" },
+        { k: "Structural ceiling", v: "54.5 — the day's maximum", src: "curated" },
+        { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez transit calls vs each strait's 12-month norm (IMF PortWatch) — embeds escalation", src: "ais" },
+        { k: "Non-maritime shocks", v: "residual Guinea/EGA bauxite drag (settled May 2026, easing; not in vessel counts)", src: "acled" },
+        { k: "Live = ceiling − acute drag", v: "recomputed every refresh from the live drivers", src: "curated" },
       ],
       assumption: "Maritime disruption is counted ONCE — via measured vessel throughput, which already embeds escalation (carriers reroute because of it). The maritime events in the convergence panel are the CAUSES of that throughput drop, shown for context, not added a second time. Only non-maritime shocks (e.g. Guinea) add a separate severity term. Escalation's one distinct residual effect — threat to the Fujairah bypass itself — is treated structurally, not as additive live drag.",
     },
@@ -126,12 +126,12 @@ window.RD = (function () {
 
   // ---- Chokepoints ---------------------------------------------------------
   const chokepoints = [
-    { id: "hormuz", name: "Strait of Hormuz", vessels: 5, baseline: 138, band: "high",
-      drop: 96, lat: 26.57, lng: 56.25, spark: [138,140,135,131,128,40,12,5], note: "Carries ~20% of seaborne oil. UAE crude exports bypass via the Habshan–Fujairah pipeline (1.5–1.8 mb/d, outside the strait) — Fujairah flows actually ROSE during the 2026 closure. LNG exports and most Jebel Ali container imports remain exposed." },
-    { id: "redsea", name: "Red Sea / Bab-el-Mandeb", vessels: 42, baseline: 85, band: "high",
-      drop: 51, lat: 12.6, lng: 43.3, spark: [85,84,80,72,60,52,46,42], note: "Houthi activity has halved transits; carriers re-routing around the Cape." },
-    { id: "suez", name: "Suez Canal", vessels: 120, baseline: 150, band: "good",
-      drop: 20, lat: 30.0, lng: 32.55, spark: [150,148,145,140,132,126,122,120], note: "Operating near normal; absorbs some diverted Red Sea traffic." },
+    { id: "hormuz", name: "Strait of Hormuz", vessels: 6, baseline: 113, band: "critical",
+      drop: 95, lat: 26.57, lng: 56.25, spark: [110,104,96,68,40,18,9,6], note: "Carries ~20% of seaborne oil. UAE crude exports bypass via the Habshan–Fujairah pipeline (1.5–1.8 mb/d, outside the strait), so Fujairah holds up even when the strait is stressed. LNG exports and most Jebel Ali container imports stay exposed." },
+    { id: "redsea", name: "Red Sea / Bab-el-Mandeb", vessels: 35, baseline: 42, band: "moderate",
+      drop: 17, lat: 12.6, lng: 43.3, spark: [44,43,41,39,38,36,35,35], note: "The Houthi missile/drone threat keeps transits below their 12-month norm; many carriers still route the long way around the Cape of Good Hope." },
+    { id: "suez", name: "Suez Canal", vessels: 40, baseline: 47, band: "moderate",
+      drop: 15, lat: 30.0, lng: 32.55, spark: [47,46,44,43,42,41,40,40], note: "Tracks the Red Sea situation closely — diverted traffic and any recovery both show up here first." },
   ];
 
   // ---- Active shocks -------------------------------------------------------
@@ -140,12 +140,12 @@ window.RD = (function () {
       src: "acled", when: "easing · settled 6 May 2026", track: "Auto-tracked via ACLED + news feed — severity re-rated as the settlement implements; will re-escalate automatically if CBG–EGA shipments stall again.",
       note: "Guinea's 2024 revocation of EGA's GAC concession halted bauxite feedstock to its Al Taweelah refinery in Abu Dhabi. Largely resolved: EGA secured alternative supply from Australia, Ghana and Brazil (>70% of volume) and signed a May 2026 settlement renewing CBG–EGA contracts. Residual drag only.",
       evidence: [{ label: "The National", url: "https://www.thenationalnews.com/business/2026/05/06/ega-settles-disputes-with-guinea-over-bauxite-mine-project/" }, { label: "Aluminium Journal", url: "https://www.aluminium-journal.com/ega-guinea-agreement-bauxite-mining" }] },
-    { id: "hormuz", name: "Hormuz escalation", short: "Hormuz", sector: "logistics", impact: -20, band: "high",
-      src: "acled", when: "2 days ago", note: "The naval-incident escalation that drove carriers out of the strait — it is the CAUSE of the −96% transit drop, so its effect is counted ONCE via measured vessel throughput, not added again here. Shown for context. The Fujairah pipeline and air cargo blunt the crude-export hit anyway.",
-      evidence: [{ label: "News", url: "https://news.google.com/search?q=Strait%20of%20Hormuz%20shipping" }, { label: "IEA brief", url: "https://www.iea.org/about/oil-security-and-emergency-response/strait-of-hormuz" }, { label: "Vessel traffic", url: "https://www.marinetraffic.com/en/ais/home/centerx:56.5/centery:26.5/zoom:8" }] },
+    { id: "hormuz", name: "Hormuz tension", short: "Hormuz", sector: "logistics", impact: -20, band: "high",
+      src: "acled", when: "ongoing", note: "Gulf naval tension is the most-cited driver behind the strait's depressed transits. Because it is the CAUSE of the throughput collapse shown on the chokepoint card, its effect is counted ONCE there — via measured IMF PortWatch vessel data — not added again here. Shown for context; the Fujairah pipeline and air cargo blunt the crude-export hit.",
+      evidence: [{ label: "IMF PortWatch", url: "https://portwatch.imf.org/datasets/42132aa4e2fc4d41bdaf9a445f688931_0/about" }, { label: "EIA chokepoints", url: "https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints" }, { label: "Live vessel traffic", url: "https://www.marinetraffic.com/en/ais/home/centerx:56.5/centery:26.5/zoom:8" }] },
     { id: "redsea", name: "Red Sea Houthi activity", short: "Red Sea", sector: "logistics", impact: -8, band: "moderate",
-      src: "acled", when: "today", note: "The Houthi drone/missile threat that drove carriers off the route — the CAUSE of the Red Sea transit drop, counted once via measured throughput, not re-added. Shown for context.",
-      evidence: [{ label: "News", url: "https://news.google.com/search?q=Red%20Sea%20Houthi%20shipping" }, { label: "ReliefWeb: Yemen", url: "https://reliefweb.int/country/yem" }] },
+      src: "acled", when: "ongoing", note: "The Houthi drone/missile threat that pushed carriers off the route — the CAUSE of the Red Sea transit drop, counted once via measured throughput, not re-added. Shown for context.",
+      evidence: [{ label: "IMF PortWatch", url: "https://portwatch.imf.org/datasets/42132aa4e2fc4d41bdaf9a445f688931_0/about" }, { label: "ReliefWeb: Yemen", url: "https://reliefweb.int/country/yem" }] },
   ];
   const convergence = { concurrent: 3, combined: -52, band: "high",
     note: "Two live maritime events (Hormuz, Red Sea) plus the easing Guinea/EGA bauxite dispute. The maritime events are the CAUSES of the chokepoint throughput drops and are counted once there — not re-added; only Guinea (non-maritime) adds a separate, now-residual severity term. The −52 below is gross event severity shown for context, NOT the live-drag input. Hypothetical events (e.g. advanced-silicon access) live only in Scenarios." };
@@ -190,7 +190,7 @@ window.RD = (function () {
     timeline: [0, 15, 30, 45, 60, 75, 90],
     nodes: [
       { id: "trigger", layer: 0, label: "Hormuz closure", kind: "trigger", day: 0, band: "critical",
-        detail: "Naval incident closes the strait. Vessel transits fall from 138/day to 5/day within 48 hours." },
+        detail: "Naval incident closes the strait. Transit calls fall from a ~110/day norm to single digits within 48 hours." },
 
       { id: "ro", layer: 1, label: "RO membranes", kind: "precursor", day: 0, band: "high",
         detail: "75-day buffer begins drawing down the moment resupply shipping stops. Consequence weight 0.90." },
@@ -315,9 +315,11 @@ window.RD = (function () {
   // ---- Data sources / freshness -------------------------------------------
   const sources = {
     acled:    { label: "ACLED", full: "Armed Conflict Location & Event Data", endpoint: "ACLED API · Gulf & Red Sea geofilter", url: "https://acleddata.com/explorer/", cadence: "5 min", fresh: "2 min ago", kind: "live" },
-    ais:      { label: "AIS", full: "Vessel traffic (MarineTraffic-ready)", endpoint: "AIS transit feed · per-strait vessel count", url: "https://www.marinetraffic.com/en/ais/home/centerx:56.5/centery:26.5/zoom:8", cadence: "10 min", fresh: "4 min ago", kind: "live" },
+    ais:      { label: "PortWatch", full: "IMF PortWatch · daily chokepoint transit calls (satellite AIS, ~90k ships)", endpoint: "services9.arcgis.com · Daily_Chokepoints_Data · transit calls vs 12-month norm", url: "https://portwatch.imf.org/", cadence: "weekly (Tue)", fresh: "live", kind: "live" },
     yfinance: { label: "Markets", full: "Oil & gas prices (yfinance)", endpoint: "Yahoo Finance · BZ=F, NG=F", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "1 min ago", kind: "live" },
     ofac:     { label: "OFAC", full: "US Treasury SDN sanctions list", endpoint: "treasury.gov SDN delta feed", url: "https://sanctionssearch.ofac.treas.gov/", cadence: "6 h", fresh: "2 h ago", kind: "live" },
+    meteo:    { label: "Open-Meteo", full: "Marine & weather (Open-Meteo, live)", endpoint: "marine-api.open-meteo.com · wave height · wind · temperature", url: "https://open-meteo.com/", cadence: "10 min", fresh: "live", kind: "live" },
+    gdelt:    { label: "GDELT", full: "Global news monitor (GDELT, live)", endpoint: "api.gdeltproject.org · trade-route, closure & conflict news · 15-min", url: "https://www.gdeltproject.org/", cadence: "15 min", fresh: "live", kind: "live" },
     curated:  { label: "Curated", full: "Hand-curated public-source CSV", endpoint: "versioned CSV · public reporting", url: "", cadence: "manual", fresh: "reviewed", kind: "curated" },
     assumption:{ label: "Assumption", full: "Explicit modelling assumption", endpoint: "stated in assumptions ledger", url: "", cadence: "—", fresh: "stated", kind: "assumption" },
   };

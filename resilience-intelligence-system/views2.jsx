@@ -767,14 +767,23 @@ function MethodologyView() {
               </div>
             ))}
           </Panel>
-          <Panel title="Data sources & freshness" icon="layers" label="THREE TIERS">
-            {Object.entries(RD.sources).map(([k, s]) => (
-              <div key={k} style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 0", borderBottom: "1px solid var(--line)" }}>
-                <SourceTag src={k} />
-                <span className="helper" style={{ flex: 1 }}>{s.full}</span>
-                <span className="mono helper">{s.cadence}</span>
-              </div>
-            ))}
+          <Panel title="Data sources & freshness" icon="layers" label="LIVE / SIMULATED">
+            {Object.entries(RD.sources).map(([k, s]) => {
+              const isLive = s.kind === "live";
+              const mode = s.mode || "sim";
+              return (
+                <div key={k} style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 0", borderBottom: "1px solid var(--line)" }}>
+                  <SourceTag src={k} />
+                  <span className="helper" style={{ flex: 1 }}>{s.full}</span>
+                  {isLive && (
+                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", padding: "1px 6px", borderRadius: 4, border: "1px solid var(--line)", color: mode === "live" ? "var(--good)" : "var(--muted)", background: mode === "live" ? "color-mix(in srgb,var(--good) 14%,transparent)" : "transparent" }}>
+                      {mode === "live" ? "● Live" : "○ Sim"}
+                    </span>
+                  )}
+                  <span className="mono helper">{s.cadence}</span>
+                </div>
+              );
+            })}
           </Panel>
           <Panel title="Assumptions ledger" icon="book" label="EDITABLE">
             {[

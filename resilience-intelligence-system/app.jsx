@@ -1,5 +1,5 @@
 /* ============================================================================
-   App shell — rail nav, top bar, direction switcher, explain drawer, routing.
+   App shell — rail nav, top bar, explain drawer, routing. Briefing style only.
    ========================================================================== */
 const { useState, useEffect, useRef } = React;
 const NAV = [
@@ -26,7 +26,6 @@ const TITLES = {
   scenarios: "Scenarios", dependencies: "Dependencies", control: "Control layer",
   operations: "Operationalize", methodology: "How this works",
 };
-const DIRS = [["a", "Command"], ["b", "Briefing"], ["c", "Terminal"]];
 
 function IntroOverlay({ onEnter, dir }) {
   return (
@@ -42,7 +41,6 @@ function IntroOverlay({ onEnter, dir }) {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <button className="btn primary" onClick={onEnter}><Icon name="arrowRight" size={15} />Enter the system</button>
-          <span className="helper">You can switch visual direction any time, top-right.</span>
         </div>
       </div>
     </div>
@@ -50,14 +48,13 @@ function IntroOverlay({ onEnter, dir }) {
 }
 
 function App() {
-  const [dir, setDir] = useState(() => localStorage.getItem("uae_dir") || "b");
+  useLiveTick();
+  const dir = "b";                 // Briefing style only
   const [view, setView] = useState("overview");
   const [opts, setOpts] = useState({});
   const [drawer, setDrawer] = useState(null);
   const [intro, setIntro] = useState(() => !localStorage.getItem("uae_seen"));
   const scrollRef = useRef(null);
-
-  useEffect(() => { localStorage.setItem("uae_dir", dir); }, [dir]);
 
   const go = (v, o = {}) => { setView(v); setOpts(o); setDrawer(null); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
   const explain = (p) => setDrawer(p);
@@ -66,7 +63,7 @@ function App() {
   const enter = () => { localStorage.setItem("uae_seen", "1"); setIntro(false); };
 
   const liveChips = [
-    { k: "ACLED", src: "acled" }, { k: "AIS", src: "ais" }, { k: "Markets", src: "yfinance" }, { k: "OFAC", src: "ofac" },
+    { k: "Ships", src: "ais" }, { k: "News", src: "gdelt" }, { k: "Markets", src: "yfinance" }, { k: "OFAC", src: "ofac" }, { k: "Sea", src: "meteo" }, { k: "ACLED", src: "acled" },
   ];
 
   const renderView = () => {
@@ -125,7 +122,7 @@ function App() {
               text: "Combines live public data feeds with curated open-source datasets and transparent assumptions to produce explainable resilience estimates.",
               formula: "Live data  +  Curated sources  +  Stated assumptions  →  Explainable estimate",
               inputs: [
-                { k: "Live feeds", v: "ACLED · AIS · markets · OFAC", src: "acled" },
+                { k: "Live feeds", v: "PortWatch · GDELT · Open-Meteo · markets · OFAC · ACLED", src: "ais" },
                 { k: "Curated", v: "14 precursors · 12 assets · 7 scenarios", src: "curated" },
                 { k: "Assumptions", v: "weights, buffers & goalposts — stated", src: "assumption" },
               ],
@@ -142,16 +139,17 @@ function App() {
             <span className="crumb">{NAV.find((g) => g.items.some((i) => i.id === view)).group} / <b>{TITLES[view]}</b></span>
             <div className="topbar-spacer"></div>
             <div className="live-chips">
-              {liveChips.map((c) => (
-                <span className="live-chip" key={c.k}><span className="live-dot"></span>{c.k}<span className="mono">{RD.sources[c.src].fresh}</span></span>
-              ))}
+              {liveChips.map((c) => {
+                const mode = (RD.sources[c.src] && RD.sources[c.src].mode) || "sim";
+                return (
+                  <span className={`live-chip ${mode === "sim" ? "sim" : ""}`} key={c.k}
+                    title={mode === "live" ? `${RD.sources[c.src].full} — live real feed` : `${RD.sources[c.src].full} — simulated (no live source connected)`}>
+                    <span className={`live-dot ${mode === "sim" ? "sim" : ""}`}></span>{c.k}<span className="mono">{RD.sources[c.src].fresh}</span>
+                  </span>
+                );
+              })}
             </div>
             <IllusBadge />
-            <div className="dir-switch">
-              {DIRS.map(([k, l]) => (
-                <button key={k} className={`dir-btn ${dir === k ? "active" : ""}`} onClick={() => setDir(k)}>{l}</button>
-              ))}
-            </div>
           </header>
 
           <div className="scroll" ref={scrollRef}>
