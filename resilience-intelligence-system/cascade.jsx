@@ -51,8 +51,9 @@ function CascadeDiagram() {
     return nodeActive(a) && nodeActive(b);
   };
 
-  // projected national score interpolates from the live baseline (47.0) toward 12.0 across timeline
-  const proj = (47.0 - (47.0 - 12.0) * (dayIdx / (days.length - 1))).toFixed(1);
+  // projected national score interpolates from today's live baseline toward an illustrative floor of 12.0
+  const liveBase = RD.headline.live.value;
+  const proj = (liveBase - (liveBase - 12.0) * (dayIdx / (days.length - 1))).toFixed(1);
 
   // caption: nodes that activated at this day
   const justNow = RD.cascade.nodes.filter((n) => n.day === day);
@@ -74,7 +75,7 @@ function CascadeDiagram() {
         : n.kind === "sector"
           ? "Sector falls when its binding precursor's buffer is exhausted"
           : n.kind === "overall"
-            ? "Overall  =  mean(sectors)  ×  non-compensatory penalty"
+            ? "Overall anchors to the most-exposed sector  =  0.60 × most-exposed  +  0.40 × mean"
             : "Trigger removes the shipping route that feeds downstream buffers",
       inputs: [
         { k: "Propagation layer", v: layerName },

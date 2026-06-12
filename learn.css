@@ -23,7 +23,7 @@
 /* nodes */
 .lg-node{position:absolute;left:0;top:0;z-index:3;display:inline-flex;align-items:center;gap:8px;
   padding:7px 13px 7px 11px;border:1px solid var(--line);border-radius:999px;background:#FBFAF7;cursor:grab;
-  font-family:var(--mono);transition:border-color .18s,box-shadow .18s,opacity .22s,background .18s,transform .05s;
+  font-family:var(--mono);transition:border-color .18s,box-shadow .18s,opacity .22s,background .18s;
   box-shadow:0 1px 0 rgba(21,20,15,.02);will-change:transform}
 .lg-node:active{cursor:grabbing}
 .lg-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 16%,transparent)}
@@ -64,8 +64,8 @@
 /* detail panel */
 .lg-panel{position:absolute;top:0;right:0;height:100%;width:368px;max-width:84%;z-index:9;
   background:rgba(251,250,247,.96);backdrop-filter:blur(10px);border-left:1px solid var(--line);
-  transform:translateX(100%);transition:transform .34s cubic-bezier(.4,0,.15,1);box-shadow:-24px 0 60px -30px rgba(21,20,15,.35)}
-.lg-panel.open{transform:translateX(0)}
+  transform:translateX(102%);box-shadow:-24px 0 60px -30px rgba(21,20,15,.35)}
+/* slide-in is driven by JS (rAF) — no transform transition; see learn-graph.jsx */
 .lg-panel-in{padding:30px 30px 30px;height:100%;overflow-y:auto;position:relative}
 .lg-close{position:absolute;top:18px;right:20px;width:30px;height:30px;border:1px solid var(--line);border-radius:50%;
   background:#fff;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;transition:all .16s}
@@ -75,6 +75,11 @@
 .lg-p-mark{width:8px;height:8px;border-radius:50%}
 .lg-p-name{font-family:var(--sans);font-weight:700;font-size:25px;line-height:1.12;letter-spacing:-.02em;color:var(--ink);margin:0 0 16px}
 .lg-p-note{font-family:var(--serif);font-size:17px;line-height:1.52;color:var(--ink-2);margin:0 0 26px;font-weight:300}
+.lg-p-link{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink);text-decoration:none;border:1px solid var(--ink);border-radius:3px;
+  padding:9px 14px;margin:-10px 0 26px;transition:background .15s,color .15s}
+.lg-p-link:hover{background:var(--ink);color:var(--bg,#FAF9F5)}
+.lg-p-link .arr{font-family:var(--sans)}
 .lg-p-conn-k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
   margin-bottom:12px;padding-top:18px;border-top:1px solid var(--line)}
 .lg-p-conn{display:flex;flex-wrap:wrap;gap:8px}

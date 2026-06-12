@@ -7,9 +7,9 @@
 window.RD = (function () {
   // ---- Semantic bands (higher score = more resilient) ----------------------
   const BANDS = [
-    { key: "critical", label: "CRITICAL", min: 0,  max: 40,  desc: "Multi-dimensional acute stress" },
-    { key: "high",     label: "HIGH RISK",min: 40, max: 60,  desc: "Compromised; vulnerable to cascade" },
-    { key: "moderate", label: "MODERATE", min: 60, max: 75,  desc: "Manageable but under active stress" },
+    { key: "critical", label: "CRITICAL", min: 0,  max: 40,  desc: "Acute load across several sectors" },
+    { key: "high",     label: "HIGH RISK",min: 40, max: 60,  desc: "Operating under load, with cascade exposure to watch" },
+    { key: "moderate", label: "MODERATE", min: 60, max: 75,  desc: "Stable, absorbing active load" },
     { key: "good",     label: "GOOD",     min: 75, max: 90,  desc: "Strong foundations" },
     { key: "strong",   label: "STRONG",   min: 90, max: 100, desc: "Highly resilient" },
   ];
@@ -26,28 +26,28 @@ window.RD = (function () {
       tag: "Baseline · the ceiling",
       horizon: "30d",
       formula: "0.58 × Sector readiness  +  0.24 × Sovereign buffer  +  0.18 × Supply depth",
-      cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "— no trade economy reaches it; the realistic frontier is ≈72 (marked). This score is also the CEILING for Live Stress — today's resilience can't exceed your fundamentals." },
-      explain: "The slow-moving baseline — your fair-weather structural capacity, exposure NET of the capacity to absorb and adapt. It is the CEILING the live score recovers toward but can never exceed: you cannot be more resilient under acute stress than your fundamentals permit. It moves over months as dependencies, sovereign buffers and supply diversity change, and is independent of today's events. The 0–100 axis is anchored to reality: 100 = total self-sufficiency no trade economy achieves; realistic frontier ≈72.",
+      cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "— no trade economy reaches it; the realistic frontier is ≈72 (marked). This score is also the CEILING for Live Stress — live strength tracks up to your fundamentals." },
+      explain: "The slow-moving baseline — your fair-weather structural capacity, exposure NET of the capacity to absorb and adapt. It is the CEILING the live score recovers toward: live strength climbs back to what your fundamentals allow as conditions settle. It moves over months as dependencies, sovereign buffers and supply diversity change, and is independent of today's events. The 0–100 axis is anchored to reality: 100 = total self-sufficiency no trade economy achieves; realistic frontier ≈72.",
       inputs: [
         { k: "Sector readiness (58%)", v: "weak-anchored blend → 48.6", src: "curated" },
         { k: "Sovereign buffer (24%)", v: "~$2.0T across UAE SWFs → 72", src: "curated" },
         { k: "Supply depth (18%)", v: "source diversity across 14 precursors → 50", src: "curated" },
       ],
-      assumption: "This is now the BASELINE/CEILING in a baseline-and-deviation model: Live Stress = this value − today's acute drag, bounded above by it. Sovereign buffer was lifted from 66 to 72 after correcting UAE sovereign wealth from a modelled $1.4T to a verified ~$2.0T (ADIA ~$1.1T + ICD $429B + Mubadala $358B). Readiness stays non-compensatory by blend: 0.60 × weakest sector (Defence 40.1) + 0.40 × mean (61.3).",
+      assumption: "This is now the BASELINE/CEILING in a baseline-and-deviation model: Live Stress = this value − today's active load, tracking up to it. Sovereign buffer was lifted from 66 to 72 after correcting UAE sovereign wealth from a modelled $1.4T to a verified ~$2.0T (ADIA ~$1.1T + ICD $429B + Mubadala $358B). Readiness stays non-compensatory by blend: 0.60 × most-exposed sector (Defence 40.1) + 0.40 × mean (61.3).",
     },
     live: {
       value: 47.0, prev: 44.5,
       name: "Live Stress Resilience",
       tag: "Daily · capped by baseline",
       horizon: "24h",
-      formula: "Structural ceiling  −  today's acute drag (live)",
-      cap: { at: 54.5, label: "ceiling = baseline 54.5", lead: "Capped by your baseline", body: "— live resilience can't exceed the structural ceiling (54.5). It sits below it by the size of today's acute drag — the cost of active disruption. As it clears, live recovers TOWARD the ceiling, never through it." },
-      explain: "How resilient the system is to the pressure happening RIGHT NOW — expressed as a DEVIATION below the structural ceiling, not a free-floating number. On a calm day it would sit AT the ceiling (54.5); live disruption pushes it down. Maritime disruption is counted ONCE, through measured vessel throughput — which already embeds escalation, since carriers reroute in response to it. The gap between this and the ceiling is the real headline signal: wide gap = acute crisis; narrow gap = operating near your fundamentals.",
+      formula: "Structural ceiling  −  today's active load (live)",
+      cap: { at: 54.5, label: "ceiling = baseline 54.5", lead: "Tracking toward your baseline", body: "— live resilience tracks toward the structural ceiling (54.5). It sits below it by the size of today's active load. As that load clears, live recovers TOWARD the ceiling, climbing back to full strength." },
+      explain: "How resilient the system is to the conditions happening RIGHT NOW — expressed as a DEVIATION below the structural ceiling, not a free-floating number. On a calm day it would sit AT the ceiling (54.5); live load lowers it. Maritime disruption is counted ONCE, through measured vessel throughput — which already embeds escalation, since carriers reroute in response to it. The gap between this and the ceiling is the real headline signal: a wide gap shows where to focus today; a narrow gap means operating close to your fundamentals.",
       inputs: [
         { k: "Structural ceiling", v: "54.5 — the day's maximum", src: "curated" },
         { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez transit calls vs each strait's 12-month norm (IMF PortWatch) — embeds escalation", src: "ais" },
-        { k: "Non-maritime shocks", v: "residual Guinea/EGA bauxite drag (settled May 2026, easing; not in vessel counts)", src: "acled" },
-        { k: "Live = ceiling − acute drag", v: "recomputed every refresh from the live drivers", src: "curated" },
+        { k: "Non-maritime shocks", v: "residual Guinea/EGA bauxite load (settled May 2026, easing; not in vessel counts)", src: "acled" },
+        { k: "Live = ceiling − active load", v: "recomputed every refresh from the live drivers", src: "curated" },
       ],
       assumption: "Maritime disruption is counted ONCE — via measured vessel throughput, which already embeds escalation (carriers reroute because of it). The maritime events in the convergence panel are the CAUSES of that throughput drop, shown for context, not added a second time. Only non-maritime shocks (e.g. Guinea) add a separate severity term. Escalation's one distinct residual effect — threat to the Fujairah bypass itself — is treated structurally, not as additive live drag.",
     },
@@ -56,8 +56,8 @@ window.RD = (function () {
   // ---- 7 sectors -----------------------------------------------------------
   const sectors = [
     { id: "energy", name: "Energy", score: 58.3, prev: 60.0,
-      topRisk: "Leading-edge chips", topDRI: 66, precursors: 3,
-      note: "Grid-control electronics and turbine spares concentrate in exposed corridors." },
+      topRisk: "Piped gas (Dolphin)", topDRI: 61, precursors: 3,
+      note: "Power and desalination draw on one shared gas envelope, so they move together under load. Piped Dolphin gas from Qatar is the highest-consequence input in the model; grid transformers and LEU fuel round out the sector's tracked precursors." },
     { id: "water", name: "Water", score: 45.0, prev: 44.5,
       topRisk: "RO membranes", topDRI: 55, precursors: 2,
       note: "Desalination runs on RO membranes from a competitive-but-concentrated supplier field. Source diversity is better than once assumed; the binding constraint is reorder lead-time (~120 days) against the 75-day buffer." },
@@ -65,7 +65,7 @@ window.RD = (function () {
       topRisk: "Leading-edge chips", topDRI: 66, precursors: 4,
       note: "Guided-systems production leans on advanced silicon. The binding risk is US export-control licensing, not Taiwanese supply — a channel that eased in late 2025." },
     { id: "food", name: "Food", score: 73.5, prev: 72.8,
-      topRisk: "Potash", topDRI: 38, precursors: 3,
+      topRisk: "Potash (fertilizer)", topDRI: 38, precursors: 3,
       note: "Diversified sourcing and strategic reserves give the deepest buffer of any sector." },
     { id: "logistics", name: "Logistics", score: 67.0, prev: 71.2,
       topRisk: "Hormuz transit", topDRI: 58, precursors: 4,
@@ -95,9 +95,9 @@ window.RD = (function () {
     { id: "api", name: "Active pharma ingredients", sector: "health", source: "India", buffer: 60, consequence: 0.85, dri: 55,
       dims: { concentration: 21, substitutability: 16, route: 10, counterpart: 8 }, hormuz: true, dolphin: false,
       note: "65% sourced from India. Hospital pharmacology depends on uninterrupted flow." },
-    { id: "potash", name: "Potash", sector: "food", source: "Canada / Russia", buffer: 120, consequence: 0.55, dri: 38,
+    { id: "potash", name: "Potash (fertilizer)", sector: "food", source: "Canada / Russia", buffer: 120, consequence: 0.55, dri: 38,
       dims: { concentration: 14, substitutability: 9, route: 9, counterpart: 6 }, hormuz: false, dolphin: false,
-      note: "Fertiliser input for domestic agriculture. Reasonably diversified." },
+      note: "Potassium fertiliser input for domestic agriculture. Reasonably diversified." },
     { id: "vaccines", name: "Vaccines", sector: "health", source: "US / EU", buffer: 180, consequence: 0.70, dri: 31,
       dims: { concentration: 12, substitutability: 8, route: 7, counterpart: 4 }, hormuz: false, dolphin: false,
       note: "Deep 180-day cold-chain buffer from diversified Western suppliers." },
@@ -200,19 +200,19 @@ window.RD = (function () {
         detail: "90-day buffer; not routed through Hormuz, so it degrades later and only if the shock widens." },
 
       { id: "taweelah", layer: 2, label: "Taweelah desalination", kind: "asset", day: 45, band: "high",
-        detail: "Membrane stock crosses its reorder-impossible line. Output begins to taper as spares run thin." },
+        detail: "Membrane stock reaches its reorder-threshold line. Output begins to taper as spares draw down." },
       { id: "grid", layer: 2, label: "Power grid", kind: "asset", day: 60, band: "high",
-        detail: "Gas balancing tightens; desalination and grid share the same gas envelope, so they fail together." },
+        detail: "Gas balancing tightens; desalination and grid share the same gas envelope, so they move together under load." },
 
       { id: "water", layer: 3, label: "Water", kind: "sector", day: 45, band: "critical",
-        detail: "Desalination is the spine of water supply. Dubai's 14-day municipal buffer is the binding constraint." },
+        detail: "Desalination is the spine of water supply. Day-to-day demand is met from operational storage; the 90-day federal strategic reserve then covers essential supply, at a reduced rate — a deep safety net rather than full-demand cover." },
       { id: "energy", layer: 3, label: "Energy", kind: "sector", day: 60, band: "high",
-        detail: "Gas-for-power competes with gas-for-water. The grid de-rates to protect desalination." },
+        detail: "Gas-for-power and gas-for-water draw on the same envelope. The grid de-rates to keep desalination supplied." },
       { id: "food", layer: 3, label: "Food", kind: "sector", day: 75, band: "moderate",
-        detail: "Cold-chain and irrigation depend on water + power. Lags the water shock by ~30 days." },
+        detail: "Cold-chain and irrigation depend on water + power, following the water signal by ~30 days." },
 
       { id: "overall", layer: 4, label: "National score", kind: "overall", day: 90, band: "critical",
-        detail: "Non-compensatory aggregation: with Water critical, the overall score is capped regardless of strong sectors." },
+        detail: "Non-compensatory aggregation: with Water under load, the overall score stays anchored to it regardless of strong sectors." },
     ],
     edges: [
       ["trigger","ro"], ["trigger","gas"], ["trigger","chips"],
@@ -279,15 +279,19 @@ window.RD = (function () {
   ];
 
   // ---- Operationalize ------------------------------------------------------
-  const water = [
-    { emirate: "Abu Dhabi", buffer: 90, band: "good", note: "Liwa strategic aquifer reserve" },
-    { emirate: "Dubai", buffer: 14, band: "critical", note: "Highest demand, thinnest municipal buffer" },
-    { emirate: "Sharjah", buffer: 20, band: "high", note: "Limited storage" },
-    { emirate: "Ajman", buffer: 18, band: "critical", note: "Very high relative vulnerability" },
-    { emirate: "Umm Al Quwain", buffer: 22, band: "high", note: "Small system, low redundancy" },
-    { emirate: "Ras Al Khaimah", buffer: 30, band: "moderate", note: "Some groundwater access" },
-    { emirate: "Fujairah", buffer: 35, band: "moderate", note: "East-coast desalination, off-Gulf" },
-  ];
+  // National strategic water reserve — consolidated federal figure. Abu Dhabi
+  // (Liwa) and Dubai (DEWA ASR) operate 90-day desalinated-water reserves, among
+  // the largest in the world. Reported as one federal essential-supply duration;
+  // not broken out per emirate.
+  const water = {
+    days: 90,
+    label: "National strategic water reserve",
+    note: "The UAE operates 90-day strategic desalinated-water reserves — Abu Dhabi's Liwa Strategic Water Reserve (the world's largest desalinated-water aquifer store) and DEWA's Aquifer Storage & Recovery in Dubai (the world's largest potable ASR). These cover essential supply for up to 90 days, with day-to-day demand met from operational storage — a deep safety net behind normal operations.",
+    evidence: [
+      { label: "Abu Dhabi — Gulf News", url: "https://gulfnews.com/uae/environment/abu-dhabi-completes-worlds-largest-desalinated-water-reserve-1.2157536" },
+      { label: "Dubai — DEWA", url: "https://www.dewa.gov.ae/en/about-us/media-publications/latest-news/2022/03/dewa-completes-construction-of-the-first-stage-of-the-asr-project" },
+    ],
+  };
   const health = {
     apis: "60-day buffer · India 65% source",
     vaccines: "180-day buffer · US / EU",
@@ -308,7 +312,8 @@ window.RD = (function () {
     { part: "Live data feeds", pct: 100 },
     { part: "Control layer", pct: 100 },
     { part: "Multi-scenario", pct: 100 },
-    { part: "Automation", pct: 80 },
+    { part: "Response & pre-mortem", pct: 90 },
+    { part: "Automation", pct: 85 },
     { part: "Calibration & tuning", pct: 30 },
   ];
 
@@ -331,7 +336,7 @@ window.RD = (function () {
     { id: "taweelah", name: "Taweelah Desalination", lat: 24.78, lng: 54.7, weight: 0.95, kind: "water", note: "World's largest RO plant" },
     { id: "fujairah", name: "Fujairah Terminal", lat: 25.17, lng: 56.33, weight: 0.85, kind: "port", note: "Off-Gulf oil export bypass" },
     { id: "ruwais", name: "Ruwais Refinery", lat: 24.11, lng: 52.73, weight: 0.8, kind: "energy", note: "Downstream hub" },
-    { id: "dubaiwater", name: "Dubai water network", lat: 25.2, lng: 55.27, weight: 0.7, kind: "water", note: "14-day municipal buffer" },
+    { id: "dubaiwater", name: "Dubai water network", lat: 25.2, lng: 55.27, weight: 0.7, kind: "water", note: "Thin operational surface storage, backed by the 90-day federal strategic reserve" },
     { id: "portrashid", name: "Port Rashid", lat: 25.32, lng: 55.33, weight: 0.4, kind: "port", note: "Dubai's original port — now cruise & heritage; cargo long since consolidated into Jebel Ali" },
   ];
 

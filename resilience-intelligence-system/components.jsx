@@ -31,6 +31,7 @@ const PATHS = {
   spark: "M3 17l5-6 4 4 5-8 4 5",
   globe: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M3 12h18 M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.5-4-9s1.5-6.5 4-9z",
   alert: "M12 9v4M12 17h.01M10.3 4.3l-7 12A2 2 0 0 0 5 19h14a2 2 0 0 0 1.7-2.7l-7-12a2 2 0 0 0-3.4 0z",
+  target: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2z",
   check: "M5 12l5 5 9-11",
   dot: "",
 };
@@ -123,13 +124,13 @@ function headlineDrivers(d) {
     const gap = +(RD.headline.structural.value - d.value).toFixed(1);
     return {
       kicker: "Live factors · updating hourly",
-      text: `Hormuz & Red Sea active, Guinea/EGA bauxite easing — maritime disruption counted once via vessel throughput (escalation embedded), Guinea as residual shock severity; live sits ${gap} pts below baseline.`,
+      text: `Hormuz & Red Sea pressure active, Guinea/EGA bauxite easing. Maritime disruption is counted once — through measured ship transits, which already reflect the escalation — and live sits ${gap} pts below the ceiling.`,
     };
   }
   const weakest = RD.sectors.reduce((a, b) => (b.score < a.score ? b : a));
   return {
     kicker: "Drivers · refreshed monthly",
-    text: `7-sector readiness (weakest: ${weakest.name} ${weakest.score.toFixed(1)}), ~$2.0T sovereign buffer & supply diversity across 14 imports — recomputed monthly from public data.`,
+    text: `7-sector readiness (lead focus: ${weakest.name} ${weakest.score.toFixed(1)}), ~$2.0T sovereign buffer & supply diversity across 14 imports — recomputed monthly from public data.`,
   };
 }
 
@@ -183,6 +184,16 @@ function ScoreCard({ d }) {
 function SectorCard({ s, onOpen }) {
   const b = RD.band(s.score);
   const explain = useExplain();
+  const topP = RD.precursors.find((p) => p.name === s.topRisk);
+  const driInputs = [
+    { k: "Top dependency", v: s.topRisk + " · DRI " + s.topDRI + "/100" },
+    { k: "DRI = Dependency Risk Index", v: "concentration + substitutability + route + counterpart, each scored 0–25 (sum 0–100). Higher = more fragile." },
+  ];
+  if (topP) driInputs.push({ k: "↳ " + s.topRisk + " breakdown", v: `concentration ${topP.dims.concentration} · substitutability ${topP.dims.substitutability} · route ${topP.dims.route} · counterpart ${topP.dims.counterpart}` });
+  driInputs.push(
+    { k: "Tracked precursors", v: s.precursors + " critical imports" },
+    { k: "30d change", v: (s.score - s.prev).toFixed(1) + " pts" },
+  );
   return (
     <div className={`sector band-${b.key} fade-in`} onClick={() => onOpen(s)}>
       <div className="sector-top">
@@ -197,13 +208,10 @@ function SectorCard({ s, onOpen }) {
         <span style={{ marginLeft: "auto" }}>
           <Fx payload={{
             kicker: "Sector score", title: s.name + " resilience",
-            text: s.note, formula: "Sector = 100 − consequence-weighted Σ(DRI × weight)",
-            inputs: [
-              { k: "Top dependency", v: s.topRisk + " · DRI " + s.topDRI + "/100" },
-              { k: "Tracked precursors", v: s.precursors + " critical imports" },
-              { k: "30d change", v: (s.score - s.prev).toFixed(1) + " pts" },
-            ],
-            assumption: "Each sector score is driven by its worst tracked dependency, not the average — a single critical import sets the ceiling.",
+            text: s.note + " The sector's headline is its most-exposed import, measured by its DRI.",
+            formula: "Sector = 100 − consequence-weighted Σ(DRI × weight)",
+            inputs: driInputs,
+            assumption: "Each sector score is driven by its most-exposed tracked dependency, not the average — the most-concentrated import sets the priority. DRI's four dimensions are deliberately unweighted (equal 0–25).",
           }} />
         </span>
       </div>
@@ -289,7 +297,7 @@ function IllusBadge() {
       formula: "Live public data  +  Curated open sources  +  Stated assumptions  →  Explainable estimate",
       inputs: [
         { k: "Live feeds", v: "IMF PortWatch chokepoint transits, GDELT trade-route news, Open-Meteo sea state, oil & gas prices, OFAC sanctions, ACLED conflict", src: "ais" },
-        { k: "Curated data", v: "14 precursors, 12 assets, 7 scenarios — human-readable CSV", src: "curated" },
+        { k: "Curated data", v: "14 precursors, 7 strategic assets, 7 scenarios — human-readable CSV", src: "curated" },
         { k: "Assumptions", v: "Goalposts, weights & buffers — all stated and editable", src: "assumption" },
       ],
       assumption: "Every number can be traced to its source and method. Nothing here is a classified or official Government of UAE position — it is a transparent worked example of how national resilience could be quantified.",

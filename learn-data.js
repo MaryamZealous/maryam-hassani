@@ -1,83 +1,107 @@
-// learn-data.js — Maryam's influence map: thinkers, books, videos, ideas.
-// Clusters: mm = mental models · math = mathematical reasoning ·
-//           learn = science of learning · sys = systems & resilience
+// learn-data.js — Maryam's influence map: thinkers, books, channels, ideas.
+// Clusters: arab = Arab polymaths (center) · sci = science & curiosity ·
+//           world = world & economics · build = building & product · live = how to live
 // Positions are normalized (0..1) anchors; the graph drifts gently around them.
 // Edit freely — add nodes, retag, repoint links.
 
 window.LEARN = {
   clusters: {
-    mm:    { label: "Mental Models",          short: "how to think",  lx: 0.10, ly: 0.04 },
-    math:  { label: "Mathematical Reasoning", short: "how to reason", lx: 0.70, ly: 0.04 },
-    learn: { label: "Science of Learning",    short: "how to learn",  lx: 0.11, ly: 0.95 },
-    sys:   { label: "Systems & Resilience",   short: "how it holds",  lx: 0.74, ly: 0.95 },
+    arab:  { label: "Arab Polymaths",       short: "the roots",          lx: 0.40, ly: 0.33 },
+    sci:   { label: "Science & Curiosity",  short: "how the world works", lx: 0.06, ly: 0.04 },
+    world: { label: "World & Economics",    short: "why nations move",   lx: 0.72, ly: 0.04 },
+    build: { label: "Building & Product",   short: "how to build",       lx: 0.07, ly: 0.95 },
+    live:  { label: "How to Live",          short: "mind & meaning",     lx: 0.73, ly: 0.95 },
   },
   nodes: [
-    // ---- Mental Models (top-left) ----
-    { id: "munger",   label: "Charlie Munger",     type: "thinker", cluster: "mm",  x: 0.15, y: 0.34, hub: true,
-      note: "The latticework of mental models — borrow the big ideas from every discipline and let them check each other." },
-    { id: "almanack", label: "Poor Charlie's Almanack", type: "book", cluster: "mm", x: 0.07, y: 0.52,
-      note: "Munger's worldly wisdom, collected. Inversion, incentives, and the psychology of misjudgment." },
-    { id: "kahneman", label: "Daniel Kahneman",    type: "thinker", cluster: "mm",  x: 0.11, y: 0.15,
-      note: "Two systems of mind — fast intuition and slow reasoning — and the biases that live in the gap." },
-    { id: "tfs",      label: "Thinking, Fast and Slow", type: "book", cluster: "mm", x: 0.26, y: 0.46,
-      note: "The field guide to your own cognitive shortcuts, and when not to trust them." },
-    { id: "parrish",  label: "Farnam Street",      type: "video",   cluster: "mm",  x: 0.29, y: 0.20,
-      note: "Shane Parrish on thinking clearly — conversations that turn mental models into daily practice." },
+    // ---- Arab Polymaths (center — everything radiates from here) ----
+    { id: "khwarizmi", label: "Al-Khwarizmi", type: "thinker", cluster: "arab", x: 0.42, y: 0.45, hub: true,
+      note: "Revolutionary mathematician whose name is the root of the word \u201Calgorithm\u201D — and who introduced algebra to the world. Every line of code traces back here." },
+    { id: "kindi", label: "Al-Kindi", type: "thinker", cluster: "arab", x: 0.31, y: 0.52,
+      note: "The philosopher of the Arabs. Brought Greek philosophy into Arabic thought, and broke ciphers with frequency analysis — cryptography's first scientist." },
+    { id: "firnas", label: "Abbas ibn Firnas", type: "thinker", cluster: "arab", x: 0.38, y: 0.66,
+      note: "Legendary inventor and engineer who made the earliest recorded scientific attempts at human flight — a thousand years before the Wright brothers." },
+    { id: "khaldun", label: "Ibn Khaldun", type: "thinker", cluster: "arab", x: 0.60, y: 0.50,
+      note: "The father of modern sociology, historiography, and economics — famous for analyzing the dynamics of civilizations in his masterpiece, the Muqaddimah." },
+    { id: "battuta", label: "Ibn Battuta", type: "thinker", cluster: "arab", x: 0.50, y: 0.61,
+      note: "Extraordinary scholar and traveler who covered over 73,000 miles across Africa, the Middle East, and Asia, documenting medieval civilizations as he went." },
+    { id: "wisdom", label: "House of Wisdom", type: "idea", cluster: "arab", x: 0.49, y: 0.38,
+      note: "Baghdad's Bayt al-Hikma — where Al-Khwarizmi and Al-Kindi worked side by side. Proof that golden ages are built, deliberately, by putting curious minds in one room." },
 
-    // ---- Mathematical Reasoning (top-right) ----
-    { id: "feynman",  label: "Richard Feynman",    type: "thinker", cluster: "math", x: 0.55, y: 0.19, hub: true,
-      note: "If you can't explain it simply, you don't understand it. Reasoning from first principles, with delight." },
-    { id: "polya",    label: "George Pólya",       type: "thinker", cluster: "math", x: 0.75, y: 0.13,
-      note: "How to Solve It — a heuristic for attacking any problem: understand, plan, execute, look back." },
-    { id: "htsi",     label: "How to Solve It",    type: "book",    cluster: "math", x: 0.88, y: 0.26,
-      note: "Pólya's four-step method. The closest thing to a grammar of problem solving." },
-    { id: "3b1b",     label: "3Blue1Brown",        type: "video",   cluster: "math", x: 0.64, y: 0.35,
-      note: "Grant Sanderson makes mathematics visual — intuition before formalism, every time." },
-    { id: "lockhart", label: "Paul Lockhart",      type: "thinker", cluster: "math", x: 0.47, y: 0.35,
-      note: "A Mathematician's Lament — math as an art of pattern and play, not a list of procedures." },
-    { id: "mandel",   label: "Benoît Mandelbrot",  type: "thinker", cluster: "math", x: 0.72, y: 0.47,
-      note: "Roughness has a geometry. Fractals: infinite complexity unfolding from one simple, repeated rule." },
+    // ---- Science & Curiosity (top-left) ----
+    { id: "veritasium", url: "https://www.youtube.com/@veritasium", label: "Veritasium", type: "video", cluster: "sci", x: 0.10, y: 0.17, hub: true,
+      note: "Counterintuitive science — why the obvious answer is usually wrong, tested on camera. @veritasium" },
+    { id: "3b1b", url: "https://www.youtube.com/@3blue1brown", label: "3Blue1Brown", type: "video", cluster: "sci", x: 0.25, y: 0.12,
+      note: "Grant Sanderson makes mathematics visual — intuition before formalism, every time. @3blue1brown" },
+    { id: "cleo", url: "https://www.youtube.com/@CleoAbram", label: "Cleo Abram", type: "video", cluster: "sci", x: 0.06, y: 0.32,
+      note: "Optimistic, rigorous tech explainers — what the future looks like if things go right. @CleoAbram" },
+    { id: "seeker", url: "https://www.youtube.com/@Seeker", label: "Seeker", type: "video", cluster: "sci", x: 0.21, y: 0.28,
+      note: "Science news made legible — fast, visual briefings from the edge of research. @Seeker" },
+    { id: "bigthink", url: "https://www.youtube.com/@bigthink", label: "Big Think", type: "video", cluster: "sci", x: 0.33, y: 0.20,
+      note: "Experts compressing their life's work into minutes — a buffet of big ideas. @bigthink" },
 
-    // ---- Science of Learning (bottom-left) ----
-    { id: "oakley",   label: "Barbara Oakley",     type: "thinker", cluster: "learn", x: 0.17, y: 0.66, hub: true,
-      note: "Learning How to Learn — focused vs. diffuse modes, chunking, and beating procrastination by design." },
-    { id: "makeitstick", label: "Make It Stick",   type: "book",    cluster: "learn", x: 0.08, y: 0.80,
-      note: "The evidence on durable learning: retrieval practice, spacing, interleaving. Effort is the point." },
-    { id: "matuschak", label: "Andy Matuschak",    type: "thinker", cluster: "learn", x: 0.31, y: 0.81,
-      note: "Why books don't work, and what does — spaced repetition, evergreen notes, knowledge you can build on." },
-    { id: "waitzkin", label: "Josh Waitzkin",      type: "thinker", cluster: "learn", x: 0.14, y: 0.86,
-      note: "The Art of Learning — depth over breadth, and making smaller circles until the basics become instinct." },
-    { id: "srs",      label: "Spaced Repetition",  type: "idea",    cluster: "learn", x: 0.36, y: 0.66,
-      note: "Review just before you'd forget. The simplest rule that compounds into a lasting memory." },
+    // ---- World & Economics (top-right) ----
+    { id: "wealth", label: "The Wealth of Nations", type: "book", cluster: "world", x: 0.76, y: 0.15, hub: true,
+      note: "Adam Smith on the division of labor, markets, and the invisible hand — still the foundation under every economics argument." },
+    { id: "econx", url: "https://www.youtube.com/@EconomicsExplained", label: "Economics Explained", type: "video", cluster: "world", x: 0.85, y: 0.26,
+      note: "Whole economies told as stories of incentives — why nations get rich, stall, or unravel. @EconomicsExplained" },
+    { id: "johnny", url: "https://www.youtube.com/@johnnyharris", label: "Johnny Harris", type: "video", cluster: "world", x: 0.64, y: 0.20,
+      note: "Geopolitics and geography as visual investigations — maps, borders, and why the world is shaped this way. @johnnyharris" },
+    { id: "lessons21", label: "21 Lessons for the 21st Century", type: "book", cluster: "world", x: 0.79, y: 0.32,
+      note: "Harari on the present tense — AI, work, truth, and attention. What actually matters this century." },
 
-    // ---- Systems & Resilience (bottom-right) ----
-    { id: "meadows",  label: "Donella Meadows",    type: "thinker", cluster: "sys", x: 0.74, y: 0.65, hub: true,
-      note: "Thinking in Systems — stocks, flows, feedback, and where to find the leverage points that actually move things." },
-    { id: "tis",      label: "Thinking in Systems", type: "book",   cluster: "sys", x: 0.89, y: 0.74,
-      note: "The primer. Once you see feedback loops, you can't unsee them." },
-    { id: "taleb",    label: "Nassim Taleb",       type: "thinker", cluster: "sys", x: 0.58, y: 0.75,
-      note: "Antifragile — some things gain from disorder. Build for the shock you can't predict." },
-    { id: "antifragile", label: "Antifragile",     type: "book",    cluster: "sys", x: 0.68, y: 0.85,
-      note: "Beyond resilient: systems that get stronger when stressed, and how to court the right kind of risk." },
-    { id: "fractalgeo", label: "The Fractal Geometry of Nature", type: "book", cluster: "sys", x: 0.85, y: 0.54,
-      note: "Mandelbrot's masterwork — the self-similar patterns that structure coastlines, markets, and minds." },
+    // ---- Building & Product (bottom-left) ----
+    { id: "lennys", url: "https://www.youtube.com/@LennysPodcast", label: "Lenny's Podcast", type: "video", cluster: "build", x: 0.13, y: 0.76, hub: true,
+      note: "Product, growth, and careers — operators explaining how it's actually done, not how it's written up. @LennysPodcast" },
+    { id: "momtest", label: "The Mom Test", type: "book", cluster: "build", x: 0.04, y: 0.60,
+      note: "Rob Fitzpatrick on customer conversations: ask questions so concrete that even your mom can't lie to you." },
+    { id: "coldstart", label: "The Cold Start Problem", type: "book", cluster: "build", x: 0.17, y: 0.64,
+      note: "Andrew Chen on network effects — how products go from zero to unstoppable, and why most never escape the cold start." },
+    { id: "doac", url: "https://www.youtube.com/@TheDiaryOfACEO", label: "The Diary Of A CEO", type: "video", cluster: "build", x: 0.20, y: 0.88,
+      note: "Steven Bartlett's long-form interviews on building, failure, and health — founders with the polish off. @TheDiaryOfACEO" },
+    { id: "arabcast", url: "https://www.youtube.com/@ArabCastAE", label: "ArabCast · لكل إبداع حكاية", type: "video", cluster: "build", x: 0.33, y: 0.79,
+      note: "Every creation has a story — Arab founders and creators on how they built it, in their own words. @ArabCastAE" },
+
+    // ---- How to Live (bottom-right) ----
+    { id: "meditations", label: "Meditations", type: "book", cluster: "live", x: 0.74, y: 0.80, hub: true,
+      note: "Marcus Aurelius writing to himself — the private notebook of the most powerful man alive, on controlling only what you can." },
+    { id: "mindgut", label: "The Mind-Gut Connection", type: "book", cluster: "live", x: 0.84, y: 0.71,
+      note: "Emeran Mayer on the gut-brain dialogue — how the body shapes mood, decisions, and the mind itself." },
+    { id: "life3d", label: "Life in Three Dimensions", type: "book", cluster: "live", x: 0.78, y: 0.89,
+      note: "Shigehiro Oishi's case for psychological richness — not just happiness or meaning, but a life of varied, perspective-changing experience." },
+    { id: "academy", url: "https://www.youtube.com/@academyofideas", label: "Academy of Ideas", type: "video", cluster: "live", x: 0.63, y: 0.74,
+      note: "Philosophy and psychology of freedom and self-mastery — Jung, Nietzsche, and the inner life. @academyofideas" },
+    { id: "lex", url: "https://www.youtube.com/@lexfridman", label: "Lex Fridman", type: "video", cluster: "live", x: 0.85, y: 0.58,
+      note: "Marathon conversations on AI, science, power, and love — patience as an interviewing style. @lexfridman" },
   ],
   // edges connect related ideas; cross-cluster links are the interesting ones
   edges: [
-    ["munger","almanack"],["munger","kahneman"],["munger","tfs"],["kahneman","tfs"],
-    ["munger","parrish"],["parrish","kahneman"],
-    ["feynman","polya"],["polya","htsi"],["feynman","3b1b"],["feynman","lockhart"],
-    ["lockhart","3b1b"],["mandel","3b1b"],
-    ["oakley","makeitstick"],["oakley","matuschak"],["matuschak","srs"],
-    ["oakley","srs"],["waitzkin","oakley"],["makeitstick","srs"],
-    ["meadows","tis"],["taleb","antifragile"],["meadows","taleb"],
-    ["mandel","fractalgeo"],["meadows","fractalgeo"],
-    // cross-cluster bridges
-    ["mandel","taleb"],          // fractals ↔ fat tails
-    ["feynman","oakley"],        // teaching ↔ learning
-    ["munger","taleb"],          // risk ↔ mental models
-    ["kahneman","waitzkin"],     // mind ↔ practice
-    ["polya","matuschak"],       // problem solving ↔ knowledge building
-    ["mandel","meadows"],        // self-similarity ↔ systems
+    // within the roots
+    ["khwarizmi","wisdom"],["kindi","wisdom"],["khwarizmi","kindi"],
+    ["khaldun","battuta"],["khwarizmi","firnas"],
+    // science & curiosity
+    ["veritasium","3b1b"],["veritasium","seeker"],["cleo","veritasium"],
+    ["cleo","seeker"],["bigthink","3b1b"],
+    // world & economics
+    ["wealth","econx"],["johnny","econx"],["wealth","lessons21"],["johnny","lessons21"],
+    // building & product
+    ["momtest","lennys"],["coldstart","lennys"],["momtest","coldstart"],
+    ["doac","lennys"],["doac","arabcast"],
+    // how to live
+    ["meditations","academy"],["mindgut","life3d"],["meditations","life3d"],["lex","mindgut"],
+    // bridges from the roots outward
+    ["khwarizmi","3b1b"],        // algebra & algorithms ↔ visual math
+    ["firnas","veritasium"],     // experiment ↔ experiment
+    ["firnas","cleo"],           // invention ↔ tech optimism
+    ["khaldun","wealth"],        // Muqaddimah ↔ political economy
+    ["khaldun","econx"],         // civilization dynamics ↔ macro stories
+    ["khaldun","lessons21"],     // reading civilizations, then and now
+    ["battuta","johnny"],        // travel ↔ geography storytelling
+    ["kindi","academy"],         // philosophy ↔ philosophy
+    ["kindi","meditations"],     // Greek thought, carried forward
+    ["arabcast","battuta"],      // Arab stories, medieval and modern
+    // other bridges
+    ["bigthink","lex"],          // long ideas ↔ long conversations
+    ["coldstart","econx"],       // network effects ↔ economics
+    ["doac","mindgut"],          // founder health ↔ gut science
   ],
 };

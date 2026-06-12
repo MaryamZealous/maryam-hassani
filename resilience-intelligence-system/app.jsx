@@ -14,6 +14,7 @@ const NAV = [
     { id: "dependencies", label: "Dependencies", icon: "chain" },
   ]},
   { group: "Respond", items: [
+    { id: "act", label: "Response & pre-mortem", icon: "target" },
     { id: "control", label: "Control layer", icon: "shield" },
     { id: "operations", label: "Operationalize", icon: "ops" },
   ]},
@@ -23,7 +24,7 @@ const NAV = [
 ];
 const TITLES = {
   overview: "Overview", threats: "Live threats", map: "Asset map", cascade: "Cascade",
-  scenarios: "Scenarios", dependencies: "Dependencies", control: "Control layer",
+  scenarios: "Scenarios", dependencies: "Dependencies", act: "Response & pre-mortem", control: "Control layer",
   operations: "Operationalize", methodology: "How this works",
 };
 
@@ -74,6 +75,7 @@ function App() {
       case "cascade": return <CascadeView />;
       case "scenarios": return <ScenariosView />;
       case "dependencies": return <DependenciesView initial={opts} />;
+      case "act": return <ActView />;
       case "control": return <ControlView />;
       case "operations": return <OperationsView />;
       case "methodology": return <MethodologyView />;
@@ -123,7 +125,7 @@ function App() {
               formula: "Live data  +  Curated sources  +  Stated assumptions  →  Explainable estimate",
               inputs: [
                 { k: "Live feeds", v: "PortWatch · GDELT · Open-Meteo · markets · OFAC · ACLED", src: "ais" },
-                { k: "Curated", v: "14 precursors · 12 assets · 7 scenarios", src: "curated" },
+                { k: "Curated", v: "14 precursors · 7 assets · 7 scenarios", src: "curated" },
                 { k: "Assumptions", v: "weights, buffers & goalposts — stated", src: "assumption" },
               ],
               assumption: "Nothing here is classified or an official Government of UAE position. It is a transparent demonstration of method.",

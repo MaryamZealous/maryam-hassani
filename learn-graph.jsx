@@ -6,10 +6,11 @@ const { useRef, useState, useEffect, useMemo } = React;
 
 const TYPE_LABEL = { thinker: "Thinker", book: "Book", video: "Video", idea: "Idea" };
 const CLUSTER_COLOR = {
-  mm:   "#2B50E0",
-  math: "#7A33C8",
-  learn:"#1F8A5B",
-  sys:  "#C0561E",
+  arab:  "#A66A1F",
+  sci:   "#2B50E0",
+  world: "#7A33C8",
+  build: "#1F8A5B",
+  live:  "#C04467",
 };
 
 function LearnGraph() {
@@ -56,6 +57,86 @@ function LearnGraph() {
     y: PAD_TOP + ay * (size.h - PAD_TOP - PAD_BOT),
   });
 
+  // collision relaxation: measure real label boxes and push anchors apart
+  // so chips never overlap, at any viewport width. Re-runs on resize + font load.
+  useEffect(() => {
+    if (!size.w || !size.h) return;
+    let dead = false;
+    const relax = () => {
+      if (dead || size.w < 480 || size.h < 320) return;
+      const st = stateRef.current;
+      const ids = data.nodes.map(n => n.id);
+      const dims = {}, pos = {};
+      for (const id of ids) {
+        const el = nodeEls.current[id];
+        if (!el) return;
+        dims[id] = { w: el.offsetWidth, h: el.offsetHeight };
+        const p = toPx(st[id].ax, st[id].ay);
+        pos[id] = { x: p.x, y: p.y };
+      }
+      const MX = 18, MY = 14; // margin incl. drift amplitude
+      const K = 0.5;           // damping — converge gently, never explode
+      // cluster labels are fixed obstacles: nodes move around them
+      const obstacles = [...(wrapRef.current ? wrapRef.current.querySelectorAll('.lg-cluster') : [])].map(el => {
+        const w = el.offsetWidth, h = el.offsetHeight;
+        const key = Object.keys(data.clusters).find(k => el.textContent.startsWith(data.clusters[k].label));
+        const c = key ? data.clusters[key] : null;
+        if (!c) return null;
+        const p = toPx(c.lx, c.ly);
+        return { x: p.x, y: p.y, w, h };
+      }).filter(Boolean);
+      for (let it = 0; it < 220; it++) {
+        let moved = false;
+        for (let i = 0; i < ids.length; i++) {
+          for (let j = i + 1; j < ids.length; j++) {
+            const a = pos[ids[i]], b = pos[ids[j]];
+            const da = dims[ids[i]], db = dims[ids[j]];
+            const ox = (da.w + db.w) / 2 + MX - Math.abs(a.x - b.x);
+            const oy = (da.h + db.h) / 2 + MY - Math.abs(a.y - b.y);
+            if (ox > 0 && oy > 0) {
+              moved = true;
+              if (ox < oy * 2.2) {
+                const push = (ox / 2) * K * (a.x <= b.x ? -1 : 1);
+                a.x += push; b.x -= push;
+              } else {
+                const push = (oy / 2) * K * (a.y <= b.y ? -1 : 1);
+                a.y += push; b.y -= push;
+              }
+            }
+          }
+        }
+        // push nodes off the (immovable) cluster labels
+        for (const id of ids) {
+          const a = pos[id], da = dims[id];
+          for (const ob of obstacles) {
+            const ox = (da.w + ob.w) / 2 + MX - Math.abs(a.x - ob.x);
+            const oy = (da.h + ob.h) / 2 + MY - Math.abs(a.y - ob.y);
+            if (ox > 0 && oy > 0) {
+              moved = true;
+              if (ox < oy * 2.2) a.x += ox * K * (a.x <= ob.x ? -1 : 1);
+              else a.y += oy * K * (a.y <= ob.y ? -1 : 1);
+            }
+          }
+        }
+        // keep inside bounds DURING iteration so pushes can't compound outward
+        for (const id of ids) {
+          const p = pos[id], d = dims[id];
+          p.x = Math.max(d.w / 2 + 8, Math.min(size.w - d.w / 2 - 8, p.x));
+          p.y = Math.max(34, Math.min(size.h - 40, p.y));
+        }
+        if (!moved) break;
+      }
+      for (const id of ids) {
+        const p = pos[id];
+        st[id].ax = (p.x - PAD_X) / (size.w - PAD_X * 2);
+        st[id].ay = (p.y - PAD_TOP) / (size.h - PAD_TOP - PAD_BOT);
+      }
+    };
+    relax();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(relax);
+    return () => { dead = true; };
+  }, [size]);
+
   // animation loop: drift + draw edges
   useEffect(() => {
     let raf;
@@ -74,6 +155,14 @@ function LearnGraph() {
           const amp = reduce ? 0 : 7;
           s.x = base.x + Math.sin(ts * 0.0004 + s.ph) * amp;
           s.y = base.y + Math.cos(ts * 0.00033 + s.ph * 1.3) * amp;
+        }
+        // hard clamp against the element's REAL size every frame — nothing
+        // (drift, drag, stale font metrics) can push a chip past the frame edge
+        const elb = nodeEls.current[n.id];
+        if (elb) {
+          const hw = elb.offsetWidth / 2 + 6, hh = elb.offsetHeight / 2 + 4;
+          s.x = Math.max(hw, Math.min(size.w - hw, s.x));
+          s.y = Math.max(hh, Math.min(size.h - hh, s.y));
         }
       });
 
@@ -107,6 +196,15 @@ function LearnGraph() {
         if (elc) elc.style.transform = `translate(-50%,-50%) translate(${s.x}px, ${s.y}px)`;
       });
 
+      // slide the detail panel from the rAF loop too — CSS transitions can be
+      // frozen in embedded preview hosts, so the visible end state must never
+      // depend on one. Eased here; reduced motion snaps.
+      const pa = panelAnim.current;
+      const target = selected ? 1 : 0;
+      pa.p = reduce ? target : pa.p + (target - pa.p) * 0.16;
+      if (Math.abs(target - pa.p) < 0.002) pa.p = target;
+      if (panelRef.current) panelRef.current.style.transform = `translateX(${((1 - pa.p) * 102).toFixed(2)}%)`;
+
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
@@ -115,6 +213,8 @@ function LearnGraph() {
 
   const byId = (id) => data.nodes.find(n => n.id === id);
   const nodeEls = useRef({});
+  const panelRef = useRef(null);
+  const panelAnim = useRef({ p: 0 });
 
   // dragging
   const drag = useRef(null);
@@ -203,7 +303,7 @@ function LearnGraph() {
       <div className="lg-hint">drag a node to play · click to read</div>
 
       {/* detail panel */}
-      <div className={"lg-panel" + (sel ? " open" : "")}>
+      <div className={"lg-panel" + (sel ? " open" : "")} ref={panelRef}>
         {sel && (
           <div className="lg-panel-in">
             <button className="lg-close" onClick={() => setSelected(null)} aria-label="Close">×</button>
@@ -213,6 +313,9 @@ function LearnGraph() {
             </div>
             <h3 className="lg-p-name">{sel.label}</h3>
             <p className="lg-p-note">{sel.note}</p>
+            {sel.url && (
+              <a className="lg-p-link" href={sel.url} target="_blank" rel="noopener noreferrer">Visit channel <span className="arr">↗</span></a>
+            )}
             <div className="lg-p-conn-k">Connected to</div>
             <div className="lg-p-conn">
               {[...adj[sel.id]].map(id => (

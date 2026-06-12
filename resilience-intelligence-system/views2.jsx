@@ -73,7 +73,7 @@ const ASSET_IO = {
   taweelah: "World's largest RO plant · membrane-dependent",
   barakah: "5.6 GW nuclear baseload · LEU-fuelled",
   ruwais: "Downstream refining & petrochemicals hub",
-  dubaiwater: "Municipal network · 14-day buffer (binding constraint)",
+  dubaiwater: "Municipal network · thin operational storage · 90-day federal strategic reserve",
   portrashid: "Cruise & heritage today · freight role absorbed by Jebel Ali",
 };
 // hand-placed label offsets so the tight Abu Dhabi–Dubai cluster doesn't collide
@@ -296,7 +296,7 @@ const UAEDetail = React.memo(function UAEDetail({ onTip, onPick }) {
       <text x={oman[0] - 22} y={oman[1] + 2} textAnchor="end" style={{ fill: "var(--gold)", opacity: 0.8 }}>bypasses the Strait of Hormuz</text>
       {/* Hormuz */}
       <g className="map-node band-critical" onClick={() => onPick("choke:hormuz")}
-        onMouseEnter={() => onTip({ b: "Chokepoint · CRITICAL", text: "Strait of Hormuz — 5 of 138 vessels/day", who: "−96% vs. baseline" })} onMouseLeave={() => onTip(null)}>
+        onMouseEnter={() => { const hzc = RD.chokepoints.find((c) => c.id === "hormuz"); onTip({ b: "Chokepoint · " + hzc.band.toUpperCase(), text: "Strait of Hormuz — " + hzc.vessels + " of " + hzc.baseline + " transit calls/day", who: "−" + hzc.drop + "% vs. 12-month norm" }); }} onMouseLeave={() => onTip(null)}>
         <rect x={hz[0] - 7} y={hz[1] - 7} width="14" height="14" rx="2" fill="var(--bc)" transform={`rotate(45 ${hz[0]} ${hz[1]})`} />
         <text x={hz[0]} y={hz[1] - 14} textAnchor="middle">Hormuz</text>
       </g>
@@ -327,9 +327,11 @@ function MapView() {
   const onPick = React.useCallback((id) => {
     if (id.startsWith("choke:")) {
       const c = RD.chokepoints.find((x) => x.id === id.slice(6));
-      return explain({ kicker: "Chokepoint", title: c.name, text: c.note, formula: "Pressure  =  1 − (today / baseline)",
-        inputs: [{ k: "Transits", v: c.vessels + " / " + c.baseline + " vessels", src: "ais" }, { k: "Drop", v: "−" + c.drop + "%" }],
-        assumption: "Judged against its own 90-day baseline, not an absolute count." });
+      return explain({ kicker: "Chokepoint", title: c.name, text: c.note, formula: c.real ? "Pressure  =  1 − (7-day avg transits / 12-month norm)" : "Pressure  =  1 − (today / baseline)",
+        inputs: [{ k: "Transits", v: c.vessels + " / " + c.baseline + " per day", src: "ais" }, { k: "Drop", v: "−" + c.drop + "%" }],
+        assumption: c.real
+          ? "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm — never an absolute count."
+          : "Judged against this strait's own baseline, never an absolute count." });
     }
     if (id.startsWith("asset:")) {
       const a = RD.assets.find((x) => x.id === id.slice(6));
@@ -599,20 +601,37 @@ function OperationsView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Operationalize</div>
-        <div className="view-sub">Where the national picture meets the ground — per-emirate water buffers, the health supply snapshot, how the model has performed against real events, and what's left to build.</div>
+        <div className="view-sub">Where the national picture meets the ground — the national strategic water reserve, the health supply snapshot, how the model has performed against real events, and what's left to build.</div>
       </div>
       <div className="grid cols-2" style={{ gridTemplateColumns: "1.2fr 1fr", marginBottom: 16, alignItems: "start" }}>
-        <Panel title="Water buffer by emirate" icon="ops" label="DAYS OF SUPPLY">
-          <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-            {RD.water.map((w) => (
-              <div key={w.emirate} className={`band-${w.band}`} style={{ display: "grid", gridTemplateColumns: "120px 1fr 92px", alignItems: "center", gap: 12 }}>
-                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{w.emirate}</span>
-                <div className="bar-track" style={{ height: 8 }}><div className="bar-fill" style={{ width: Math.min(w.buffer, 90) / 90 * 100 + "%" }}></div></div>
-                <span className="mono" style={{ fontSize: 12.5, textAlign: "right" }}>{w.buffer} days</span>
-              </div>
-            ))}
+        <Panel title="National strategic water reserve" icon="ops" label="EMERGENCY ESSENTIAL-SUPPLY · DAYS">
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 14 }}>
+            <span className="mono" style={{ fontSize: 52, fontWeight: 600, lineHeight: 0.9, letterSpacing: "-0.02em" }}>{RD.water.days}</span>
+            <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>days of essential supply</span>
+              <span className="helper" style={{ fontSize: 11 }}>essential supply at emergency rate · a deep safety net</span>
+            </span>
+            <span style={{ marginLeft: "auto" }}>
+              <Fx payload={{
+                kicker: "National strategic water reserve", title: "How the 90-day reserve is sourced",
+                text: RD.water.note,
+                inputs: [
+                  { k: "Strategic reserve", v: RD.water.days + " days · essential supply" },
+                  { k: "Public sources", v: (<span style={{ display: "inline-flex", flexWrap: "wrap", gap: "6px 12px" }}>{RD.water.evidence.map((e, i) => (<a key={i} className="drawer-link" href={e.url} target="_blank" rel="noopener noreferrer">{e.label} ↗</a>))}</span>) },
+                ],
+                assumption: "The 90-day figure is the emergency essential-supply duration — a deep safety net behind normal operations. Day-to-day demand is met from operational storage, with the strategic reserve held in reserve behind it.",
+              }} />
+            </span>
           </div>
-          <div className="note-card" style={{ marginTop: 16 }}>Dubai's 14-day municipal buffer is the binding constraint in every water-linked cascade — the number to watch.</div>
+          <div className="bar-track" style={{ height: 10 }}>
+            <div className="bar-fill band-good" style={{ width: "100%", background: "var(--good)" }}></div>
+          </div>
+          <div className="note-card" style={{ marginTop: 16 }}>
+            The UAE operates <b>90-day strategic desalinated-water reserves</b> — Abu Dhabi's <b>Liwa Strategic Water Reserve</b>
+            {" "}(the world's largest desalinated-water aquifer store) and Dubai's <b>DEWA Aquifer Storage &amp; Recovery</b> (the
+            world's largest potable ASR). These cover essential supply for up to 90 days, with day-to-day demand met from
+            operational storage — a deep safety net held behind normal operations.
+          </div>
         </Panel>
         <Panel title="Health supply snapshot" icon="ops">
           <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
@@ -666,12 +685,15 @@ function OperationsView() {
 /* ---------- Methodology (explainability home) --------------------------- */
 function MethodologyView() {
   const qs = [
-    { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving CEILING — your fundamentals. Live Stress is that ceiling minus today's acute drag, and is bounded by it: you can't be more resilient mid-crisis than your fundamentals allow. The gap between them tells you whether a low number is a deep structural problem or a passing storm." },
+    { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving CEILING — your fundamentals. Live Stress is that ceiling minus today's active load, and tracks toward it: live strength climbs back to what your fundamentals allow as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm." },
     { n: "2", t: "What is the DRI?", d: "The Dependency Risk Index scores a single import on four equal 0–25 dimensions — source concentration, substitutability, route exposure and counterpart risk — summing to a 0–100 fragility score." },
-    { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a weak one. Readiness anchors to the worst sector — a blend of 60% weakest + 40% mean — so one critical dependency stays visible behind six healthy ones, without dragging the score below the weakest pillar itself." },
+    { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one. Readiness anchors to the most-exposed sector — a blend of 60% most-exposed + 40% mean — so one concentrated dependency stays visible behind six healthy ones, while still reading the full picture." },
     { n: "4", t: "What is consequence weighting?", d: "Not every import matters equally. RO membranes (0.90) feed desalination; gold doré (0.20) does not. Weights scale each dependency's effect on the national picture." },
-    { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public APIs, hand-curated open-source CSVs, and explicitly stated assumptions. Every figure in the system carries a source tag identifying which tier it came from." },
+    { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying its tier, and the status bar shows whether each live feed is currently connected (● Live) or temporarily simulated (○ Sim)." },
     { n: "6", t: "Why does Hormuz appear twice?", d: "It is shown twice but scored once. The chokepoint signal (AIS) measures the vessel-throughput drop. The 'Hormuz escalation' event (ACLED) is the CAUSE of that drop — carriers reroute because of the escalation — so the throughput number already embeds it. The model therefore counts maritime disruption a single time, via measured throughput, and shows the event only as context. Adding the event's severity on top would double-count one situation through its cause and its effect." },
+    { n: "7", t: "Does the system recommend actions?", d: "Yes — the Response & pre-mortem view closes the loop from sense → simulate → ACT. It holds a ranked queue of national responses. Each one is a concrete implementation brief — what gets built, where, with which technology and partners — anchored to a real precedent project and its actual cost and timeline. The one decision per response is how far to go: three scope tiers, from quick stopgap to full build. LIVE tiers improve today's score; CEILING tiers raise the structural ceiling. Priority blends impact, urgency, speed and value for money." },
+    { n: "8", t: "What is a pre-mortem?", d: "A post-mortem asks why something failed after the fact; a pre-mortem flips the timeline — it assumes a response has already failed and works backwards to explain how, surfacing weak points before you commit. Every recommendation carries one: the named ways it could fail, each with a likelihood, the leading indicator to watch, and a mitigation. A recommendation is only as trustworthy as its failure modes." },
+    { n: "9", t: "What happens when a live feed is unreachable?", d: "The system never quietly substitutes invented data for measured data. Each feed is marked ● Live in the status bar while connected; if a source goes down, that one signal falls back to a clearly-marked simulation (○ Sim) anchored to its last known values — and the driver attribution on the Overview keeps showing exactly which inputs are measured and which are modelled." },
   ];
   return (
     <div className="view fade-in">
@@ -774,7 +796,7 @@ function MethodologyView() {
               return (
                 <div key={k} style={{ display: "flex", alignItems: "center", gap: 11, padding: "9px 0", borderBottom: "1px solid var(--line)" }}>
                   <SourceTag src={k} />
-                  <span className="helper" style={{ flex: 1 }}>{s.full}</span>
+                  <span className="helper" style={{ flex: 1 }}>{s.full}{s.url ? <> · <a className="drawer-link" href={s.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11 }}>source ↗</a></> : null}</span>
                   {isLive && (
                     <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", padding: "1px 6px", borderRadius: 4, border: "1px solid var(--line)", color: mode === "live" ? "var(--good)" : "var(--muted)", background: mode === "live" ? "color-mix(in srgb,var(--good) 14%,transparent)" : "transparent" }}>
                       {mode === "live" ? "● Live" : "○ Sim"}
@@ -787,14 +809,16 @@ function MethodologyView() {
           </Panel>
           <Panel title="Assumptions ledger" icon="book" label="EDITABLE">
             {[
-              "Readiness = 0.60 × weakest sector + 0.40 × mean (weak-anchored blend)",
-              "Live Stress = Structural ceiling − today's acute drag (bounded above)",
+              "Readiness = 0.60 × most-exposed sector + 0.40 × mean (exposure-anchored blend)",
+              "Live Stress = Structural ceiling − today's active load (tracks toward it)",
               "Structural axis anchored: 100 = autarky, ~72 = realistic frontier",
               "Sovereign buffer sub-score from verified SWF AUM (~$2.0T)",
-              "Chokepoint baselines = 90-day median transits",
+              "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
               "DRI dimensions are unweighted (equal 0–25)",
-            ].map((a, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: i < 5 ? "1px solid var(--line)" : "none", fontSize: 12.5 }}>
+              "Response priority = 0.38 impact + 0.30 urgency + 0.18 speed + 0.14 efficiency",
+              "Response effects are independent & additive: Live′ = min(Ceiling′, live + staged points)",
+            ].map((a, i, arr) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: i < arr.length - 1 ? "1px solid var(--line)" : "none", fontSize: 12.5 }}>
                 <span className="src assumption" style={{ flex: "0 0 auto" }}><span className="d"></span>A{i + 1}</span>
                 <span>{a}</span>
               </div>

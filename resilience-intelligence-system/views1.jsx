@@ -16,9 +16,11 @@ function WhatChanged() {
   const ro = RD.indicators.find((i) => i.id === "romembrane");
   const brent = RD.indicators.find((i) => i.id === "brent");
   const lsd = +(live.value - live.prev).toFixed(1);
+  const lg = RD.sectors.find((s) => s.id === "logistics");
+  const lgd = +(lg.score - lg.prev).toFixed(1);
   const items = [
     { label: "Live Stress", v: (lsd > 0 ? "+" : "") + lsd, dir: lsd >= 0 ? "up" : "down", note: "vs yesterday's baseline", src: "acled" },
-    { label: "Logistics", v: "−4.2", dir: "down", note: "Hormuz transits depressed", src: "ais" },
+    { label: "Logistics", v: (lgd > 0 ? "+" : "") + lgd, dir: lgd >= 0 ? "up" : "down", note: "Hormuz transits depressed", src: "ais" },
     { label: "Hormuz", v: "−" + hz.drop + "%", dir: "down", note: hz.vessels + " of " + hz.baseline + " transit calls/day", src: "ais" },
     { label: "RO stock", v: "−1 day", dir: "down", note: "now " + ro.value + " of 75-day buffer", src: "curated" },
     { label: "Brent", v: (brent.delta > 0 ? "+" : "") + brent.delta + "%", dir: brent.delta >= 0 ? "up" : "down", note: brent.value + " / barrel", src: "yfinance" },
@@ -50,7 +52,7 @@ function GapBar() {
       <div className="gapbar-head">
         <span className="gapbar-k">The gap is the signal</span>
         <span className="gapbar-val mono">{gap}</span>
-        <span className="gapbar-sub">points below baseline · live disruption</span>
+        <span className="gapbar-sub">points below baseline · live load</span>
       </div>
       <div className="gapbar-track">
         <div className="gapbar-live" style={{ width: l + "%" }}></div>
@@ -59,9 +61,9 @@ function GapBar() {
         <div className="gapbar-livemark" style={{ left: l + "%" }}><span>live {l}</span></div>
       </div>
       <div className="gapbar-foot">
-        Live operational resilience sits <b>{gap} below the structural ceiling</b> — the cost of today's disruption
-        (Hormuz &amp; Red Sea throughput, counted once via vessels, plus residual Guinea/EGA bauxite drag — now easing). As it clears, live recovers
-        <i>toward</i> {s} but can never pass it. A widening gap is the early-warning metric; a closing gap means the system is returning to its fundamentals.
+        Live operational resilience sits <b>{gap} below the structural ceiling</b> — the active load the system is absorbing today
+        (Hormuz &amp; Red Sea throughput, counted once via vessels, plus residual Guinea/EGA bauxite load — now easing). As it clears, live recovers
+        <i>toward</i> {s}, tracking back to its fundamentals. A widening gap shows where to focus today; a closing gap means the system is returning to full strength.
       </div>
     </div>
   );
@@ -83,7 +85,7 @@ function DriverTrace() {
     <Panel title="What's moving the score right now" icon="book" label="LIVE DRIVER ATTRIBUTION"
       right={<span className="helper" style={{ marginLeft: "auto" }}>{liveN} of {drivers.length} drivers on a connected live feed</span>}>
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
-        The gap below baseline is the sum of named drags. Each row shows its point contribution and how it is sourced:
+        The gap below baseline is the sum of named live loads. Each row shows its point contribution and how it is sourced:
         <span style={{ color: "var(--good)", fontWeight: 600 }}> LIVE</span> (a connected feed, moving on its own as the world changes) or
         <span style={{ color: "var(--muted)", fontWeight: 600 }}> MODEL</span> (a curated severity judgement with no real-time numeric feed). This is the honest line between what the system measures and what it estimates.
       </p>
@@ -113,7 +115,7 @@ function DriverTrace() {
       <div className="helper" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
         Feeds — <b>maritime throughput</b>: IMF PortWatch satellite AIS · <b>sea state</b>: Open-Meteo · <b>trade-route news</b>: GDELT ·
         <b> energy-market stress</b>: Brent &amp; gas · <b>counterpart risk</b>: OFAC / OpenSanctions. The residual Guinea/EGA bauxite
-        drag is the one <b>MODEL</b> input — a curated, easing severity judgement with no real-time numeric feed, so it is never shown as live.
+        load is the one <b>MODEL</b> input — a curated, easing severity judgement with no real-time numeric feed, so it is never shown as live.
       </div>
     </Panel>
   );
@@ -128,8 +130,8 @@ function OverviewView({ go }) {
         <div className="view-sub">
           A <b>baseline and its live deviation</b>, not two independent readings. <b>Structural Resilience</b> is the
           slow-moving ceiling — your fundamentals, exposure net of the capacity to absorb and adapt. <b>Live Stress</b> is
-          that ceiling <i>minus</i> today's acute drag, and can never exceed it: you can't be more resilient mid-crisis
-          than your fundamentals allow. The <b>gap</b> between them is the real signal — wide gap = acute crisis; narrow = operating near baseline.
+          that ceiling <i>minus</i> today's active load, and tracks toward it as conditions settle: live strength climbs back to
+          what your fundamentals allow. The <b>gap</b> between them is the real signal — a wide gap shows where to focus today; narrow = operating close to full strength.
         </div>
       </div>
 
@@ -146,16 +148,16 @@ function OverviewView({ go }) {
 
       <Panel title="Sector resilience" icon="gauge" label="7 CRITICAL SECTORS"
         right={<span className="helper" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
-          Worst sector caps the score <Fx payload={{
+          Most-exposed sector sets the floor <Fx payload={{
             kicker: "Aggregation rule", title: "Non-compensatory by blend",
-            text: "Strong sectors cannot average away a weak one, but the weakest pillar shouldn't drag the score below itself either. Readiness is anchored to the worst sector while still reading the mean — so a single critical dependency stays visible without producing an impossibly low floor.",
-            formula: "Readiness  =  0.60 × weakest sector  +  0.40 × mean(sectors)",
+            text: "Strong sectors cannot average away a more-exposed one, but the most-exposed pillar shouldn't pull the score below itself either. Readiness is anchored to the most-exposed sector while still reading the mean — so a single concentrated dependency stays visible without producing an impossibly low floor.",
+            formula: "Readiness  =  0.60 × most-exposed sector  +  0.40 × mean(sectors)",
             inputs: [
-              { k: "Weakest sector", v: "Defence · 40.1" },
+              { k: "Most-exposed sector", v: "Defence · 40.1" },
               { k: "Mean of 7 sectors", v: "61.3" },
               { k: "Blended readiness", v: "48.6" },
             ],
-            assumption: "The 0.60 weak-anchor weight is a deliberate, editable assumption — it sets how hard the worst pillar dominates. It replaces an earlier multiplicative penalty that could push the result below the weakest sector, which overstated fragility.",
+            assumption: "The 0.60 exposure-anchor weight is a deliberate, editable assumption — it sets how strongly the most-exposed pillar anchors the score. It replaces an earlier multiplicative penalty that could push the result below the most-exposed sector, which overstated fragility.",
           }} />
         </span>}>
         <div className="sector-grid">
@@ -253,8 +255,8 @@ function ProvenanceLedger() {
   const residDrag = drv("Residual shock (Guinea)");
   const acuteDrag = (structural.value - live.value);
   const trail = [
-    [`Live Stress ${live.value.toFixed(1)}`, `Structural ceiling ${structural.value} − Acute drag ${acuteDrag.toFixed(1)}`, 0],
-    [`Acute drag ${acuteDrag.toFixed(1)}`, `Maritime throughput (−${throughDrag.toFixed(1)}) + sea state, news, markets & sanctions + residual Guinea shock (−${residDrag.toFixed(1)})`, 1],
+    [`Live Stress ${live.value.toFixed(1)}`, `Structural ceiling ${structural.value} − Active load ${acuteDrag.toFixed(1)}`, 0],
+    [`Active load ${acuteDrag.toFixed(1)}`, `Maritime throughput (−${throughDrag.toFixed(1)}) + sea state, news, markets & sanctions + residual Guinea shock (−${residDrag.toFixed(1)})`, 1],
     ["Maritime throughput", "IMF PortWatch · " + RD.chokepoints.map((c) => `${({ hormuz: "Hormuz", redsea: "Red Sea", suez: "Suez" })[c.id] || c.name} ${c.vessels}/${c.baseline}`).join(", ") + " — embeds escalation", 2],
     ["Residual shock", "ACLED · Guinea bauxite (settled May 2026, easing) — the only shock not already in transit counts", 2],
   ];
@@ -388,7 +390,7 @@ function ThreatsView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Live threats</div>
-        <div className="view-sub">Chokepoint pressure, converging shocks and leading indicators — the fast-moving inputs to the Live Stress score.</div>
+        <div className="view-sub">Chokepoint activity, converging signals and leading indicators — the fast-moving inputs to the Live Stress score.</div>
       </div>
 
       <Panel title="Maritime chokepoints" icon="globe" label="TRANSIT CALLS/DAY vs. 12-MONTH NORM" style={{ marginBottom: 16 }}>
@@ -472,7 +474,7 @@ function ThreatsView() {
                           { k: "Observed", v: `event · ${s.when}`, src: s.src },
                           { k: "Event note", v: s.note },
                           { k: "Severity applied", v: `${s.impact} pts` },
-                          { k: "Feeds into", v: "Shock severity (40% of acute drag)" },
+                          { k: "Feeds into", v: "Residual non-maritime severity term of the active load" },
                           { k: "Public sources", v: (<span style={{ display: "inline-flex", flexWrap: "wrap", gap: "6px 12px" }}>{s.evidence.map((e, i) => (<a key={i} className="drawer-link" href={e.url} target="_blank" rel="noopener noreferrer">{e.label} ↗</a>))}</span>) },
                         ],
                         assumption: "Severity is a curated, editable judgement, not a measured quantity. Overlapping-corridor shocks compound rather than add.",
@@ -491,7 +493,7 @@ function ThreatsView() {
                 <span style={{ fontWeight: 600, fontSize: 13 }}>{RD.convergence.concurrent} concurrent shocks</span>
                 <span className="mono" style={{ marginLeft: "auto", fontSize: 18, fontWeight: 700, color: "var(--bc)" }}>{RD.convergence.combined}</span>
                 <Fx payload={{
-                  kicker: "Convergence", title: "Why combined is worse than the sum",
+                  kicker: "Convergence", title: "Why combined exceeds the sum",
                   text: RD.convergence.note,
                   formula: "Combined  =  Σ shocks  +  corridor-overlap amplifier",
                   inputs: RD.shocks.map((s) => ({ k: s.name, v: s.impact + " pts", src: s.src })),
@@ -533,8 +535,8 @@ function CascadeView() {
       <div className="view-head">
         <div className="view-title">The cascade engine</div>
         <div className="view-sub">
-          This is how the system actually thinks. A shock at a chokepoint depletes the buffers of the imports
-          that route through it; as each buffer runs out, the asset it feeds degrades, then the sector, then the
+          This is how the system actually thinks. A shock at a chokepoint draws down the buffers of the imports
+          that route through it; as each buffer draws down, the asset it supports comes under load, then the sector, then the
           national score. Press play, or step through the timeline — every node explains itself.
         </div>
       </div>
