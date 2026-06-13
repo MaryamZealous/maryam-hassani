@@ -124,7 +124,7 @@ function App() {
               text: "Combines live public data feeds with curated open-source datasets and transparent assumptions to produce explainable resilience estimates.",
               formula: "Live data  +  Curated sources  +  Stated assumptions  →  Explainable estimate",
               inputs: [
-                { k: "Live feeds", v: "PortWatch · GDELT · Open-Meteo · markets · OFAC · ACLED", src: "ais" },
+                { k: "Live feeds", v: "PortWatch · Google News · Open-Meteo · markets · OFAC · ACLED", src: "ais" },
                 { k: "Curated", v: "14 precursors · 7 assets · 7 scenarios", src: "curated" },
                 { k: "Assumptions", v: "weights, buffers & goalposts — stated", src: "assumption" },
               ],

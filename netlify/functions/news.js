@@ -1,48 +1,122 @@
-/* Netlify Function — REAL trade-route news via GDELT DOC 2.0.
-   No API key required. GDELT ingests world news every 15 minutes.
+/* Netlify Function — REAL trade-route news.
+   Primary source: Google News RSS (free, no key, reliable from serverless IPs).
+   Fallback: GDELT DOC 2.0 (richer volume signal, but it rate-limits cloud /
+   serverless egress IPs with HTTP 429, so it cannot be the sole source).
 
-   Why ONE combined query (not four):
-   GDELT throttles to ~1 request / 5s per IP, and a Netlify function must finish
-   inside its ~10s timeout. Four spaced requests can't satisfy both. So we make a
-   single combined trade-route query (finishes in 1-2s, never throttled) and
-   bucket the returned articles into chokepoints here, server-side. Server-side
-   fetch also sidesteps GDELT's lack of CORS headers (a browser cannot call it
-   directly). Deployed at: /.netlify/functions/news
+   Both are fetched SERVER-SIDE here because neither sends CORS headers — a
+   browser cannot call them directly. We score how far 2-day coverage runs above
+   each route's normal volume and return the latest headlines.
+   Deployed at: /.netlify/functions/news
 */
-const CORS = {
+const HEAD_OK = {   // cache real data at the CDN so repeat loads don't re-fetch
   "Access-Control-Allow-Origin": "*",
   "Content-Type": "application/json",
-  "Cache-Control": "public, max-age=180",
+  "Cache-Control": "public, max-age=300",
 };
+const HEAD_FAIL = { // NEVER cache a failure — the next page load should retry
+  "Access-Control-Allow-Origin": "*",
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+};
+const UA = "Mozilla/5.0 (compatible; resilience-system/1.0; +https://maryam-hassani.netlify.app)";
+const wait = (ms) => new Promise((res) => setTimeout(res, ms));
 
-// one net cast over all trade-route coverage; we sort by date and bucket below
-const COMBINED =
+// per-route search queries (Google News query syntax; `when:2d` = last 2 days)
+const QUERIES = {
+  hormuz:  '"Strait of Hormuz"',
+  redsea:  '"Bab-el-Mandeb" OR ("Red Sea" shipping) OR ("Houthi" shipping)',
+  suez:    '"Suez Canal"',
+  general: '"shipping disruption" OR "port closure" OR "trade route" OR "supply chain disruption"',
+};
+// typical 2-day article volume per route — the "normal" baseline to beat
+const BASELINE = { hormuz: 30, redsea: 35, suez: 30, general: 60 };
+
+/* ---- date + entity helpers ---------------------------------------------- */
+function gdeltStamp(d) {            // client expects GDELT format YYYYMMDDThhmmssZ
+  if (isNaN(d)) return "";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}T`
+    + `${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`;
+}
+function decodeEntities(s) {
+  return s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&").trim();
+}
+
+/* ---- Google News RSS (primary) ------------------------------------------ */
+function gnewsUrl(q) {
+  return `https://news.google.com/rss/search?q=${encodeURIComponent(q + " when:2d")}`
+    + `&hl=en-US&gl=US&ceid=US:en`;
+}
+function parseRss(xml) {
+  const items = [];
+  const blocks = xml.split("<item>").slice(1);
+  for (const b of blocks) {
+    const grab = (tag) => {
+      const m = b.match(new RegExp("<" + tag + "[^>]*>([\\s\\S]*?)</" + tag + ">"));
+      return m ? decodeEntities(m[1]) : "";
+    };
+    let title = grab("title");
+    const src = grab("source");
+    // Google News titles are "Headline - Publisher"; trim the trailing source
+    if (src && title.endsWith(" - " + src)) title = title.slice(0, -(src.length + 3));
+    const pub = grab("pubDate");
+    items.push({
+      title,
+      url: grab("link"),
+      domain: src,
+      seendate: gdeltStamp(new Date(pub)),
+    });
+  }
+  return items;
+}
+async function gnews(id) {
+  const r = await fetch(gnewsUrl(QUERIES[id]), { headers: { "User-Agent": UA } });
+  if (!r.ok) throw new Error(`gnews ${r.status}`);
+  const xml = await r.text();
+  if (!/<rss|<feed/i.test(xml)) throw new Error("gnews non-RSS");
+  return parseRss(xml);
+}
+
+/* ---- GDELT (fallback) --------------------------------------------------- */
+const GDELT_COMBINED =
   '("Strait of Hormuz" OR "Bab-el-Mandeb" OR "Red Sea shipping" OR "Suez Canal" '
   + 'OR "shipping disruption" OR "port closure" OR "trade route" OR "Houthi attack")';
-
-// which returned articles belong to which chokepoint (general = the whole net)
 const ROUTE_RE = {
   hormuz: /hormuz/i,
   redsea: /bab.?el.?mandeb|bab.?al.?mandab|red sea|houthi/i,
   suez:   /suez/i,
 };
-// typical 2-day article volume per bucket — the "normal" baseline to beat
-const BASELINE = { hormuz: 22, redsea: 28, suez: 35, general: 90 };
-
-async function gdelt(q, max) {
-  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}`
-    + `&mode=artlist&maxrecords=${max}&format=json&sort=datedesc&timespan=2d`;
-  const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (compatible; resilience-system/1.0)" } });
-  if (!r.ok) throw new Error(`gdelt ${r.status}`);
+async function gdeltOnce() {
+  const url = "https://api.gdeltproject.org/api/v2/doc/doc?query="
+    + encodeURIComponent(GDELT_COMBINED)
+    + "&mode=artlist&maxrecords=200&format=json&sort=datedesc&timespan=2d";
+  const r = await fetch(url, { headers: { "User-Agent": UA } });
+  if (!r.ok) { const e = new Error(`gdelt ${r.status}`); e.status = r.status; throw e; }
   const txt = await r.text();
-  let j;
-  // GDELT returns plain-text errors / throttle notices with HTTP 200, so a
-  // JSON parse failure is the real signal that the call did not return data.
-  try { j = JSON.parse(txt); }
-  catch (e) { throw new Error("gdelt non-JSON: " + txt.slice(0, 80)); }
+  let j; try { j = JSON.parse(txt); } catch (e) { throw new Error("gdelt non-JSON"); }
   return Array.isArray(j.articles) ? j.articles : [];
 }
+async function gdeltBuckets() {
+  let arts, lastErr;
+  for (const ms of [0, 1800]) {           // one retry on rate-limit, inside timeout
+    if (ms) await wait(ms);
+    try { arts = await gdeltOnce(); break; }
+    catch (e) { lastErr = e; if (e.status && e.status !== 429 && e.status !== 503) break; }
+  }
+  if (!arts) throw lastErr;
+  const hit = { hormuz: [], redsea: [], suez: [] };
+  for (const a of arts) {
+    const hay = `${a.title || ""} ${a.url || ""} ${a.domain || ""}`;
+    for (const id in ROUTE_RE) if (ROUTE_RE[id].test(hay)) hit[id].push(a);
+  }
+  return { hormuz: hit.hormuz, redsea: hit.redsea, suez: hit.suez, general: arts };
+}
 
+/* ---- scoring ------------------------------------------------------------ */
 function summarize(id, arts) {
   const vol = arts.length;
   const base = BASELINE[id] || 40;
@@ -53,28 +127,39 @@ function summarize(id, arts) {
   return { vol, score, headlines };
 }
 
-function bucket(arts) {
-  const hit = { hormuz: [], redsea: [], suez: [] };
-  for (const a of arts) {
-    const hay = `${a.title || ""} ${a.url || ""} ${a.domain || ""}`;
-    for (const id in ROUTE_RE) if (ROUTE_RE[id].test(hay)) hit[id].push(a);
-  }
-  return {
-    hormuz:  summarize("hormuz", hit.hormuz),
-    redsea:  summarize("redsea", hit.redsea),
-    suez:    summarize("suez", hit.suez),
-    general: summarize("general", arts),   // the whole trade-route net
-  };
-}
-
 exports.handler = async function () {
+  const ids = Object.keys(QUERIES);
+
+  // 1) PRIMARY — Google News RSS, four routes in parallel (it tolerates this).
+  //    A route that fails is vol:null ("no data"), never a fabricated 0.
   try {
-    const arts = await gdelt(COMBINED, 250);
-    const areas = bucket(arts);
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, areas, ts: Date.now() }) };
-  } catch (e) {
-    // graceful: client falls back to its own attempt, then to simulation.
-    // We NEVER fabricate zero articles — a failure is reported as ok:false.
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: false, error: String(e) }) };
+    const lists = await Promise.all(ids.map((id) => gnews(id).then(
+      (arts) => ({ id, arts }),
+      () => ({ id, arts: null })
+    )));
+    const areas = {}; let okCount = 0;
+    for (const { id, arts } of lists) {
+      if (arts) { areas[id] = summarize(id, arts); okCount++; }
+      else areas[id] = { vol: null, score: 0, headlines: [], failed: true };
+    }
+    if (okCount >= 2) {
+      return { statusCode: 200, headers: HEAD_OK, body: JSON.stringify({ ok: true, src: "googlenews", areas, ts: Date.now() }) };
+    }
+    throw new Error("googlenews thin (" + okCount + "/4)");
+  } catch (ePrimary) {
+    // 2) FALLBACK — GDELT combined query, bucketed.
+    try {
+      const b = await gdeltBuckets();
+      const areas = {
+        hormuz: summarize("hormuz", b.hormuz),
+        redsea: summarize("redsea", b.redsea),
+        suez:   summarize("suez", b.suez),
+        general: summarize("general", b.general),
+      };
+      return { statusCode: 200, headers: HEAD_OK, body: JSON.stringify({ ok: true, src: "gdelt", areas, ts: Date.now() }) };
+    } catch (eFallback) {
+      // both sources unreachable — honest failure, not cached, client retries.
+      return { statusCode: 200, headers: HEAD_FAIL, body: JSON.stringify({ ok: false, error: `googlenews:${ePrimary.message}; gdelt:${eFallback.message}` }) };
+    }
   }
 };

@@ -117,7 +117,7 @@ function DriverTrace() {
         })}
       </div>
       <div className="helper" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-        Feeds — <b>maritime throughput</b>: IMF PortWatch satellite AIS · <b>sea state</b>: Open-Meteo · <b>trade-route news</b>: GDELT ·
+        Feeds — <b>maritime throughput</b>: IMF PortWatch satellite AIS · <b>sea state</b>: Open-Meteo · <b>trade-route news</b>: Google News ·
         <b> energy-market stress</b>: Brent &amp; gas · <b>counterpart risk</b>: OFAC / OpenSanctions. The residual Guinea/EGA bauxite
         load is the one <b>MODEL</b> input — a curated, easing severity judgement with no real-time numeric feed, so it is never shown as live.
       </div>
@@ -317,7 +317,7 @@ function ProvenanceLedger() {
     </Panel>
   );
 }
-/* ---------- Real trade-route news (GDELT) -------------------------------- */
+/* ---------- Real trade-route news (Google News + GDELT) ----------------- */
 function TradeRouteNews() {
   const news = (LIVE.real && LIVE.real.news) || RD.convergence._news || null;
   const live = LIVE.real && LIVE.real.status && LIVE.real.status.gdelt === "live";
@@ -343,16 +343,16 @@ function TradeRouteNews() {
   const featured = ranked.slice().sort((a, b) => (b.d.score || 0) - (a.d.score || 0))[0];
 
   return (
-    <Panel title="Trade-route news monitor" icon="globe" label="GDELT · CLOSURE / CONFLICT COVERAGE" style={{ marginTop: 16 }}
+    <Panel title="Trade-route news monitor" icon="globe" label="GOOGLE NEWS · CLOSURE / CONFLICT COVERAGE" style={{ marginTop: 16 }}
       right={<span style={{ marginLeft: "auto" }}><SourceTag src="gdelt" /></span>}>
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
-        With no free real-time vessel feed, <b>news is the early detector for trade-route disruption</b>. GDELT scans world
-        media every 15 minutes; a surge of closure or conflict coverage above each route's normal volume registers as
+        With no free real-time vessel feed, <b>news is the early detector for trade-route disruption</b>. We scan world
+        media every few minutes; a surge of closure or conflict coverage above each route's normal volume registers as
         <b> news pressure</b> and adds live drag to the score before throughput data would ever confirm it.
       </p>
       {!news ? (
         <div className="helper" style={{ padding: "18px 0" }}>
-          Connecting to GDELT… <span className="muted">live trade-route headlines appear here once the news feed is connected.</span>
+          Connecting to the news feed… <span className="muted">live trade-route headlines appear here once the news feed is connected.</span>
         </div>
       ) : (
         <div className="grid cols-2" style={{ gridTemplateColumns: "0.85fr 1.15fr", gap: 16, alignItems: "start" }}>

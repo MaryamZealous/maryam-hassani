@@ -296,7 +296,7 @@ function IllusBadge() {
       text: "The UAE National Resilience Intelligence System is an ILLUSTRATIVE decision-support model. It combines live, publicly-available data feeds with hand-curated open-source datasets and a set of transparent, documented assumptions.",
       formula: "Live public data  +  Curated open sources  +  Stated assumptions  →  Explainable estimate",
       inputs: [
-        { k: "Live feeds", v: "IMF PortWatch chokepoint transits, GDELT trade-route news, Open-Meteo sea state, oil & gas prices, OFAC sanctions, ACLED conflict", src: "ais" },
+        { k: "Live feeds", v: "IMF PortWatch chokepoint transits, Google News trade-route coverage, Open-Meteo sea state, oil & gas prices, OFAC sanctions, ACLED conflict", src: "ais" },
         { k: "Curated data", v: "14 precursors, 7 strategic assets, 7 scenarios — human-readable CSV", src: "curated" },
         { k: "Assumptions", v: "Goalposts, weights & buffers — all stated and editable", src: "assumption" },
       ],

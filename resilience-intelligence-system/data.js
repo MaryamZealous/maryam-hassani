@@ -324,7 +324,7 @@ window.RD = (function () {
     yfinance: { label: "Markets", full: "Oil & gas prices (yfinance)", endpoint: "Yahoo Finance · BZ=F, NG=F", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "connecting…", kind: "live" },
     ofac:     { label: "OFAC", full: "US Treasury SDN sanctions list", endpoint: "treasury.gov SDN delta feed", url: "https://sanctionssearch.ofac.treas.gov/", cadence: "6 h", fresh: "connecting…", kind: "live" },
     meteo:    { label: "Open-Meteo", full: "Marine & weather (Open-Meteo, live)", endpoint: "marine-api.open-meteo.com · wave height · wind · temperature", url: "https://open-meteo.com/", cadence: "10 min", fresh: "connecting…", kind: "live" },
-    gdelt:    { label: "GDELT", full: "Global news monitor (GDELT, live)", endpoint: "api.gdeltproject.org · trade-route, closure & conflict news · 15-min", url: "https://www.gdeltproject.org/", cadence: "15 min", fresh: "connecting…", kind: "live" },
+    gdelt:    { label: "Google News", full: "Trade-route news monitor (Google News RSS, live · GDELT fallback)", endpoint: "news.google.com/rss · closure & conflict coverage · GDELT fallback", url: "https://news.google.com/", cadence: "6 min", fresh: "connecting…", kind: "live" },
     curated:  { label: "Curated", full: "Hand-curated public-source CSV", endpoint: "versioned CSV · public reporting", url: "", cadence: "manual", fresh: "reviewed", kind: "curated" },
     assumption:{ label: "Assumption", full: "Explicit modelling assumption", endpoint: "stated in assumptions ledger", url: "", cadence: "—", fresh: "stated", kind: "assumption" },
   };
