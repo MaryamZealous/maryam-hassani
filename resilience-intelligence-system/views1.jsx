@@ -570,6 +570,7 @@ function CascadeView() {
 
 /* ---------- Scenarios ---------------------------------------------------- */
 function ScenariosView() {
+  LIVE.useLiveTick();
   const [pick, setPick] = useState("combined");
   const scn = RD.scenarios.find((s) => s.id === pick);
   const baseLive = RD.headline.live.value;
@@ -628,16 +629,25 @@ function ScenariosView() {
             </div>
           </Panel>
 
-          <Panel title="Plausible actors behind it" icon="threat" label="RANKED BY CONFIDENCE">
-            {RD.actors.slice().sort((a, b) => b.confidence - a.confidence).map((a) => (
+          <Panel title="Plausible actors behind it" icon="threat" label="CONFIDENCE · LIVE ACLED ACTIVITY">
+            {RD.actors.slice().sort((a, b) => b.confidence - a.confidence).map((a) => {
+              const ac = (a.acled || []).map((c) => LIVE.conflictFor(c)).filter((x) => x.tracked);
+              const top = ac.sort((x, y) => y.events - x.events)[0];
+              return (
               <div className={`band-${a.band}`} key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", borderBottom: "1px solid var(--line)" }}>
                 <span style={{ fontSize: 13, fontWeight: 600, minWidth: 90 }}>{a.name}</span>
                 <span className="helper" style={{ flex: 1 }}>{a.vector}</span>
+                {top
+                  ? <span className={`tag-band band-${top.band}`} title={`${top.events} battle / remote-violence events in ${top.country} over the last 30 days (ACLED).`} style={{ whiteSpace: "nowrap" }}><span></span>{top.events}/30d</span>
+                  : a.acled ? <span className="helper" style={{ fontSize: 10 }} title="ACLED not connected">—</span> : null}
                 <div className="bar-track" style={{ width: 90 }}><div className="bar-fill" style={{ width: a.confidence + "%" }}></div></div>
                 <span className="mono" style={{ fontSize: 12, minWidth: 36, textAlign: "right", color: "var(--bc)" }}>{a.confidence}%</span>
               </div>
-            ))}
-            <div className="helper" style={{ marginTop: 10 }}>Confidence is an analyst-assigned prior, not a probability of attack. <SourceTag src="assumption" /></div>
+              );
+            })}
+            <div className="helper" style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              Confidence is an analyst-assigned prior <SourceTag src="assumption" />. The <b>/30d</b> chip is live conflict activity in each actor's territory <SourceTag src="acled" />.
+            </div>
           </Panel>
         </div>
       </div>

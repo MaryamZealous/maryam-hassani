@@ -231,11 +231,11 @@ window.RD = (function () {
 
   // ---- Threat actors -------------------------------------------------------
   const actors = [
-    { id: "iran", name: "Iran", confidence: 70, vector: "Military posturing in the Gulf", band: "critical" },
-    { id: "houthi", name: "Houthis", confidence: 40, vector: "Autonomous attacks on shipping", band: "high" },
+    { id: "iran", name: "Iran", confidence: 70, vector: "Military posturing in the Gulf", band: "critical", acled: ["Iran"] },
+    { id: "houthi", name: "Houthis", confidence: 40, vector: "Autonomous attacks on shipping", band: "high", acled: ["Yemen"] },
     { id: "cyber", name: "Cyber actors", confidence: 30, vector: "Coordinated infrastructure intrusion", band: "high" },
     { id: "china", name: "China", confidence: 20, vector: "Technology / export leverage", band: "moderate" },
-    { id: "russia", name: "Russia", confidence: 15, vector: "Geopolitical opportunism", band: "moderate" },
+    { id: "russia", name: "Russia", confidence: 15, vector: "Geopolitical opportunism", band: "moderate", acled: ["Russia"] },
     { id: "climate", name: "Climate", confidence: 25, vector: "Heat / desalination demand spikes", band: "moderate" },
   ];
 

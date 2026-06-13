@@ -251,8 +251,36 @@ window.LIVE = (function () {
   // prime feed strings once so first paint is consistent
   for (const k in FEEDS) RD.sources[k].fresh = freshText(k);
 
+  /* ---- ACLED-backed trade-partner conflict exposure --------------------
+     Maps a partner / source country to its live 30-day conflict intensity from
+     ACLED (Battles + Explosions/Remote violence). pressure is a 0..1 log scale
+     so wildly different magnitudes (Sudan in the thousands vs a quiet partner
+     near zero) stay comparable. Returns live:false when ACLED isn't connected
+     so the UI can fall back to the curated counterpart score honestly. */
+  const CONFLICT_BAND = (p) => p >= 0.66 ? "critical" : p >= 0.40 ? "high" : p > 0.15 ? "moderate" : "good";
+  // free-text source strings ("Canada / Russia") → ACLED country names we track
+  const COUNTRY_ALIASES = { "russia": "Russia", "sudan": "Sudan", "yemen": "Yemen", "iran": "Iran" };
+  function conflictFor(source) {
+    const acled = REAL.acled;
+    const live = REAL.status.acled === "live" && acled && acled.byCountry;
+    const hay = String(source || "").toLowerCase();
+    const matched = [];
+    for (const key in COUNTRY_ALIASES) {
+      const name = COUNTRY_ALIASES[key];
+      if (hay.includes(key) && live && acled.byCountry[name] != null) {
+        matched.push({ country: name, events: acled.byCountry[name] });
+      }
+    }
+    if (!matched.length) return { live: !!live, tracked: false, events: null, pressure: 0, band: "good", country: null };
+    // a precursor with several sources takes the most conflict-exposed one
+    matched.sort((a, b) => b.events - a.events);
+    const top = matched[0];
+    const pressure = Math.max(0, Math.min(1, Math.log10(top.events + 1) / Math.log10(3000)));
+    return { live: true, tracked: true, events: top.events, pressure, band: CONFLICT_BAND(pressure), country: top.country, since: acled.since };
+  }
+
   const interval = setInterval(step, 1500);
 
-  return { subscribe: (f) => (subs.add(f), () => subs.delete(f)), freshText, useLiveTick, step, real: REAL, _interval: interval };
+  return { subscribe: (f) => (subs.add(f), () => subs.delete(f)), freshText, useLiveTick, conflictFor, step, real: REAL, _interval: interval };
 })();
 window.useLiveTick = window.LIVE.useLiveTick;

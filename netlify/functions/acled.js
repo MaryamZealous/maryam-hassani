@@ -95,33 +95,54 @@ exports.handler = async function () {
   try {
     const token = await getToken(email, password);
 
-    // last 30 days of Gulf / Red Sea conflict + explosion events
+    // last 30 days of conflict (Battles + Explosions/Remote violence)
     const since = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
-    const countries = encodeURIComponent("Yemen:Iran:Saudi Arabia:United Arab Emirates:Oman");
-    const url = `${READ_URL}?_format=json&country=${countries}` +
-      `&event_date=${since}&event_date_where=%3E%3D` +
-      `&event_type=${encodeURIComponent("Explosions/Remote violence:Battles")}` +
-      `&fields=event_id_cnty|event_date|event_type|country&limit=2000`;
+    const EVENT_TYPES = "Explosions/Remote violence:Battles";
 
-    let r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    // Count events for one ACLED country expression (e.g. "Sudan" or a
+    // colon-joined Gulf cluster). limit=4000 + lightweight fields keeps each
+    // call fast; row count IS the event count for the window.
+    async function countFor(countryExpr) {
+      const url = `${READ_URL}?_format=json&country=${encodeURIComponent(countryExpr)}` +
+        `&event_date=${since}&event_date_where=%3E%3D` +
+        `&event_type=${encodeURIComponent(EVENT_TYPES)}` +
+        `&fields=event_id_cnty&limit=4000`;
+      let r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.status === 401) {                 // token expired mid-flight — re-auth once
+        TOKEN = { access: null, refresh: null, exp: 0 };
+        const fresh = await getToken(email, password);
+        r = await fetch(url, { headers: { Authorization: `Bearer ${fresh}` } });
+      }
+      const txt = await r.text();
+      if (!r.ok) { const e = new Error("read_failed"); e.stage = "read"; e.status = r.status; e.detail = txt.slice(0, 300); throw e; }
+      let j; try { j = JSON.parse(txt); } catch (_) { j = null; }
+      return (j && Array.isArray(j.data)) ? j.data.length : 0;
+    }
 
-    // token might have just expired mid-flight — re-auth once and retry
-    if (r.status === 401) {
-      TOKEN = { access: null, refresh: null, exp: 0 };
-      const fresh = await getToken(email, password);
-      r = await fetch(url, { headers: { Authorization: `Bearer ${fresh}` } });
-    }
-    const txt = await r.text();
-    if (!r.ok) {
-      const e = new Error("read_failed");
-      e.stage = "read"; e.status = r.status; e.detail = txt.slice(0, 300);
-      throw e;
-    }
-    let j; try { j = JSON.parse(txt); } catch (_) { j = null; }
-    const events = (j && j.data) ? j.data.length : 0;
-    // map raw event volume to the dashboard's "GPS jamming events / week" proxy
-    const gpsjam = Math.max(2, Math.round(events / 4));
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, events, gpsjam, since, ts: Date.now() }) };
+    // Partner / actor geographies we track live, plus a Gulf cluster that backs
+    // the GPS-jamming proxy. Run in parallel — ACLED tolerates it and it keeps
+    // us inside the function timeout. A single country's failure doesn't sink
+    // the rest (it resolves to null = "no data", never a fabricated 0).
+    const PARTNERS = ["Sudan", "Russia", "Yemen", "Iran"];
+    const GULF = "Saudi Arabia:United Arab Emirates:Oman:Iraq";
+    const settled = await Promise.all([
+      ...PARTNERS.map((c) => countFor(c).then((n) => [c, n], () => [c, null])),
+      countFor(GULF).then((n) => ["_gulf", n], () => ["_gulf", null]),
+    ]);
+
+    const byCountry = {};
+    for (const [c, n] of settled) if (c !== "_gulf") byCountry[c] = n;
+    const okCount = Object.values(byCountry).filter((v) => v != null).length;
+    if (!okCount) { const e = new Error("all_countries_failed"); e.stage = "read"; throw e; }
+
+    const gulf = (settled.find(([c]) => c === "_gulf") || [])[1];
+    // total tracked events (Gulf cluster + Yemen/Iran already inside it are the
+    // jamming-relevant theatre); gpsjam proxy maps that theatre's intensity.
+    const theatre = (gulf || 0) + (byCountry.Yemen || 0) + (byCountry.Iran || 0);
+    const gpsjam = Math.max(2, Math.round(theatre / 40));
+    const events = Object.values(byCountry).reduce((a, b) => a + (b || 0), 0) + (gulf || 0);
+
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, events, gpsjam, byCountry, gulf, since, ts: Date.now() }) };
   } catch (e) {
     return {
       statusCode: 200, headers: CORS,

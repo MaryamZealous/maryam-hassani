@@ -81,9 +81,11 @@
       if (!j || !j.ok) throw 0;
       if (j.gpsjam != null) REAL.vals.gpsjam = j.gpsjam;
       if (j.events != null) RD.convergence._realEvents = j.events;
+      // per-partner conflict counts back the trade-partner risk + scenario actors
+      REAL.acled = { byCountry: j.byCountry || {}, gulf: j.gulf, events: j.events, since: j.since, ts: Date.now() };
       RD.sources.acled._ts = Date.now();
       setStatus("acled", "live");
-    } catch (e) { delete REAL.vals.gpsjam; setStatus("acled", "sim"); }
+    } catch (e) { delete REAL.vals.gpsjam; delete REAL.acled; setStatus("acled", "sim"); }
   }
 
   /* ---- 4. OFAC sanctions via function (real OpenSanctions mirror) ------- */

@@ -416,6 +416,7 @@ function MapView() {
 
 /* ---------- Dependencies ------------------------------------------------- */
 function DependenciesView({ initial }) {
+  LIVE.useLiveTick();
   const [filter, setFilter] = useState((initial && initial.sector) || "all");
   const [q, setQ] = useState("");
   const list = RD.precursors.filter((p) => (filter === "all" || p.sector === filter) && p.name.toLowerCase().includes(q.toLowerCase()));
@@ -491,6 +492,19 @@ function DependenciesView({ initial }) {
                 );
               })}
             </div>
+            {(() => {
+              const c = LIVE.conflictFor(sel.source);
+              if (!c.tracked) return null;
+              return (
+                <div className={`band-${c.band}`} style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 9, padding: "10px 12px", border: "1px solid var(--line)", borderLeft: "3px solid var(--bc)", borderRadius: "var(--radius)", background: "var(--panel-2)" }}>
+                  <span className="live-dot"></span>
+                  <span style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+                    <b>Live counterpart signal</b> — {c.events} battle / remote-violence events in {c.country} over the last 30 days. Real conflict in this source's territory is raising counterpart risk now, above the curated baseline.
+                  </span>
+                  <span style={{ marginLeft: "auto" }}><SourceTag src="acled" /></span>
+                </div>
+              );
+            })()}
             <div style={{ display: "flex", gap: 8, margin: "16px 0 6px", flexWrap: "wrap" }}>
               {sel.hormuz && <span className="pill band-critical"><span className="sq"></span>Hormuz-routed</span>}
               {sel.dolphin && <span className="pill band-high"><span className="sq"></span>Dolphin gas</span>}
@@ -519,6 +533,7 @@ function DependenciesView({ initial }) {
 
 /* ---------- Control Layer ------------------------------------------------ */
 function ControlView() {
+  LIVE.useLiveTick();
   const tabs = [["sovereign", "Sovereign vehicles"], ["foreign", "Foreign assets"], ["agreements", "Agreements"], ["workforce", "Workforce"], ["obligations", "Obligations"]];
   const [tab, setTab] = useState("sovereign");
   const totalAUM = RD.sovereign.reduce((s, v) => s + v.aum, 0);
@@ -565,12 +580,25 @@ function ControlView() {
             })}</tbody></table>
         )}
         {tab === "agreements" && (
-          <table className="tbl"><thead><tr><th>Agreement</th><th>Partner</th><th>Expiry</th><th>Status</th></tr></thead>
-            <tbody>{RD.agreements.map((v) => (
+          <React.Fragment>
+          <table className="tbl"><thead><tr><th>Agreement</th><th>Partner</th><th>Expiry</th><th>Status</th><th>Partner conflict · ACLED</th></tr></thead>
+            <tbody>{RD.agreements.map((v) => {
+              const c = LIVE.conflictFor(v.partner);
+              return (
               <tr key={v.name}><td style={{ fontWeight: 600 }}>{v.name}</td><td className="muted">{v.partner}</td>
                 <td><span className="mono" style={{ color: v.urgent ? "var(--high)" : "var(--ink)" }}>{v.expiry}{v.urgent && " ⚠"}</span></td>
-                <td><span className={`tag-band band-${v.status === "Active" ? "good" : "high"}`}><span></span>{v.status}</span></td></tr>
-            ))}</tbody></table>
+                <td><span className={`tag-band band-${v.status === "Active" ? "good" : "high"}`}><span></span>{v.status}</span></td>
+                <td>{!c.live
+                  ? <span className="helper" title="ACLED not connected — set credentials to make partner conflict risk live.">sim</span>
+                  : c.tracked
+                    ? <span className={`tag-band band-${c.band}`} title={`${c.events} battle / remote-violence events in ${c.country} over the last 30 days (ACLED).`}><span></span>{c.events} events / 30d</span>
+                    : <span className="tag-band band-good" title="No tracked conflict events in this partner's territory (ACLED)."><span></span>calm</span>}</td></tr>
+              );
+            })}</tbody></table>
+          <div className="helper" style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6 }}>
+            Partner conflict risk is live from ACLED battle &amp; remote-violence events in each partner's territory over the last 30 days. <SourceTag src="acled" />
+          </div>
+          </React.Fragment>
         )}
         {tab === "workforce" && (
           <table className="tbl"><thead><tr><th>Skill class</th><th>Origin concentration</th><th>Risk</th></tr></thead>
