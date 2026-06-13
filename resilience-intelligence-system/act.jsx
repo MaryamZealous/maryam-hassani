@@ -118,10 +118,6 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
           <span className="mono act-stat-pts">+{r.pts.toFixed(1)}</span>
           <span className="mono">{ACT.fmtAED(r.cost)}</span>
           <span className="mono">{ACT.fmtDays(r.days)}</span>
-          <span className="act-prio" title="Priority score">
-            <span className="act-prio-bar"><span style={{ width: prio.score + "%" }}></span></span>
-            <span className="mono">{prio.score}</span>
-          </span>
         </div>
       </div>
       <button className={`act-stage ${isStaged ? "on" : ""}`} onClick={(e) => { e.stopPropagation(); onStage(p.id); }}
@@ -372,8 +368,8 @@ function ActView() {
             ))}
           </div>
           <div className="helper" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-            Priority blends <b>impact</b> (points gained), <b>urgency</b> (how acute the problem is), <b>speed</b> and
-            <b> value for money</b> (points per AED bn) — at whichever scope you've chosen for each response.
+            The queue is <b>ranked by priority</b> — a blend of <b>impact</b> (points gained), <b>urgency</b> (how acute the problem is), <b>speed</b> and
+            <b> value for money</b> (points per AED bn), at whichever scope you've chosen for each response. Change a scope and the order reranks.
           </div>
         </Panel>
         <TagLegend />

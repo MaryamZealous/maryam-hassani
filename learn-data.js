@@ -72,6 +72,40 @@ window.LEARN = {
       note: "Philosophy and psychology of freedom and self-mastery — Jung, Nietzsche, and the inner life. @academyofideas" },
     { id: "lex", url: "https://www.youtube.com/@lexfridman", label: "Lex Fridman", type: "video", cluster: "live", x: 0.85, y: 0.58,
       note: "Marathon conversations on AI, science, power, and love — patience as an interviewing style. @lexfridman" },
+
+    // ---- Science & Curiosity (added books) ----
+    { id: "systems", label: "Thinking in Systems", type: "book", cluster: "sci", x: 0.04, y: 0.06,
+      note: "Donella Meadows on seeing the world as stocks, flows, and feedback loops — the mental model under every resilience and complexity question." },
+    { id: "hownotwrong", label: "How Not to Be Wrong", type: "book", cluster: "sci", x: 0.17, y: 0.04,
+      note: "Jordan Ellenberg on the hidden maths of everyday life — how mathematical thinking sharpens judgement far outside the classroom." },
+    { id: "hitchhiker", label: "The Hitchhiker's Guide to the Galaxy", type: "book", cluster: "sci", x: 0.37, y: 0.32,
+      note: "Douglas Adams' cosmic comedy — curiosity, absurdity, and the reminder not to take the universe (or yourself) too seriously." },
+
+    // ---- World & Economics (added books) ----
+    { id: "silkroads", label: "The New Silk Roads", type: "book", cluster: "world", x: 0.90, y: 0.12,
+      note: "Peter Frankopan on the East's return to the center of the world economy — where power and trade are actually flowing now." },
+    { id: "prisoners", label: "Prisoners of Geography", type: "book", cluster: "world", x: 0.69, y: 0.09,
+      note: "Tim Marshall on how mountains, rivers, and coastlines still dictate the choices of nations — geography as destiny." },
+    { id: "sapiens", label: "Sapiens", type: "book", cluster: "world", x: 0.62, y: 0.30,
+      note: "Yuval Noah Harari's brief history of humankind — how shared fictions let strangers cooperate at scale and built civilization." },
+    { id: "surveillance", label: "The Age of Surveillance Capitalism", type: "book", cluster: "world", x: 0.91, y: 0.40,
+      note: "Shoshana Zuboff on how human experience became raw material for prediction and profit — the new logic of power." },
+    { id: "philosopher", label: "The Philosopher in the Valley", type: "book", cluster: "world", x: 0.75, y: 0.43,
+      note: "Michael Steinberger on Alex Karp and Palantir — data, defense, and the rise of the surveillance state from inside Silicon Valley." },
+
+    // ---- Building & Product (added books) ----
+    { id: "startupcomm", label: "The Startup Community Way", type: "book", cluster: "build", x: 0.05, y: 0.83,
+      note: "Brad Feld & Ian Hathaway on building entrepreneurial ecosystems — startups as a complex, emergent system, not a machine." },
+    { id: "moonshots", label: "Moonshots", type: "book", cluster: "build", x: 0.30, y: 0.66,
+      note: "Naveen Jain on thinking bigger — solving the world's hardest problems by aiming at the audacious rather than the incremental." },
+    { id: "comingwave", label: "The Coming Wave", type: "book", cluster: "build", x: 0.31, y: 0.93,
+      note: "Mustafa Suleyman on AI and synthetic biology — the most powerful technologies in history, and the containment problem they pose." },
+
+    // ---- How to Live (added books) ----
+    { id: "fivepeople", label: "The Five People You Meet in Heaven", type: "book", cluster: "live", x: 0.65, y: 0.90,
+      note: "Mitch Albom's parable on how every life quietly touches others — meaning found in connections you never noticed." },
+    { id: "strangers", label: "Talking to Strangers", type: "book", cluster: "live", x: 0.93, y: 0.82,
+      note: "Malcolm Gladwell on why we misread people we don't know — the hidden assumptions behind our worst misunderstandings." },
   ],
   // edges connect related ideas; cross-cluster links are the interesting ones
   edges: [
@@ -103,5 +137,18 @@ window.LEARN = {
     ["bigthink","lex"],          // long ideas ↔ long conversations
     ["coldstart","econx"],       // network effects ↔ economics
     ["doac","mindgut"],          // founder health ↔ gut science
+    // ---- added books — woven into the existing map ----
+    ["systems","3b1b"],["systems","coldstart"],["systems","econx"],
+    ["hownotwrong","3b1b"],["hownotwrong","veritasium"],
+    ["hitchhiker","veritasium"],["hitchhiker","bigthink"],
+    ["silkroads","johnny"],["silkroads","wealth"],["prisoners","johnny"],["prisoners","silkroads"],
+    ["sapiens","lessons21"],["sapiens","khaldun"],["sapiens","wealth"],
+    ["surveillance","lessons21"],["surveillance","comingwave"],
+    ["philosopher","surveillance"],["philosopher","comingwave"],
+    ["comingwave","cleo"],["comingwave","lennys"],
+    ["startupcomm","lennys"],["startupcomm","coldstart"],
+    ["moonshots","lennys"],["moonshots","cleo"],
+    ["fivepeople","meditations"],["fivepeople","life3d"],
+    ["strangers","lex"],["strangers","academy"],
   ],
 };

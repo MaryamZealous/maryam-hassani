@@ -7,7 +7,7 @@ const { useRef, useState, useEffect, useMemo } = React;
 const TYPE_LABEL = { thinker: "Thinker", book: "Book", video: "Video", idea: "Idea" };
 const CLUSTER_COLOR = {
   arab:  "#A66A1F",
-  sci:   "#2B50E0",
+  sci:   "#138A8A",
   world: "#7A33C8",
   build: "#1F8A5B",
   live:  "#C04467",
