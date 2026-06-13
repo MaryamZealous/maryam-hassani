@@ -494,16 +494,19 @@ window.ACT = (function () {
     };
   }
 
-  /* Priority 0–100 across the current evaluation of every play — the queue
-     reorders live as scope decisions change. Transparent weighting.        */
+  /* Priority 0–100. Each factor is scaled against FIXED references — the full
+     range across every tier of every play — so a response's priority depends
+     ONLY on its own chosen scope. Changing one response's scope moves that
+     response in the queue without reshuffling the others. Transparent weighting. */
+  const _allTiers = PLAYS.flatMap((p) => p.tiers);
+  const REF_PTS = Math.max(0.1, ..._allTiers.map((t) => t.livePts + t.ceilPts));
+  const REF_DAYS = Math.max(1, ..._allTiers.map((t) => t.days));
+  const REF_EFF = Math.max(0.01, ..._allTiers.map((t) => (t.livePts + t.ceilPts) / Math.max(t.cost, 0.2)));
   function priorities(evals) {
-    const maxPts = Math.max(0.1, ...evals.map((e) => e.r.pts));
-    const maxDays = Math.max(1, ...evals.map((e) => e.r.days));
-    const maxEff = Math.max(0.01, ...evals.map((e) => e.r.eff));
     return evals.map((e) => {
-      const impact = e.r.pts / maxPts;
-      const speed = 1 - e.r.days / maxDays;
-      const eff = e.r.eff / maxEff;
+      const impact = Math.min(1, e.r.pts / REF_PTS);
+      const speed = 1 - e.r.days / REF_DAYS;
+      const eff = Math.min(1, e.r.eff / REF_EFF);
       const score = 100 * (0.38 * impact + 0.30 * e.p.urgency + 0.18 * speed + 0.14 * eff);
       return { id: e.p.id, score: +score.toFixed(0), impact, speed, eff, urgency: e.p.urgency };
     });
