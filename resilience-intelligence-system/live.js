@@ -177,14 +177,37 @@ window.LIVE = (function () {
     const live = clamp(ceiling - totalDrag, 25, ceiling - 0.1);
     RD.headline.live.value = +live.toFixed(1);
 
-    // decomposition for the attribution trace (real = driven by a connected feed)
+    // decomposition for the attribution trace. real = driven by a connected
+    // feed. read = the actual live reading, so a quiet driver is visibly alive
+    // ("watching" backed by evidence) rather than just an empty bar.
+    const reads = {};
+    reads.ais = "Hormuz \u2212" + (ck.hormuz || 0) + "% \u00b7 Red Sea \u2212" + (ck.redsea || 0) + "% vs 12-mo norm";
+    if (REAL.news) {
+      const vols = Object.keys(REAL.news).map((k) => REAL.news[k].vol).filter((v) => v != null);
+      const tv = vols.reduce((a, b) => a + b, 0);
+      reads.gdelt = tv + " articles/2d \u00b7 " + (newsDrag > 0.05 ? "above-normal coverage" : "coverage at/below normal");
+    }
+    if (REAL.meteo && REAL.meteo.sea) {
+      let mx = 0;
+      for (const id in REAL.meteo.sea) { const sv = REAL.meteo.sea[id]; if (sv && sv.wave != null) mx = Math.max(mx, sv.wave); }
+      reads.meteo = "max wave " + mx.toFixed(1) + " m \u00b7 " + (seaStateDrag > 0.05 ? "impairing transit (>1.2 m)" : "calm (drag starts >1.2 m)");
+    }
+    if (status.yfinance === "live") {
+      reads.yfinance = "Brent $" + indState.brent.toFixed(2) + " \u00b7 gas $" + indState.natgas.toFixed(2) + " \u00b7 " + (marketDrag > 0.05 ? "above stress marks" : "below stress marks ($96 / $3.60)");
+    }
+    if (RD.sources.ofac._total != null && sanctionBase != null) {
+      const added = RD.sources.ofac._total - sanctionBase;
+      reads.ofac = (added >= 0 ? "+" : "") + added.toLocaleString() + " SDN entities since session baseline";
+    }
+    reads.model = "curated severity \u00b7 easing as exports recover";
+
     RD.headline.live.drivers = [
-      { k: "Maritime throughput", v: throughputDrag, src: "ais", real: status.ais === "live" },
-      { k: "Trade-route news", v: newsDrag, src: "gdelt", real: status.gdelt === "live" },
-      { k: "Sea state", v: seaStateDrag, src: "meteo", real: status.meteo === "live" },
-      { k: "Energy-market stress", v: marketDrag, src: "yfinance", real: status.yfinance === "live" },
-      { k: "Counterpart / sanctions", v: sanctionDrag, src: "ofac", real: status.ofac === "live" },
-      { k: "Residual shock (Guinea)", v: nonMaritime, src: "acled", real: false, modelled: true },
+      { k: "Maritime throughput", v: throughputDrag, src: "ais", real: status.ais === "live", read: reads.ais },
+      { k: "Trade-route news", v: newsDrag, src: "gdelt", real: status.gdelt === "live", read: reads.gdelt },
+      { k: "Sea state", v: seaStateDrag, src: "meteo", real: status.meteo === "live", read: reads.meteo },
+      { k: "Energy-market stress", v: marketDrag, src: "yfinance", real: status.yfinance === "live", read: reads.yfinance },
+      { k: "Counterpart / sanctions", v: sanctionDrag, src: "ofac", real: status.ofac === "live", read: reads.ofac },
+      { k: "Residual shock (Guinea)", v: nonMaritime, src: "curated", real: false, modelled: true, read: reads.model },
     ];
 
     // 4) slow fundamentals — drift gently every ~20s, mean-reverting to anchor
@@ -200,10 +223,13 @@ window.LIVE = (function () {
       RD.headline.structural.value = +clamp(rw(RD.headline.structural.value, a, 0.05, 0.05), a - 0.6, a + 0.6).toFixed(1);
     }
 
-    // 5) feed clocks — age + re-poll on cadence
+    // 5) feed clocks — honest freshness. A LIVE feed's timestamp comes ONLY
+    // from its real fetches (set in feeds.js); fabricating ticks here would
+    // claim updates that never happened. Only simulated feeds re-stamp on
+    // their simulated cadence — and they are badged SIM wherever shown.
     for (const k in FEEDS) {
       const s = RD.sources[k];
-      if (nowt >= s._next) { s._ts = nowt; s._next = nowt + s._cad; }
+      if (REAL.status[k] !== "live" && nowt >= s._next) { s._ts = nowt; s._next = nowt + s._cad; }
       s.fresh = freshText(k);
     }
     if (RD.sources.meteo && RD.sources.meteo._ts) RD.sources.meteo.fresh = freshText("meteo");

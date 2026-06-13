@@ -157,15 +157,23 @@
     } catch (e) { setStatus("ais", "sim"); }
   }
 
-  /* ---- 5. GDELT live news — the trade-route / closure / conflict detector */
-  const NEWS_Q = {
-    hormuz:  '"Strait of Hormuz"',
-    redsea:  '"Bab-el-Mandeb" OR "Red Sea shipping"',
-    suez:    '"Suez Canal"',
-    general: '"shipping disruption" OR "port closure" OR "trade route"',
+  /* ---- 5. GDELT live news — the trade-route / closure / conflict detector.
+     GDELT sends no CORS headers, so a browser CANNOT call it directly; the
+     serverless function (server-side, no CORS) is the real path. Browser-direct
+     here is a best-effort fallback through a public CORS proxy for when the
+     function is unavailable (e.g. local preview). ONE combined query is used so
+     we never trip GDELT's ~1-request-per-5s throttle. */
+  // one net over all trade-route coverage; articles are bucketed by route below
+  const NEWS_COMBINED =
+    '("Strait of Hormuz" OR "Bab-el-Mandeb" OR "Red Sea shipping" OR "Suez Canal" '
+    + 'OR "shipping disruption" OR "port closure" OR "trade route" OR "Houthi attack")';
+  const NEWS_ROUTE_RE = {
+    hormuz: /hormuz/i,
+    redsea: /bab.?el.?mandeb|bab.?al.?mandab|red sea|houthi/i,
+    suez:   /suez/i,
   };
-  // typical 2-day article volume per query — the "normal" baseline to beat
-  const NEWS_BASE = { hormuz: 25, redsea: 30, suez: 40, general: 70 };
+  // typical 2-day article volume per bucket — the "normal" baseline to beat
+  const NEWS_BASE = { hormuz: 22, redsea: 28, suez: 35, general: 90 };
 
   function summarizeNews(id, arts) {
     const vol = arts.length;
@@ -177,28 +185,47 @@
     }));
     return { vol, score, headlines };
   }
+  function bucketNews(arts) {
+    const hit = { hormuz: [], redsea: [], suez: [] };
+    for (const a of arts) {
+      const hay = `${a.title || ""} ${a.url || ""} ${a.domain || ""}`;
+      for (const id in NEWS_ROUTE_RE) if (NEWS_ROUTE_RE[id].test(hay)) hit[id].push(a);
+    }
+    return {
+      hormuz:  summarizeNews("hormuz", hit.hormuz),
+      redsea:  summarizeNews("redsea", hit.redsea),
+      suez:    summarizeNews("suez", hit.suez),
+      general: summarizeNews("general", arts),
+    };
+  }
   function applyNews(areas) {
     REAL.news = areas;
     RD.convergence._news = areas;
     RD.sources.gdelt._ts = Date.now();
     setStatus("gdelt", "live");
   }
-  async function gdeltDirect(q) {
-    const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&maxrecords=120&format=json&sort=datedesc&timespan=2d`;
-    const j = await jget(url);
+  // best-effort browser fetch of the combined query through a CORS proxy.
+  async function gdeltDirectCombined() {
+    const g = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(NEWS_COMBINED)}`
+      + `&mode=artlist&maxrecords=120&format=json&sort=datedesc&timespan=2d`;
+    const j = await jget(`https://api.allorigins.win/raw?url=${encodeURIComponent(g)}`);
     return (j && j.articles) ? j.articles : [];
   }
   async function pullNews() {
-    // serverless aggregator first (one call, robust), then browser-direct GDELT
+    // serverless aggregator first (one server-side call, robust, no CORS). An
+    // aggregator response only counts if at least one area carries real data
+    // (vol != null) — an all-null/failed payload falls through.
     try {
       const j = await jget("/.netlify/functions/news");
-      if (j && j.ok && j.areas) { applyNews(j.areas); return; }
+      if (j && j.ok && j.areas && Object.values(j.areas).some((a) => a && a.vol != null)) { applyNews(j.areas); return; }
       throw 0;
     } catch (e) {
+      // browser-direct via CORS proxy — single combined query, bucketed locally.
+      // Flaky (public proxy), so failure is reported honestly as SIM, never as
+      // fabricated zero articles.
       try {
-        const areas = {};
-        for (const id in NEWS_Q) areas[id] = summarizeNews(id, await gdeltDirect(NEWS_Q[id]));
-        applyNews(areas);
+        const arts = await gdeltDirectCombined();
+        applyNews(bucketNews(arts));
       } catch (e2) { setStatus("gdelt", "sim"); }
     }
   }

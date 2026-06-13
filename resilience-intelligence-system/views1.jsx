@@ -61,9 +61,10 @@ function GapBar() {
         <div className="gapbar-livemark" style={{ left: l + "%" }}><span>live {l}</span></div>
       </div>
       <div className="gapbar-foot">
-        Live operational resilience sits <b>{gap} below the structural ceiling</b> — the active load the system is absorbing today
-        (Hormuz &amp; Red Sea throughput, counted once via vessels, plus residual Guinea/EGA bauxite load — now easing). As it clears, live recovers
-        <i>toward</i> {s}, tracking back to its fundamentals. A widening gap shows where to focus today; a closing gap means the system is returning to full strength.
+        Live operational resilience sits <b>{gap} below the structural ceiling</b> — the active load the system is absorbing today,
+        summed from the named drivers below: maritime throughput (Hormuz &amp; Red Sea, counted once via transits), news pressure, sea state,
+        market stress, sanctions drift, and the residual Guinea/EGA bauxite load (easing). As load clears, live recovers
+        <i> toward</i> {s}, tracking back to its fundamentals. A widening gap shows where to focus today; a closing gap means the system is returning to full strength.
       </div>
     </div>
   );
@@ -73,20 +74,23 @@ function GapBar() {
 function DriverTrace() {
   const drivers = (RD.headline.live.drivers || []).slice().sort((a, b) => (b.real - a.real) || (b.v - a.v));
   const maxV = Math.max(0.1, ...drivers.map((d) => d.v));
-  const liveN = drivers.filter((d) => !d.modelled).length;
+  const liveN = drivers.filter((d) => d.real).length;
   if (!drivers.length) return null;
-  // two states: a connected live feed (LIVE) or the curated modelled input (MODEL).
-  const stateOf = (d) => d.modelled ? "model" : "live";
+  // three states: a connected live feed (LIVE), a simulated stand-in awaiting
+  // its feed (SIM — never dressed up as live), or the curated model input (MODEL).
+  const stateOf = (d) => d.modelled ? "model" : (d.real ? "live" : "sim");
   const META = {
     live:  { badge: "LIVE",  cls: "on",    sub: "live feed" },
+    sim:   { badge: "SIM",   cls: "",      sub: "simulated until its feed connects" },
     model: { badge: "MODEL", cls: "model", sub: "modelled severity" },
   };
   return (
     <Panel title="What's moving the score right now" icon="book" label="LIVE DRIVER ATTRIBUTION"
       right={<span className="helper" style={{ marginLeft: "auto" }}>{liveN} of {drivers.length} drivers on a connected live feed</span>}>
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
-        The gap below baseline is the sum of named live loads. Each row shows its point contribution and how it is sourced:
-        <span style={{ color: "var(--good)", fontWeight: 600 }}> LIVE</span> (a connected feed, moving on its own as the world changes) or
+        The gap below baseline is the sum of named live loads. Each row shows its point contribution, its current reading, and how it is sourced:
+        <span style={{ color: "var(--good)", fontWeight: 600 }}> LIVE</span> (a connected feed, moving on its own as the world changes),
+        <span style={{ fontWeight: 600 }}> SIM</span> (a simulated stand-in, shown only until its feed connects) or
         <span style={{ color: "var(--muted)", fontWeight: 600 }}> MODEL</span> (a curated severity judgement with no real-time numeric feed). This is the honest line between what the system measures and what it estimates.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
@@ -96,16 +100,16 @@ function DriverTrace() {
           const st = stateOf(d); const m = META[st];
           return (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ minWidth: 188, display: "flex", flexDirection: "column", gap: 1 }}>
+              <div style={{ minWidth: 250, display: "flex", flexDirection: "column", gap: 1 }}>
                 <span style={{ fontSize: 12.5, fontWeight: 600 }}>{d.k}</span>
-                <span className="helper" style={{ fontSize: 10 }}>{m.sub}</span>
+                <span className="helper" style={{ fontSize: 10 }}>{d.read || m.sub}</span>
               </div>
               <span className={`live-badge ${m.cls}`} title={m.sub}>{m.badge}</span>
               <div className="bar-track" style={{ flex: 1, height: 7 }}>
                 <div className="bar-fill" style={{ width: Math.max(w, calm ? 0 : 2) + "%", background: st === "live" ? "var(--good)" : "var(--faint)" }}></div>
               </div>
               {calm
-                ? <span className="mono" style={{ fontSize: 11, minWidth: 50, textAlign: "right", color: "var(--good)" }}>watching</span>
+                ? <span className="mono" style={{ fontSize: 11, minWidth: 50, textAlign: "right", color: d.real ? "var(--good)" : "var(--faint)" }}>{d.real ? "watching" : "idle"}</span>
                 : <span className="mono down" style={{ fontSize: 13, minWidth: 50, textAlign: "right" }}>−{d.v.toFixed(1)}</span>}
               <span style={{ minWidth: 92 }}><SourceTag src={d.src} /></span>
             </div>
@@ -358,15 +362,19 @@ function TradeRouteNews() {
             {AREAS.map((a) => {
               const d = news[a.id]; if (!d) return null;
               const pct = Math.round((d.score || 0) * 100);
+              const noData = d.vol == null;
               return (
                 <div key={a.id} className={`band-${band(d.score || 0)}`} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontSize: 12.5, fontWeight: 600, minWidth: 150 }}>{a.label}</span>
                   <div className="bar-track" style={{ flex: 1, height: 6 }}><div className="bar-fill" style={{ width: pct + "%" }}></div></div>
-                  <span className="mono" style={{ fontSize: 11.5, minWidth: 64, textAlign: "right", color: "var(--muted)" }}>{d.vol} articles</span>
+                  <span className="mono" style={{ fontSize: 11.5, minWidth: 76, textAlign: "right", color: noData ? "var(--faint)" : "var(--muted)" }}
+                    title={noData ? "This query could not be fetched on the last pull — shown as no data, never as a fake zero." : undefined}>
+                    {noData ? "no data" : d.vol + " articles"}</span>
                 </div>
               );
             })}
-            <div className="helper" style={{ marginTop: 4 }}>Pressure = how far 2-day coverage runs above each route's normal volume (2× normal = full pressure).</div>
+            <div className="helper" style={{ marginTop: 4 }}>Pressure = how far 2-day coverage runs above each route's normal volume (2× normal = full pressure).
+              {" "}Checked {RD.sources.gdelt.fresh || "—"} · re-polls every 6 min.</div>
           </div>
           {/* featured headlines */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
