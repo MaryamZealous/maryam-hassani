@@ -48,11 +48,14 @@ window.LIVE = (function () {
   }
 
   /* ---- streaming numeric state ----------------------------------------- */
-  // chokepoint vessel anchors (depressed crisis levels) + volatility
+  // Sim anchors are the depressed CRISIS levels each strait mean-reverts to,
+  // chosen so the simulated drop matches each strait's curated baseline drop:
+  //   Hormuz ~6/113 ≈ −95% · Red Sea ~35/42 ≈ −17% · Suez ~40/47 ≈ −15%.
+  // (When IMF PortWatch connects, real transits override these entirely.)
   const CK = {
     hormuz: { anchor: 6,   vol: 1.1, pull: 0.08 },
-    redsea: { anchor: 42,  vol: 2.4, pull: 0.07 },
-    suez:   { anchor: 120, vol: 3.5, pull: 0.06 },
+    redsea: { anchor: 35,  vol: 1.4, pull: 0.07 },
+    suez:   { anchor: 40,  vol: 1.6, pull: 0.06 },
   };
   const ckState = {};
   RD.chokepoints.forEach((c) => { ckState[c.id] = c.vessels; });
@@ -210,18 +213,12 @@ window.LIVE = (function () {
       { k: "Residual shock (Guinea)", v: nonMaritime, src: "curated", real: false, modelled: true, read: reads.model },
     ];
 
-    // 4) slow fundamentals — drift gently every ~20s, mean-reverting to anchor
-    if (tick % 14 === 0) {
-      RD.sectors.forEach((s) => {
-        if (s._anchor === undefined) s._anchor = s.score;
-        s.score = +clamp(rw(s.score, s._anchor, 0.12, 0.05), s._anchor - 1.2, s._anchor + 1.2).toFixed(1);
-      });
-    }
-    if (tick % 22 === 0) {
-      if (RD.headline.structural._anchor === undefined) RD.headline.structural._anchor = RD.headline.structural.value;
-      const a = RD.headline.structural._anchor;
-      RD.headline.structural.value = +clamp(rw(RD.headline.structural.value, a, 0.05, 0.05), a - 0.6, a + 0.6).toFixed(1);
-    }
+    // 4) Structural fundamentals are a deterministic FUNCTION of the dependency
+    // data (computed in data.js: sector scores → most-exposed → structural).
+    // They are slow-moving by definition and change ONLY when that data changes
+    // — never on a random per-tick walk — so every displayed structural number
+    // stays exactly equal to the formula shown in its own explainer. Only Live
+    // Stress (section 3) moves on the tick, driven by the real feeds.
 
     // 5) feed clocks — honest freshness. A LIVE feed's timestamp comes ONLY
     // from its real fetches (set in feeds.js); fabricating ticks here would

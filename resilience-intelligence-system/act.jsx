@@ -89,7 +89,7 @@ function Posture({ staged, evalById }) {
             text: "Responses come in two kinds. LIVE responses improve today's score — they close the gap between current stress and the ceiling. CEILING responses raise the ceiling itself — the best score the country can structurally reach. Today's score can never rise above the ceiling, which is why the long-term builds matter. Note the emergency fund's capital is committed, not spent — this roll-up adds headline figures.",
             formula: "Ceiling′ = ceiling + Σ ceiling-pts   ·   Live′ = min(Ceiling′,  live + Σ live-pts)",
             inputs: [
-              { k: "Live baseline", v: liveBase.toFixed(1), src: "ais" },
+              { k: "Live baseline", v: liveBase.toFixed(1), src: "curated" },
               { k: "Structural ceiling", v: ceilBase.toFixed(1) + " → " + ceilNew.toFixed(1), src: "curated" },
               { k: "Staged live recovery", v: "+" + addLive.toFixed(1) + " pts" },
               { k: "Staged ceiling lift", v: "+" + addCeil.toFixed(1) + " pts" },

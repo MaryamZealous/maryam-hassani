@@ -130,7 +130,7 @@ function headlineDrivers(d) {
   const weakest = RD.sectors.reduce((a, b) => (b.score < a.score ? b : a));
   return {
     kicker: "Drivers · refreshed monthly",
-    text: `7-sector readiness (lead focus: ${weakest.name} ${weakest.score.toFixed(1)}), ~$2.0T sovereign buffer & supply diversity across 14 imports — recomputed monthly from public data.`,
+    text: `Capacity — Absorb · Recover · Adapt — set against the most-exposed sector (${weakest.name} ${weakest.score.toFixed(1)}). Recomputed monthly from public data.`,
   };
 }
 
@@ -142,7 +142,28 @@ function ScoreCard({ d }) {
       <div className="score-top">
         <span className="score-name">{d.name}</span>
         <span className="score-tag">{d.tag}</span>
-        <span style={{ marginLeft: "auto" }}><SourceTag src={d === RD.headline.live ? "ais" : "curated"} /></span>
+        <span style={{ marginLeft: "auto" }}>
+          {d === RD.headline.live ? (
+            <span className="src live" role="button" tabIndex={0} style={{ cursor: "pointer" }}
+              title="Live Stress blends six public feeds — PortWatch, Open-Meteo, Google News, Markets, OFAC, ACLED"
+              onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
+                kicker: "Live feeds · updating continuously", title: "What feeds the Live Stress score",
+                text: "Live Stress is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from six public feeds. Maritime throughput (PortWatch) is the largest mover, which is why it often leads — but it is never the only input.",
+                formula: "Active load  =  maritime throughput + sea state + trade-route news + market stress + sanctions drift + Guinea residual",
+                inputs: [
+                  { k: "Maritime throughput — largest driver", v: "chokepoint transit calls vs 12-month norm", src: "ais" },
+                  { k: "Sea state", v: "wave height & wind on the approaches", src: "meteo" },
+                  { k: "Trade-route news", v: "closure & conflict coverage", src: "gdelt" },
+                  { k: "Market stress", v: "Brent & natural-gas prices", src: "yfinance" },
+                  { k: "Sanctions drift", v: "OFAC SDN updates", src: "ofac" },
+                  { k: "Guinea residual (non-maritime)", v: "easing bauxite shock", src: "acled" },
+                ],
+                assumption: "PortWatch is the dominant mover, but the score is a blend of all six live feeds against the structural ceiling — never PortWatch alone.",
+              }); }}>
+              <span className="d"></span>6 live feeds
+            </span>
+          ) : <SourceTag src="curated" />}
+        </span>
       </div>
       <div className="score-row">
         <span className="score-num mono">{d.value.toFixed(1)}</span>
@@ -184,14 +205,15 @@ function ScoreCard({ d }) {
 function SectorCard({ s, onOpen }) {
   const b = RD.band(s.score);
   const explain = useExplain();
-  const topP = RD.precursors.find((p) => p.name === s.topRisk);
-  const driInputs = [
-    { k: "Top dependency", v: s.topRisk + " · DRI " + s.topDRI + "/100" },
-    { k: "DRI = Dependency Risk Index", v: "concentration + substitutability + route + counterpart, each scored 0–25 (sum 0–100). Higher = more fragile." },
-  ];
-  if (topP) driInputs.push({ k: "↳ " + s.topRisk + " breakdown", v: `concentration ${topP.dims.concentration} · substitutability ${topP.dims.substitutability} · route ${topP.dims.route} · counterpart ${topP.dims.counterpart}` });
+  const ps = RD.precursors.filter((p) => p.sector === s.id);
+  const cw = ps.reduce((a, p) => a + p.consequence, 0) || 1;
+  const driInputs = ps.map((p) => ({
+    k: (p.name === s.topRisk ? "★ " : "") + p.name,
+    v: "DRI " + p.dri + " × consequence " + p.consequence.toFixed(2),
+  }));
   driInputs.push(
-    { k: "Tracked precursors", v: s.precursors + " critical imports" },
+    { k: "Consequence-weighted mean DRI", v: s.wdri + " / 100  (fragility)" },
+    { k: "Resilience = 100 − " + s.wdri, v: s.score.toFixed(1) + " / 100" },
     { k: "30d change", v: (s.score - s.prev).toFixed(1) + " pts" },
   );
   return (
@@ -207,11 +229,11 @@ function SectorCard({ s, onOpen }) {
         </span>
         <span style={{ marginLeft: "auto" }}>
           <Fx payload={{
-            kicker: "Sector score", title: s.name + " resilience",
-            text: s.note + " The sector's headline is its most-exposed import, measured by its DRI.",
-            formula: "Sector = 100 − consequence-weighted Σ(DRI × weight)",
+            kicker: "Sector score · computed", title: s.name + " resilience",
+            text: s.note + " The score is computed, not hand-set: it takes the Dependency Risk Index of each tracked import, weights it by national consequence (so the imports that matter most count most), averages them, and subtracts from 100. The ★ import — the most fragile — is the one to watch.",
+            formula: "Sector  =  100  −  ( Σ(DRI × consequence) / Σ consequence )",
             inputs: driInputs,
-            assumption: "Each sector score is driven by its most-exposed tracked dependency, not the average — the most-concentrated import sets the priority. DRI's four dimensions are deliberately unweighted (equal 0–25).",
+            assumption: "A deterministic function of the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. DRI's own four dimensions are equally weighted (0–25 each). Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
           }} />
         </span>
       </div>
@@ -296,8 +318,8 @@ function IllusBadge() {
       text: "The UAE National Resilience Intelligence System is an ILLUSTRATIVE decision-support model. It combines live, publicly-available data feeds with hand-curated open-source datasets and a set of transparent, documented assumptions.",
       formula: "Live public data  +  Curated open sources  +  Stated assumptions  →  Explainable estimate",
       inputs: [
-        { k: "Live feeds", v: "IMF PortWatch chokepoint transits, Google News trade-route coverage, Open-Meteo sea state, oil & gas prices, OFAC sanctions, ACLED conflict", src: "ais" },
-        { k: "Curated data", v: "14 precursors, 7 strategic assets, 7 scenarios — human-readable CSV", src: "curated" },
+        { k: "Live feeds (6)", v: "IMF PortWatch chokepoint transits, Google News trade-route coverage, Open-Meteo sea state, oil & gas prices, OFAC sanctions, ACLED conflict", src: "live" },
+        { k: "Curated data", v: RD.precursors.length + " critical imports, " + RD.assets.length + " strategic assets, " + RD.scenarios.length + " scenarios — human-readable CSV", src: "curated" },
         { k: "Assumptions", v: "Goalposts, weights & buffers — all stated and editable", src: "assumption" },
       ],
       assumption: "Every number can be traced to its source and method. Nothing here is a classified or official Government of UAE position — it is a transparent worked example of how national resilience could be quantified.",

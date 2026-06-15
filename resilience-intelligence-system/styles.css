@@ -1,25 +1,12 @@
 /* ==========================================================================
    UAE Resilience Intelligence System — stylesheet
-   Three switchable directions driven entirely by tokens on [data-dir].
-   A = Command (dark, Palantir/WorldMonitor)  B = Briefing (light editorial)
-   C = Terminal (deep navy, Bloomberg)
+   Single shipped direction: B · Briefing (light editorial).
+   Earlier prototype directions A (Command) and C (Terminal) were retired;
+   their token sets and the direction switcher have been removed.
    ========================================================================== */
 
-/* ---------- Direction A · COMMAND ---------------------------------------- */
-[data-dir="a"]{
-  --bg:#0A0E12; --bg-2:#0C1116; --panel:#11161D; --panel-2:#151B23; --panel-3:#1A222C;
-  --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.13);
-  --ink:#E8EDF4; --muted:#94A1B3; --faint:#5E6B7D;
-  --accent:#5B93F0; --accent-ink:#08111F; --accent-soft:rgba(91,147,240,.14);
-  --crit:#FB5A5A; --high:#F2913D; --mod:#E6C13F; --good:#46C49A; --strong:#2FA67C;
-  --radius:7px; --radius-lg:11px;
-  --font-ui:"Inter",system-ui,sans-serif; --font-display:"Inter",system-ui,sans-serif; --font-mono:"IBM Plex Mono",monospace;
-  --label-tf:uppercase; --label-ls:.09em; --label-w:600;
-  --shadow:0 1px 0 rgba(255,255,255,.02), 0 8px 30px rgba(0,0,0,.4);
-  --grid:rgba(255,255,255,.025);
-}
-/* ---------- Direction B · BRIEFING --------------------------------------- */
-[data-dir="b"]{
+/* ---------- Briefing tokens (the only direction) ------------------------- */
+:root,[data-dir="b"]{
   --bg:#F5F2EC; --bg-2:#EFEBE2; --panel:#FCFBF7; --panel-2:#FFFFFF; --panel-3:#F1EDE4;
   --line:#E5DFD2; --line-2:#D3CAB8;
   --ink:#1E2632; --muted:#5C6675; --faint:#9A958B;
@@ -30,19 +17,6 @@
   --label-tf:uppercase; --label-ls:.14em; --label-w:600;
   --shadow:0 1px 2px rgba(40,32,16,.05), 0 10px 28px rgba(60,48,24,.07);
   --grid:rgba(40,32,16,.035);
-}
-/* ---------- Direction C · TERMINAL --------------------------------------- */
-[data-dir="c"]{
-  --bg:#080F1C; --bg-2:#0A1322; --panel:#0D1828; --panel-2:#102036; --panel-3:#13263F;
-  --line:rgba(120,160,220,.13); --line-2:rgba(120,160,220,.26);
-  --ink:#DCE7F7; --muted:#7C8FB2; --faint:#4F608A;
-  --accent:#18C0AD; --accent-ink:#04121A; --accent-soft:rgba(24,192,173,.13); --amber:#F4B53F;
-  --crit:#FF5470; --high:#FF9F45; --mod:#FFD23F; --good:#2BD4A6; --strong:#14A07C;
-  --radius:2px; --radius-lg:3px;
-  --font-ui:"Inter",system-ui,sans-serif; --font-display:"Space Grotesk",system-ui,sans-serif; --font-mono:"IBM Plex Mono",monospace;
-  --label-tf:uppercase; --label-ls:.1em; --label-w:600;
-  --shadow:0 1px 0 rgba(120,160,220,.04), 0 8px 30px rgba(0,0,0,.45);
-  --grid:rgba(120,160,220,.04);
 }
 
 /* ---------- band helpers ------------------------------------------------- */
@@ -120,8 +94,7 @@ a{color:inherit}
 .illus-badge b{color:var(--ink);font-weight:600;letter-spacing:.04em}
 .illus-badge .pulse{width:7px;height:7px;border-radius:2px;background:var(--accent)}
 
-/* direction switcher */
-.dir-switch{display:flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--panel)}
+/* segmented toggle buttons (map layers, dependency filters, control tabs) */
 .dir-btn{padding:5px 11px;border-radius:calc(var(--radius) - 1px);font-size:11.5px;color:var(--muted);
   font-weight:500;transition:.15s;letter-spacing:.02em}
 .dir-btn:hover{color:var(--ink)}
@@ -197,14 +170,6 @@ a{color:inherit}
 .gapbar-foot b{color:var(--ink);font-weight:600}
 
 /* provenance ledger */
-.prov-trail{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;display:flex;flex-direction:column;gap:9px}
-.prov-trail-row{display:flex;align-items:baseline;gap:9px;font-size:12.5px;flex-wrap:wrap}
-.prov-trail-elbow{color:var(--faint);font-family:var(--font-mono);font-size:12px}
-.prov-trail-k{font-weight:700;color:var(--ink);white-space:nowrap}
-.prov-trail-eq{color:var(--faint)}
-.prov-trail-v{color:var(--muted)}
-.prov-note{font-size:12px;line-height:1.55;color:var(--muted);background:color-mix(in srgb,var(--accent) 5%,transparent);border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-radius:var(--radius);padding:11px 14px;margin-bottom:16px}
-.prov-note b{color:var(--ink);font-weight:600}
 .prov-table-wrap{overflow-x:auto}
 .prov-table{width:100%;border-collapse:collapse;font-size:12px}
 .prov-table th{text-align:left;font-family:var(--font-display);font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:0 14px 9px 0;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -213,14 +178,6 @@ a{color:inherit}
 .prov-endpoint{font-size:10.5px;color:var(--faint);line-height:1.3}
 .prov-transform{color:var(--ink);font-size:11.5px}
 .prov-fresh{color:var(--good);font-size:11px;white-space:nowrap}
-.prov-sources{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding:11px 14px;background:var(--panel-2);border:1px solid var(--line);border-radius:var(--radius)}
-.prov-sources-k{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-.prov-srclink{display:inline-flex;align-items:center;gap:4px;text-decoration:none;padding:3px 7px;border:1px solid var(--line);border-radius:6px;background:var(--panel);transition:border-color .15s,background .15s}
-.prov-srclink:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,transparent)}
-.prov-ar{font-family:var(--font-mono);font-size:11px;color:var(--accent);font-weight:700}
-.prov-feedlink{display:flex;flex-direction:column;gap:3px;text-decoration:none}
-.prov-feedlink:hover .prov-endpoint{color:var(--accent)}
-.prov-feedlink:hover .prov-ar{text-decoration:underline}
 .evi-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px}
 .evi-k{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
 .evi-link{padding:2px 6px;font-size:10.5px;color:var(--muted)}
@@ -461,11 +418,6 @@ a{color:inherit}
 .map-tip b{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
 .map-tip .who2{display:block;font-family:var(--font-mono);font-size:10px;color:var(--faint);margin-top:4px}
 .map-loading{height:460px;display:grid;place-items:center;color:var(--muted);font-size:13px}
-.gulf-inset{position:absolute;left:14px;bottom:14px;width:270px;border:1px solid var(--line-2);
-  border-radius:var(--radius);overflow:hidden;background:var(--panel);box-shadow:var(--shadow)}
-.gulf-inset svg{display:block;width:100%}
-.gulf-cap{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:600;
-  padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
 .map-stage{user-select:none}
 .map-stage svg{cursor:grab}
 .map-stage svg:active{cursor:grabbing}

@@ -423,15 +423,17 @@ function DependenciesView({ initial }) {
   const [selId, setSelId] = useState(list[0] ? list[0].id : "ro");
   const sel = RD.precursors.find((p) => p.id === selId) || RD.precursors[0];
   const dims = [
-    ["concentration", "Source concentration"], ["substitutability", "Substitutability"],
-    ["route", "Route exposure"], ["counterpart", "Counterpart risk"],
+    ["concentration", "Source concentration", "How few suppliers or countries provide it today. One dominant source scores high — all your eggs in one basket right now."],
+    ["substitutability", "Substitution difficulty", "If that source is cut, how hard it is to switch — technical fit plus time to qualify or retool an alternative. No viable alternative scores high."],
+    ["route", "Route exposure", "How much the physical shipment depends on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). Chokepoint-locked routes score high."],
+    ["counterpart", "Counterpart risk", "Political and sanctions reliability of the supplier — the chance it becomes unwilling or unable to sell (conflict, sanctions, export controls)."],
   ];
   const sectorBand = RD.band(100 - sel.dri).key;
   return (
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Dependencies</div>
-        <div className="view-sub">The 14 critical imports the whole model rests on. Each carries a four-dimension Dependency Risk Index (DRI), a buffer in days, and a national-consequence weight.</div>
+        <div className="view-sub">The {RD.precursors.length} critical imports the whole model rests on. Each carries a four-dimension Dependency Risk Index (DRI), a buffer in days, and a national-consequence weight. The four dimensions are defined in the breakdown below — all scored so that <b>higher always means more fragile</b>.</div>
       </div>
       <div className="grid cols-2" style={{ gridTemplateColumns: "0.85fr 1.4fr", alignItems: "start" }}>
         <Panel title="Critical imports" icon="chain" label={list.length + " SHOWN"}>
@@ -470,23 +472,38 @@ function DependenciesView({ initial }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>
               <div className="kpi"><span className="kpi-v mono">{sel.dri}</span><span className="kpi-l">DRI / 100 <Fx payload={{
                 kicker: "Dependency Risk Index", title: "How DRI is built",
-                text: "DRI scores how risky a single import is, on four independent 0–25 dimensions that sum to 100. Higher means more fragile.",
-                formula: "DRI  =  concentration  +  substitutability  +  route  +  counterpart",
-                inputs: dims.map(([k, l]) => ({ k: l, v: sel.dims[k] + " / 25" })),
-                assumption: "Each dimension is scored against documented goalposts. The four are deliberately unweighted — all count equally.",
+                text: "DRI scores how risky a single import is, on four independent 0–25 dimensions that sum to 100. All four are scored the same direction — higher means more fragile.",
+                formula: "DRI  =  concentration  +  substitution difficulty  +  route  +  counterpart",
+                inputs: dims.map(([k, l, def]) => ({ k: l, v: sel.dims[k] + " / 25 — " + def })),
+                assumption: "Concentration vs substitution difficulty are distinct: concentration is how many baskets your eggs are in TODAY; substitution difficulty is whether you could get new baskets if one breaks. You can be concentrated yet easily substituted (one supplier by choice, many available), or diversified yet hard to substitute (several suppliers, all reliant on the same irreplaceable input). Each dimension is scored against documented goalposts; the four are deliberately unweighted — all count equally.",
               }} /></span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.buffer}</span><span className="kpi-l">Buffer days</span></div>
-              <div className="kpi"><span className="kpi-v mono">{sel.consequence.toFixed(2)}</span><span className="kpi-l">Consequence weight</span></div>
+              <div className="kpi"><span className="kpi-v mono">{sel.consequence.toFixed(2)}</span><span className="kpi-l" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>Consequence weight <Fx payload={{
+                kicker: "Consequence · computed", title: sel.name + " — national consequence",
+                text: "How much losing this import would hurt the nation — computed, not assigned. A blend of four publicly-grounded factors (each 0–1), so the weight moves only when the underlying reality does. It scales this import's pull on its sector score and on Absorb capacity.",
+                formula: "Consequence  =  0.40·Essentiality + 0.25·Service reliance + 0.20·Immediacy + 0.15·Breadth",
+                inputs: [
+                  { k: "Essentiality", v: sel.cfac.ess.toFixed(2) + " — how vital the end-service is (does life/economy stop?)" },
+                  { k: "Service reliance", v: sel.cfac.svc.toFixed(2) + " — share of that service riding on this input" },
+                  { k: "Immediacy", v: sel.cfac.imm.toFixed(2) + " — continuous-flow (fails fast) vs slow-burn consumable" },
+                  { k: "Breadth", v: sel.cfac.brd.toFixed(2) + " — sectors & population the loss would touch" },
+                  { k: "Weighted result", v: sel.consequence.toFixed(2) + " / 1.00" },
+                ],
+                assumption: "The four factors are scored from public, documented facts — demand shares, which end-service the input feeds, and whether the need is continuous. The 0.40/0.25/0.20/0.15 weights are editable; essentiality dominates because an input feeding a non-essential service can't be a top national consequence however concentrated its supply. Distinct from DRI: DRI scores SUPPLIER fragility (can we get it?); consequence scores national importance (how bad if we can't?).",
+              }} /></span></div>
               <div className="kpi"><span className="kpi-v" style={{ fontSize: 15, fontFamily: "var(--font-display)" }}>{RD.sectors.find((s) => s.id === sel.sector).name}</span><span className="kpi-l">Sector</span></div>
             </div>
-            <h4 style={{ fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--faint)", marginBottom: 12 }}>DRI breakdown — four dimensions</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-              {dims.map(([k, l]) => {
+            <h4 style={{ fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--faint)", marginBottom: 12 }}>DRI breakdown — four dimensions <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--faint)", fontWeight: 400 }}>(higher = more fragile)</span></h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              {dims.map(([k, l, def]) => {
                 const v = sel.dims[k]; const b = RD.band(100 - v * 4).key;
                 return (
-                  <div key={k} className={`band-${b}`} style={{ display: "grid", gridTemplateColumns: "150px 1fr 46px", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 12 }}>{l}</span>
-                    <div className="bar-track" style={{ height: 7 }}><div className="bar-fill" style={{ width: (v / 25) * 100 + "%" }}></div></div>
+                  <div key={k} className={`band-${b}`} style={{ display: "grid", gridTemplateColumns: "1fr 46px", alignItems: "baseline", gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6 }}>{l}</div>
+                      <div className="bar-track" style={{ height: 7 }}><div className="bar-fill" style={{ width: (v / 25) * 100 + "%" }}></div></div>
+                      <div className="helper" style={{ marginTop: 5, lineHeight: 1.45 }}>{def}</div>
+                    </div>
                     <span className="mono" style={{ fontSize: 12, textAlign: "right" }}>{v}/25</span>
                   </div>
                 );
@@ -713,15 +730,35 @@ function OperationsView() {
 /* ---------- Methodology (explainability home) --------------------------- */
 function MethodologyView() {
   const qs = [
-    { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving CEILING — your fundamentals. Live Stress is that ceiling minus today's active load, and tracks toward it: live strength climbs back to what your fundamentals allow as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm." },
-    { n: "2", t: "What is the DRI?", d: "The Dependency Risk Index scores a single import on four equal 0–25 dimensions — source concentration, substitutability, route exposure and counterpart risk — summing to a 0–100 fragility score." },
-    { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one. Readiness anchors to the most-exposed sector — a blend of 60% most-exposed + 40% mean — so one concentrated dependency stays visible behind six healthy ones, while still reading the full picture." },
-    { n: "4", t: "What is consequence weighting?", d: "Not every import matters equally. RO membranes (0.90) feed desalination; gold doré (0.20) does not. Weights scale each dependency's effect on the national picture." },
+    { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving CEILING — your fundamentals. Live Stress is that ceiling minus today's active load, and tracks toward it: live strength climbs back to what your fundamentals allow as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm. Structural Resilience itself breaks into three capacities — Absorb, Recover and Adapt — measured against your most-exposed sector." },
+    { n: "2", t: "What is the DRI — and how do its four dimensions differ?", d: "The Dependency Risk Index scores a single import on four equal 0–25 dimensions, summing to a 0–100 fragility score (higher = more fragile). — Source concentration: how few suppliers provide it today (single-basket risk). — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested maritime chokepoint. — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. Concentration and substitution difficulty are the pair most often confused: concentration is how many baskets your eggs are in now; substitution difficulty is whether you can get new baskets if one breaks — you can be concentrated yet easily substituted, or diversified yet hard to substitute." },
+    { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one. Structural Resilience anchors to the most-exposed sector — 60% most-exposed + 40% overall capacity — so one concentrated dependency stays visible behind healthy ones, while still reading the full picture." },
+    { n: "4", t: "How is consequence weighting calculated?", d: "It is computed, not assigned. Each import's 0–1 national-consequence weight is a blend of four publicly-grounded factors — Essentiality (how vital the end-service is), Service reliance (how much of that service rides on this input), Immediacy (continuous-flow vs slow-burn consumable) and Breadth (sectors and population touched) — combined as 0.40·ess + 0.25·svc + 0.20·imm + 0.15·brd. Piped gas scores 1.00 (powers electricity and desalination, continuous, universal); gold doré ~0.23 (a refining margin, narrow). The weight then scales each dependency's pull on its sector score and on Absorb capacity, so it moves only when the underlying facts move. Open any import on the Dependencies view to see its four factors. Distinct from the DRI, which scores supplier fragility, not national importance." },
     { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying its tier, and the status bar shows whether each live feed is currently connected (● Live) or temporarily simulated (○ Sim)." },
-    { n: "6", t: "Why does Hormuz appear twice?", d: "It is shown twice but scored once. The chokepoint signal (AIS) measures the vessel-throughput drop. The 'Hormuz escalation' event (ACLED) is the CAUSE of that drop — carriers reroute because of the escalation — so the throughput number already embeds it. The model therefore counts maritime disruption a single time, via measured throughput, and shows the event only as context. Adding the event's severity on top would double-count one situation through its cause and its effect." },
-    { n: "7", t: "Does the system recommend actions?", d: "Yes — the Response & pre-mortem view closes the loop from sense → simulate → ACT. It holds a ranked queue of national responses. Each one is a concrete implementation brief — what gets built, where, with which technology and partners — anchored to a real precedent project and its actual cost and timeline. The one decision per response is how far to go: three scope tiers, from quick stopgap to full build. LIVE tiers improve today's score; CEILING tiers raise the structural ceiling. Priority blends impact, urgency, speed and value for money." },
-    { n: "8", t: "What is a pre-mortem?", d: "A post-mortem asks why something failed after the fact; a pre-mortem flips the timeline — it assumes a response has already failed and works backwards to explain how, surfacing weak points before you commit. Every recommendation carries one: the named ways it could fail, each with a likelihood, the leading indicator to watch, and a mitigation. A recommendation is only as trustworthy as its failure modes." },
-    { n: "9", t: "What happens when a live feed is unreachable?", d: "The system never quietly substitutes invented data for measured data. Each feed is marked ● Live in the status bar while connected; if a source goes down, that one signal falls back to a clearly-marked simulation (○ Sim) anchored to its last known values — and the driver attribution on the Overview keeps showing exactly which inputs are measured and which are modelled." },
+    { n: "6", t: "Does the system recommend actions?", d: "Yes — the Response & pre-mortem view closes the loop from sense → simulate → ACT. It holds a ranked queue of national responses. Each one is a concrete implementation brief — what gets built, where, with which technology and partners — anchored to a real precedent project and its actual cost and timeline. The one decision per response is how far to go: three scope tiers, from quick stopgap to full build. LIVE tiers improve today's score; CEILING tiers raise the structural ceiling. Priority blends impact, urgency, speed and value for money." },
+    { n: "7", t: "What is a pre-mortem?", d: "A post-mortem asks why something failed after the fact; a pre-mortem flips the timeline — it assumes a response has already failed and works backwards to explain how, surfacing weak points before you commit. Every recommendation carries one: the named ways it could fail, each with a likelihood, the leading indicator to watch, and a mitigation. A recommendation is only as trustworthy as its failure modes." },
+    { n: "8", t: "What happens when a live feed is unreachable?", d: "The system never quietly substitutes invented data for measured data. Each feed is marked ● Live in the status bar while connected; if a source goes down, that one signal falls back to a clearly-marked simulation (○ Sim) anchored to its last known values — and the driver attribution on the Overview keeps showing exactly which inputs are measured and which are modelled." },
+  ];
+  const STEPS = [
+    { t: "Start with what the country must import", d: "We track 17 supplies the UAE cannot function without — natural gas, desalination membranes, medicines, advanced chips, dollar-clearing access and more.", where: "Dependencies" },
+    { t: "Score how shaky each supply is", d: "Each import gets a fragility score built from four things: how few suppliers it has, how hard it would be to switch, how exposed its shipping route is, and how reliable the seller is.", where: "Dependencies → DRI" },
+    { t: "Weigh how much each one matters", d: "Each import also gets an importance weight — how badly the country would feel its loss, based on how essential it is and how many people and sectors rely on it.", where: "Dependencies → Consequence" },
+    { t: "Roll the imports up into 7 sectors", d: "Imports group into sectors — energy, water, health, food, defence, logistics, finance. A sector's strength is its imports' fragility, weighted by how much each one matters.", where: "Overview → Sector resilience" },
+    { t: "Set the fair-weather national strength", d: "The single weakest sector, combined with the country's ability to absorb shocks, recover and adapt, sets Structural Resilience — strength on a calm day.", where: "Overview → Structural Resilience" },
+    { t: "Subtract today's real-world pressure", d: "Live events — shipping disruptions, conflict, market stress — subtract from that baseline to give Live Stress, the strength right now. The gap between the two is exactly where the system recommends action.", where: "Overview → Live Stress · Response" },
+  ];
+  const GLOSS = [
+    ["Structural Resilience", "Fair-weather strength — how well the country copes on a calm day. Slow to change."],
+    ["Live Stress", "Strength right now, after today's events. Moves day to day."],
+    ["The gap", "Today's pressure — how far live strength has dropped below fair-weather strength."],
+    ["DRI", "Dependency Risk Index — a 0–100 fragility score for one import. Higher means shakier supply."],
+    ["Consequence", "How badly losing an import would hurt the nation, scored 0 to 1."],
+    ["Buffer", "How many days the country can keep going on existing stock if a supply stops."],
+    ["Absorb · Recover · Adapt", "The three ways a country copes: take a hit, bounce back, and cut future risk."],
+    ["Non-compensatory", "A strong sector can't hide a weak one — the weakest link always shows in the score."],
+    ["Cascade", "A timeline of what would break first if a shock hit, as buffers run down."],
+    ["Pre-mortem", "Imagining a plan has already failed and asking why — to catch weak points before committing."],
+    ["Live / Sim", "Live = a real data feed is connected. Sim = that feed is down, showing a last-known stand-in."],
   ];
   return (
     <div className="view fade-in">
@@ -733,15 +770,50 @@ function MethodologyView() {
       <div className="intro-card" style={{ maxWidth: "none", marginBottom: 22 }}>
         <div className="intro-kicker">Read this first</div>
         <div className="intro-title" style={{ fontSize: 22 }}>An illustrative model — transparent by design</div>
-        <p className="intro-lead">This system is a worked example of how national supply-chain resilience <em>could</em> be quantified. It runs on live, publicly-available data feeds plus curated open sources, combined through documented logic and stated assumptions. It is decision-support, not a classified or official Government of UAE assessment — and every number can be traced back to its source and method.</p>
+        <p className="intro-lead">This is a worked example of how a country's supply-chain resilience could be measured. It runs on live, publicly-available data plus curated open sources, combined through logic and assumptions that are all written down. Think of it as decision-support — not an official or classified government assessment — where every number can be traced back to where it came from.</p>
+      </div>
+
+      <div style={{ marginBottom: 22 }}>
+        <Panel title="How a national score is built" icon="layers" label="START HERE · PLAIN ENGLISH">
+          <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6, margin: "0 0 18px", maxWidth: 900 }}>
+            Every number on this platform is built the same way, from the ground up. Here is the whole chain in six plain steps.
+          </p>
+          <div>
+            {STEPS.map((s, i) => (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <span style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--accent)", color: "var(--accent-ink)", display: "grid", placeItems: "center", fontWeight: 700, fontFamily: "var(--font-mono)", fontSize: 13, flex: "0 0 auto" }}>{i + 1}</span>
+                  {i < STEPS.length - 1 && <span style={{ flex: 1, width: 2, background: "var(--line-2)", margin: "4px 0" }}></span>}
+                </div>
+                <div style={{ paddingBottom: i < STEPS.length - 1 ? 18 : 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14.5, marginBottom: 3 }}>{s.t}</div>
+                  <div className="muted" style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 5 }}>{s.d}</div>
+                  <span className="helper" style={{ fontSize: 11 }}>In the app: <b style={{ color: "var(--accent)" }}>{s.where}</b></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <div style={{ marginBottom: 22 }}>
+        <Panel title="What the words mean" icon="book" label="PLAIN-LANGUAGE GLOSSARY">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 30px" }}>
+            {GLOSS.map(([term, def], i) => (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "148px 1fr", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--line)", alignItems: "baseline" }}>
+                <span style={{ fontWeight: 600, fontSize: 12.5 }}>{term}</span>
+                <span className="helper" style={{ lineHeight: 1.5 }}>{def}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
       </div>
 
       <div style={{ marginBottom: 22 }}>
         <Panel title="Methodology lineage — what this model is built on" icon="book" label="NO SINGLE GLOBAL STANDARD">
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6, margin: "0 0 20px", maxWidth: 980 }}>
-            There is <b>no single binding international standard</b> for measuring national resilience — the field is a
-            fragmented ecosystem of competing frameworks, and published reviews have catalogued <b>18+ distinct measures</b> across
-            household, sub-national, national and global scales. So this model can't borrow authority by conforming to one
+            <span style={{ fontStyle: "italic", color: "var(--faint)" }}>Not essential reading — this section is here to show the model's academic roots.</span> There is <b>no single binding international standard</b> for measuring national resilience — the field is a
+            fragmented ecosystem of competing frameworks, and published reviews have catalogued <b>18+ distinct measures</b>. So this model can't borrow authority by conforming to one
             standard. Instead its design deliberately follows the logic of the recognised frameworks below — and where it
             invents (the anchored 0–100 scale, the band thresholds) it says so.
           </p>
@@ -781,7 +853,7 @@ function MethodologyView() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "9px 26px" }}>
               {[
                 ["Resilience vs. adaptive capacity", "→ our Structural ceiling vs. Live deviation (per the IFR split)"],
-                ["Import dependence weighted by partner diversity", "→ our DRI (concentration + substitutability) (per the Resilient Economies Index)"],
+                ["Import dependence weighted by partner diversity", "→ our DRI (source concentration + substitution difficulty) (per the Resilient Economies Index)"],
                 ["Non-compensatory aggregation", "→ weakest-pillar anchoring, so one critical sector stays visible"],
                 ["Buffers-and-flows propagation", "→ the cascade engine: each import has a published buffer in days"],
               ].map(([a, b]) => (
@@ -837,9 +909,10 @@ function MethodologyView() {
           </Panel>
           <Panel title="Assumptions ledger" icon="book" label="EDITABLE">
             {[
-              "Readiness = 0.60 × most-exposed sector + 0.40 × mean (exposure-anchored blend)",
+              "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity (non-compensatory anchor)",
+              "Capacity = equal-weight Absorb (buffers vs 90-day benchmark) · Recover (sovereign firepower + substitutability) · Adapt (sectors with a structural plan)",
               "Live Stress = Structural ceiling − today's active load (tracks toward it)",
-              "Structural axis anchored: 100 = autarky, ~72 = realistic frontier",
+              "Structural axis goalpost: 100 = autarky (unreachable), ~72 = realistic-frontier marker — a display anchor only, feeds no score",
               "Sovereign buffer sub-score from verified SWF AUM (~$2.0T)",
               "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
               "DRI dimensions are unweighted (equal 0–25)",

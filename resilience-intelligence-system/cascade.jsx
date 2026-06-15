@@ -51,9 +51,13 @@ function CascadeDiagram() {
     return nodeActive(a) && nodeActive(b);
   };
 
-  // projected national score interpolates from today's live baseline toward an illustrative floor of 12.0
+  // Projected national score eases from today's live baseline toward the floor
+  // the Hormuz-closure scenario projects (see Scenarios) — so the cascade ends
+  // where the scenario engine says it should, not at an invented number.
   const liveBase = RD.headline.live.value;
-  const proj = (liveBase - (liveBase - 12.0) * (dayIdx / (days.length - 1))).toFixed(1);
+  const hzScn = RD.scenarios.find((s) => s.id === "hormuz");
+  const floor = Math.max(0, +(liveBase + (hzScn ? hzScn.overall : -22)).toFixed(1));
+  const proj = (liveBase - (liveBase - floor) * (dayIdx / (days.length - 1))).toFixed(1);
 
   // caption: nodes that activated at this day
   const justNow = RD.cascade.nodes.filter((n) => n.day === day);
@@ -75,7 +79,7 @@ function CascadeDiagram() {
         : n.kind === "sector"
           ? "Sector falls when its binding precursor's buffer is exhausted"
           : n.kind === "overall"
-            ? "Overall anchors to the most-exposed sector  =  0.60 × most-exposed  +  0.40 × mean"
+            ? "Overall anchors to the most-exposed sector  =  0.60 × most-exposed  +  0.40 × capacity"
             : "Trigger removes the shipping route that feeds downstream buffers",
       inputs: [
         { k: "Propagation layer", v: layerName },
