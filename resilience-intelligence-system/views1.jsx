@@ -658,9 +658,16 @@ function ScenariosView() {
   const [pick, setPick] = useState("combined");
   const scn = RD.scenarios.find((s) => s.id === pick);
   const baseLive = RD.headline.live.value;
-  // Resilience can't go negative: a 0–100 score floors at 0 even under the
-  // 4× stress test (otherwise "Combined Maximum" rendered a nonsensical −10).
-  const after = Math.max(0, baseLive + scn.overall).toFixed(1);
+  // A 0–100 resilience score can't go negative. Most scenarios land above 0;
+  // the synthetic 4× "Combined Maximum" applies more stress than the entire
+  // live score remaining, so the index bottoms out at 0 (systemic failure).
+  const rawAfter = baseLive + scn.overall;
+  const afterN = Math.max(0, rawAfter);
+  const after = afterN.toFixed(1);
+  // Net change = the ACTUAL change in the score (clamped), so 45.8 → 0.0 reads
+  // as −45.8, never the raw −58 that would imply an impossible negative score.
+  const netChange = +(afterN - baseLive).toFixed(1);
+  const floored = rawAfter < 0;
 
   return (
     <div className="view fade-in">
@@ -693,10 +700,15 @@ function ScenariosView() {
               <Icon name="arrowRight" size={20} style={{ color: "var(--faint)" }} />
               <div className="kpi"><span className="kpi-v mono" style={{ color: scn.overall < 0 ? "var(--crit)" : "var(--ink)" }}>{after}</span><span className="kpi-l">Under this scenario</span></div>
               <div style={{ marginLeft: "auto", textAlign: "right" }}>
-                <div className="mono" style={{ fontSize: 26, fontWeight: 700, color: scn.overall < 0 ? "var(--crit)" : "var(--muted)" }}>{scn.overall === 0 ? "0.0" : scn.overall}</div>
+                <div className="mono" style={{ fontSize: 26, fontWeight: 700, color: netChange < 0 ? "var(--crit)" : "var(--muted)" }}>{netChange === 0 ? "—" : netChange}</div>
                 <div className="label">net change</div>
               </div>
             </div>
+            {floored && (
+              <div className="helper" style={{ margin: "-6px 0 16px", padding: "9px 12px", borderRadius: "var(--radius)", background: "color-mix(in srgb,var(--crit) 8%,transparent)", border: "1px solid color-mix(in srgb,var(--crit) 22%,transparent)", lineHeight: 1.5 }}>
+                <b>Why 0.0?</b> This stress test applies {scn.overall} points — more than the {baseLive.toFixed(1)} of live score remaining — so the index bottoms out at 0. A 0–100 resilience score can&#8217;t go negative; reaching 0 represents systemic failure across every sector at once, not a precise value.
+              </div>
+            )}
             <div className="delta-bars">
               {RD.sectors.map((sec) => {
                 const d = scn.deltas[sec.id] || 0;

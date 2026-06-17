@@ -29,7 +29,7 @@ window.ACT = (function () {
     {
       id: "ro-membrane",
       title: "Water filters — hold a reserve, then make them here",
-      sector: "water", urgency: 0.92,
+      sector: "water", window: 0.80,
       addresses: "Filter stock lasts 75 days — but a new order takes ~120 days to arrive",
       thesis: "Nearly all drinking water comes from desalination plants, and the filter cartridges they run on (called 'RO membranes') are 100% imported. The choice is not 'build a filter factory, yes or no' — it is how far up the supply chain to climb: hold a bigger stockpile (buys time), make the filters here (Saudi Arabia just did exactly this next door), or also make their raw chemicals here (true independence).",
       site: {
@@ -105,7 +105,7 @@ window.ACT = (function () {
     {
       id: "fujairah-bypass",
       title: "Give imports a back door — the Fujairah bypass",
-      sector: "logistics", urgency: 0.85,
+      sector: "logistics", window: 0.80,
       addresses: "~60% of imports land at Jebel Ali — a port inside the Strait of Hormuz",
       thesis: "The 2026 closure of the strait proved the point twice. Oil exports kept flowing, because oil has a pipeline to Fujairah on the open ocean — but imports have no such back door: container ships still funnel through the strait to Jebel Ali. The choice is how much of the import flow gets the same insurance the oil already enjoys.",
       site: {
@@ -180,7 +180,7 @@ window.ACT = (function () {
     {
       id: "solar-firming",
       title: "Break the water–gas link with round-the-clock solar",
-      sector: "energy", urgency: 0.78,
+      sector: "energy", window: 0.55,
       addresses: "Power stations and desalination plants both run on the same imported gas",
       thesis: "Electricity and drinking water draw on the same gas supply — so if gas is disrupted, both fail together. That is the deepest hidden link in this model. The UAE is already building the cure at world scale: a giant solar farm with batteries big enough to deliver power day and night. The choice is whether water gets a guaranteed share of it — and whether to build a second one that is water's own.",
       site: {
@@ -256,7 +256,7 @@ window.ACT = (function () {
     {
       id: "api-localization",
       title: "Medicine ingredients — bigger reserve, then make them here",
-      sector: "health", urgency: 0.70,
+      sector: "health", window: 0.50,
       addresses: "65% of medicine ingredients come from India · hospitals hold ~60 days of stock",
       thesis: "Hospitals run on imported medicine ingredients — the active chemicals inside each drug — 65% of them from India, shipped through the strait. The UAE has already proven it can make them: a plant in Ras Al Khaimah has produced insulin's active ingredient for over a decade. The choice is how far to extend that proof: hold more stock, or start making the most critical medicines here.",
       site: {
@@ -332,7 +332,7 @@ window.ACT = (function () {
     {
       id: "stabilisation",
       title: "A standing emergency fund for imports",
-      sector: "finance", urgency: 0.60,
+      sector: "finance", window: 0.35,
       addresses: "Crisis price spikes · the cost surge of emergency importing",
       thesis: "The UAE's financial depth is its fastest tool — and the state has already shown it can stand up a major financial backstop in days, not months. A pre-built emergency fund that covers crisis import costs and absorbs price spikes keeps prices stable for households through a shock, at a fraction of the damage it prevents.",
       site: {
@@ -405,7 +405,7 @@ window.ACT = (function () {
     {
       id: "compute-localisation",
       title: "Computer chips — stock up while the door is open",
-      sector: "defence", urgency: 0.66,
+      sector: "defence", window: 0.92,
       addresses: "Advanced chips depend on a US export licence — which policy could revoke",
       thesis: "The hard limit on advanced chips is not money — it is US export licences: a door that is open today under the UAE–US AI agreement, and which a policy change in Washington could shut faster than any factory can be built. So the honest plan runs two clocks at once: buy chips now while the door is open (months), and build what is realistically buildable here (years) — knowing the most advanced chips will never be made locally.",
       site: {
@@ -494,21 +494,46 @@ window.ACT = (function () {
     };
   }
 
-  /* Priority 0–100. Each factor is scaled against FIXED references — the full
-     range across every tier of every play — so a response's priority depends
-     ONLY on its own chosen scope. Changing one response's scope moves that
-     response in the queue without reshuffling the others. Transparent weighting. */
-  const _allTiers = PLAYS.flatMap((p) => p.tiers);
-  const REF_PTS = Math.max(0.1, ..._allTiers.map((t) => t.livePts + t.ceilPts));
-  const REF_DAYS = Math.max(1, ..._allTiers.map((t) => t.days));
-  const REF_EFF = Math.max(0.01, ..._allTiers.map((t) => (t.livePts + t.ceilPts) / Math.max(t.cost, 0.2)));
+  /* Priority 0–100 — a property of the PROBLEM, not the chosen plan.
+     It blends URGENCY with STAKES (the points the recommended scope would
+     recover, scaled against the largest such across all plays). Both are
+     tier-independent, so exploring or staging a scope never reorders the queue.
+
+     URGENCY itself is now COMPUTED, not hand-set. It is led by the addressed
+     sector's FRAGILITY — its consequence-weighted DRI, the same number that
+     drives the sector score on the Overview — plus a smaller hand-set WINDOW
+     factor for the genuine time-sensitivity fragility can't see (e.g. an export
+     licence that is open today but could shut). So the queue tracks where the
+     model is actually weakest, and any departure from that ordering is an
+     explicit, named closing-window adjustment rather than a silent judgement.
+
+     Speed and value-for-money are deliberately NOT here — they are the lens for
+     the *scope decision* on the right, not for ranking which problem matters
+     most. Weights are editable. */
+  const _recPts = (p) => { const t = p.tiers.find((x) => x.recommended) || p.tiers[0]; return t.livePts + t.ceilPts; };
+  const REF_PTS = Math.max(0.1, ...PLAYS.map(_recPts));
+  // Sector fragility = consequence-weighted mean DRI / 100 (0–1). Same basis as
+  // the sector score (which is 100 − that wDRI), so fragility and the Overview
+  // sector grid always agree.
+  function sectorFragility(sectorId) {
+    const ps = RD.precursors.filter((x) => x.sector === sectorId);
+    if (!ps.length) return 0.5;
+    const cw = ps.reduce((a, x) => a + x.consequence, 0) || 1;
+    const wdri = ps.reduce((a, x) => a + x.dri * x.consequence, 0) / cw;
+    return Math.min(1, wdri / 100);
+  }
+  const U_FRAG = 0.65, U_WINDOW = 0.35; // urgency = fragility-led, window-adjusted
+  function urgencyOf(p) {
+    return U_FRAG * sectorFragility(p.sector) + U_WINDOW * (p.window != null ? p.window : 0.5);
+  }
   function priorities(evals) {
     return evals.map((e) => {
-      const impact = Math.min(1, e.r.pts / REF_PTS);
-      const speed = 1 - e.r.days / REF_DAYS;
-      const eff = Math.min(1, e.r.eff / REF_EFF);
-      const score = 100 * (0.38 * impact + 0.30 * e.p.urgency + 0.18 * speed + 0.14 * eff);
-      return { id: e.p.id, score: +score.toFixed(0), impact, speed, eff, urgency: e.p.urgency };
+      const fragility = sectorFragility(e.p.sector);
+      const window = e.p.window != null ? e.p.window : 0.5;
+      const urgency = U_FRAG * fragility + U_WINDOW * window;
+      const stakes = Math.min(1, _recPts(e.p) / REF_PTS); // recommended-scope points → tier-independent
+      const score = 100 * (0.55 * urgency + 0.45 * stakes);
+      return { id: e.p.id, score: +score.toFixed(0), stakes, urgency, fragility, window, wdri: +(fragility * 100).toFixed(1) };
     });
   }
 
@@ -522,5 +547,5 @@ window.ACT = (function () {
     return "AED " + Math.round(b * 1000) + "m";
   }
 
-  return { PLAYS, evalPlay, priorities, fmtDays, fmtAED };
+  return { PLAYS, evalPlay, priorities, sectorFragility, urgencyOf, fmtDays, fmtAED };
 })();

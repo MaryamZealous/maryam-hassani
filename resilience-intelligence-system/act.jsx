@@ -104,16 +104,33 @@ function Posture({ staged, evalById }) {
 
 /* ---- Ranked queue row -------------------------------------------------- */
 function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
-  const b = p.urgency >= 0.85 ? "critical" : p.urgency >= 0.7 ? "high" : "moderate";
+  const b = prio.urgency >= 0.6 ? "critical" : prio.urgency >= 0.5 ? "high" : "moderate";
   return (
     <div className={`act-row band-${b} ${selected ? "sel" : ""}`} onClick={() => onSelect(p.id)}>
       <div className="act-rank mono">{String(rank).padStart(2, "0")}</div>
       <div className="act-row-body">
         <div className="act-row-top">
           <span className="act-row-title">{p.title}</span>
+          <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, flex: "0 0 auto" }} onClick={(e) => e.stopPropagation()}>
+            <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--bc)" }} title="Priority score">P{prio.score}</span>
+            <Fx payload={{
+              kicker: "Priority · computed", title: "Why this rank",
+              text: "Priority ranks the PROBLEM, not the plan you're eyeing. It is led by how fragile the addressed sector is — its consequence-weighted DRI, the same number behind the sector score on the Overview — plus a closing-window factor for time-sensitivity that fragility can't see. That urgency is then weighed against the stakes: the points the recommended scope would recover.",
+              formula: "Priority = 0.55·urgency + 0.45·stakes · urgency = 0.65·fragility + 0.35·window",
+              inputs: [
+                { k: "Sector fragility (DRI)", v: prio.wdri + " / 100 — " + p.sector + " sector" },
+                { k: "Closing-window factor", v: p.window.toFixed(2) + (p.window >= 0.75 ? " — time-critical" : p.window <= 0.4 ? " — no clock" : "") },
+                { k: "→ Urgency", v: prio.urgency.toFixed(2) },
+                { k: "Stakes (recommended-scope pts, scaled)", v: prio.stakes.toFixed(2) },
+                { k: "→ Priority", v: prio.score + " / 100" },
+              ],
+              assumption: "Urgency is fragility-led, so the queue tracks where the model is actually weakest. The window factor is the only hand-set part of the rank, shown explicitly — it is why a sector can sit above or below its raw DRI order (chips' export-licence window lifts Defence; Finance's depth and absent clock keep it low).",
+            }} />
+          </span>
         </div>
         <div className="act-row-addr">{p.addresses}</div>
         <div className="act-row-stats">
+          <span className="mono" style={{ color: "var(--bc)", fontWeight: 600 }} title="Sector fragility — consequence-weighted DRI, the same number behind the sector score">DRI {prio.wdri}</span>
           <span className="act-row-tier">{r.tier.name.replace(/Tier (\d) · /, "T$1 · ")}</span>
           <span className="mono act-stat-pts">+{r.pts.toFixed(1)}</span>
           <span className="mono">{ACT.fmtAED(r.cost)}</span>
@@ -332,13 +349,20 @@ function ActView() {
   const evalById = (id) => ACT.evalPlay(ACT.PLAYS.find((p) => p.id === id), states[id]);
   const onStage = (id) => setStaged((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-  const evals = useMemo(() => ACT.PLAYS.map((p) => ({ p, r: ACT.evalPlay(p, states[p.id]) })), [states]);
+  // The queue ORDER is a property of the problem (urgency + stakes), so it never
+  // moves while you explore or stage. The per-row figures, though, reflect your
+  // COMMITTED scope: unstaged rows show the recommended scope; once staged, the
+  // row shows the scope you committed.
+  const queueEvals = useMemo(
+    () => ACT.PLAYS.map((p) => ({ p, r: ACT.evalPlay(p, staged.has(p.id) ? states[p.id] : undefined) })),
+    [states, staged]
+  );
   const prio = useMemo(() => {
-    const ps = ACT.priorities(evals);
+    const ps = ACT.priorities(queueEvals);
     const m = {}; ps.forEach((x) => (m[x.id] = x));
     return m;
-  }, [evals]);
-  const ranked = useMemo(() => evals.slice().sort((a, b) => prio[b.p.id].score - prio[a.p.id].score), [evals, prio]);
+  }, [queueEvals]);
+  const ranked = useMemo(() => queueEvals.slice().sort((a, b) => prio[b.p.id].score - prio[a.p.id].score), [queueEvals, prio]);
 
   const sel = ACT.PLAYS.find((p) => p.id === selId);
   const selR = evalById(selId);
@@ -359,7 +383,7 @@ function ActView() {
       <div className="grid cols-2" style={{ gridTemplateColumns: "minmax(360px, 0.95fr) 1.45fr", alignItems: "start", marginTop: 16 }}>
         <div className="stack act-left">
         <Panel title="National response queue" icon="ops" label={ACT.PLAYS.length + " RESPONSES · RANKED BY PRIORITY"}
-          right={<span className="helper" style={{ marginLeft: "auto" }}>Change a scope → the queue reranks</span>}>
+          right={<span className="helper" style={{ marginLeft: "auto" }}>Ranked by problem urgency &amp; stakes</span>}>
           <div className="act-queue">
             {ranked.map(({ p, r }, i) => (
               <QueueRow key={p.id} p={p} rank={i + 1} prio={prio[p.id]} r={r}
@@ -368,8 +392,7 @@ function ActView() {
             ))}
           </div>
           <div className="helper" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-            The queue is <b>ranked by priority</b> — a blend of <b>impact</b> (points gained), <b>urgency</b> (how acute the problem is), <b>speed</b> and
-            <b> value for money</b> (points per AED bn), at whichever scope you've chosen for each response. Change a scope and the order reranks.
+            Ranked by <b>priority</b>, led by each sector&#8217;s <b>fragility</b> &mdash; its consequence-weighted <b>DRI</b> (shown on every row, the same number behind the sector score) &mdash; plus a <b>closing-window</b> factor for time-sensitivity fragility can&#8217;t see, weighed against the <b>stakes</b> (points the recommended scope recovers). So the queue tracks where the model is actually weakest; any departure from raw DRI order is an explicit window adjustment, openable on each row. Priority is a property of the <b>problem</b>, so the order stays fixed while you work. <b>Speed</b> and <b>value for money</b> aren&#8217;t here &mdash; they&#8217;re the lens for the <b>scope decision</b> on the right.
           </div>
         </Panel>
         <TagLegend />
