@@ -138,7 +138,7 @@ function Capacities() {
         inputs: [
           { k: "Benchmark", v: "90 days of cover = full credit" },
           { k: "Piped gas (Dolphin)", v: "30-day buffer → 0.33 cover · weight 1.00" },
-          { k: "RO membranes", v: "75-day buffer → 0.83 cover · weight 0.90" },
+          { k: "RO membranes", v: "75-day buffer → 0.83 cover · weight 0.87" },
           { k: "Most imports", v: "90+ day buffers → full cover" },
           { k: "Weighted result", v: absorb + " / 100" },
         ],
@@ -639,7 +639,7 @@ function CascadeView() {
       <div className="grid cols-3" style={{ marginTop: 16 }}>
         {[
           { n: "1", t: "Buffers, not bangs", d: "Nothing fails instantly. Each import has a published buffer in days; the shock simply starts the clock." },
-          { n: "2", t: "Consequence-weighted", d: "RO membranes (0.90) and piped gas (1.00) propagate hard; gold doré (0.20) barely moves the system." },
+          { n: "2", t: "Consequence-weighted", d: "RO membranes (0.87) and piped gas (1.00) propagate hard; gold doré (0.23) barely moves the system." },
           { n: "3", t: "Non-compensatory end", d: "Once Water turns critical, the national score is capped — strong Finance and Food cannot buy it back." },
         ].map((c) => (
           <div className="method-q" key={c.n} style={{ marginBottom: 0 }}>

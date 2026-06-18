@@ -65,8 +65,9 @@ straight from the browser because they allow it):
   ships, for Hormuz / Bab-el-Mandeb / Suez. Drives the **Maritime throughput** driver —
   the biggest input to Live Stress. Shown on the chokepoint cards as transit calls/day vs
   each strait's 12-month norm. Updates weekly (Tuesdays).
-- **GDELT** — live world-news monitor for trade-route closure / conflict coverage. Powers
-  the **Trade-route news monitor** panel and the news-pressure driver. Updates every 15 min.
+- **Google News (+ GDELT fallback)** — live world-news monitor for trade-route closure /
+  conflict coverage. Powers the **Trade-route news monitor** panel and the news-pressure
+  driver. Shown in the platform as "Google News". Updates every 6 min.
 - **Open-Meteo** — live sea-state (wave height) + wind at Hormuz / Bab-el-Mandeb /
   Suez and Gulf temperature. Shown on the chokepoint cards as "Sea state".
 - **OFAC / OpenSanctions** — live US Treasury SDN entity count.

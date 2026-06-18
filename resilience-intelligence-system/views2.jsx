@@ -176,7 +176,7 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
       {layers.imports && FLOWS.map((fl) => {
         const s = GEO_SRC[fl.from]; const d = routeS(P(s.lng, s.lat), hubS, fl.via, 0.16); const w = 0.8 + s.cons * 3;
         return (
-          <g key={fl.from} className="flow-grp" onMouseEnter={() => onTip({ b: "Import → UAE", text: s.label + " — " + s.tip, who: s.who + " · consequence " + s.cons.toFixed(2) })} onMouseLeave={() => onTip(null)}>
+          <g key={fl.from} className="flow-grp" onMouseEnter={() => onTip({ b: "Import → UAE", text: s.label + " — " + s.tip, who: s.who + " · import weight " + s.cons.toFixed(2) })} onMouseLeave={() => onTip(null)}>
             <path className="flow-arc import" d={d} markerEnd="url(#mk-import)" strokeWidth={w} />
             <path className="flow-pulse import casc-pulse" d={d} strokeWidth={w} />
           </g>
@@ -348,7 +348,7 @@ function MapView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Global dependency map</div>
-        <div className="view-sub">Where the UAE sits in the world's supply web. Each line is a dependency — <b>blue flows in</b> (imports, weighted by national consequence), <b>gold &amp; green flow out</b> (export &amp; transit) — because the UAE is a hub, not an endpoint. Hover anything for why it matters, click for the full logic, and <b>zoom into the UAE to reveal its strategic assets and ports</b>.</div>
+        <div className="view-sub">Where the UAE sits in the world's supply web. Each line is a dependency — <b>blue flows in</b> (imports, line thickness ~ relative import weight), <b>gold &amp; green flow out</b> (export &amp; transit) — because the UAE is a hub, not an endpoint. Hover anything for why it matters, click for the full logic, and <b>zoom into the UAE to reveal its strategic assets and ports</b>.</div>
       </div>
       <Panel title="Global dependency map" icon="map" label="LIVE FLOWS · ZOOM · HOVER TO EXPLAIN"
         right={<div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
@@ -735,12 +735,12 @@ function MethodologyView() {
     { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one. Structural Resilience anchors to the most-exposed sector — 60% most-exposed + 40% overall capacity — so one concentrated dependency stays visible behind healthy ones, while still reading the full picture." },
     { n: "4", t: "How is consequence weighting calculated?", d: "It is computed, not assigned. Each import's 0–1 national-consequence weight is a blend of four publicly-grounded factors — Essentiality (how vital the end-service is), Service reliance (how much of that service rides on this input), Immediacy (continuous-flow vs slow-burn consumable) and Breadth (sectors and population touched) — combined as 0.40·ess + 0.25·svc + 0.20·imm + 0.15·brd. Piped gas scores 1.00 (powers electricity and desalination, continuous, universal); gold doré ~0.23 (a refining margin, narrow). The weight then scales each dependency's pull on its sector score and on Absorb capacity, so it moves only when the underlying facts move. Open any import on the Dependencies view to see its four factors. Distinct from the DRI, which scores supplier fragility, not national importance." },
     { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying its tier, and the status bar shows whether each live feed is currently connected (● Live) or temporarily simulated (○ Sim)." },
-    { n: "6", t: "Does the system recommend actions?", d: "Yes — the Response & pre-mortem view closes the loop from sense → simulate → ACT. It holds a ranked queue of national responses. Each one is a concrete implementation brief — what gets built, where, with which technology and partners — anchored to a real precedent project and its actual cost and timeline. The one decision per response is how far to go: three scope tiers, from quick stopgap to full build. LIVE tiers improve today's score; CEILING tiers raise the structural ceiling. Priority blends impact, urgency, speed and value for money." },
+    { n: "6", t: "Does the system recommend actions?", d: "Yes — the Response & pre-mortem view closes the loop from sense → simulate → ACT. It holds a ranked queue of national responses. Each one is a concrete implementation brief — what gets built, where, with which technology and partners — anchored to a real precedent project and its actual cost and timeline. The one decision per response is how far to go: three scope tiers, from quick stopgap to full build. LIVE tiers improve today's score; CEILING tiers raise the structural ceiling. Priority ranks the problem, not the plan you pick: it blends how weak the sector is (its DRI), how much the recommended fix would recover, and any time-pressure the weakness can't show on its own — weakness leads. Speed and value-for-money aren't in the ranking; they're the lens for the scope decision." },
     { n: "7", t: "What is a pre-mortem?", d: "A post-mortem asks why something failed after the fact; a pre-mortem flips the timeline — it assumes a response has already failed and works backwards to explain how, surfacing weak points before you commit. Every recommendation carries one: the named ways it could fail, each with a likelihood, the leading indicator to watch, and a mitigation. A recommendation is only as trustworthy as its failure modes." },
     { n: "8", t: "What happens when a live feed is unreachable?", d: "The system never quietly substitutes invented data for measured data. Each feed is marked ● Live in the status bar while connected; if a source goes down, that one signal falls back to a clearly-marked simulation (○ Sim) anchored to its last known values — and the driver attribution on the Overview keeps showing exactly which inputs are measured and which are modelled." },
   ];
   const STEPS = [
-    { t: "Start with what the country must import", d: "We track 17 supplies the UAE cannot function without — natural gas, desalination membranes, medicines, advanced chips, dollar-clearing access and more.", where: "Dependencies" },
+    { t: "Start with what the country must import", d: "We track 18 supplies the UAE cannot function without — natural gas, desalination membranes, medicines, advanced chips, dollar-clearing access and more.", where: "Dependencies" },
     { t: "Score how shaky each supply is", d: "Each import gets a fragility score built from four things: how few suppliers it has, how hard it would be to switch, how exposed its shipping route is, and how reliable the seller is.", where: "Dependencies → DRI" },
     { t: "Weigh how much each one matters", d: "Each import also gets an importance weight — how badly the country would feel its loss, based on how essential it is and how many people and sectors rely on it.", where: "Dependencies → Consequence" },
     { t: "Roll the imports up into 7 sectors", d: "Imports group into sectors — energy, water, health, food, defence, logistics, finance. A sector's strength is its imports' fragility, weighted by how much each one matters.", where: "Overview → Sector resilience" },
@@ -916,7 +916,7 @@ function MethodologyView() {
               "Sovereign buffer sub-score from verified SWF AUM (~$2.0T)",
               "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
               "DRI dimensions are unweighted (equal 0–25)",
-              "Response priority = 0.38 impact + 0.30 urgency + 0.18 speed + 0.14 efficiency",
+              "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure (speed & value-for-money inform the scope decision, not the ranking)",
               "Response effects are independent & additive: Live′ = min(Ceiling′, live + staged points)",
             ].map((a, i, arr) => (
               <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: i < arr.length - 1 ? "1px solid var(--line)" : "none", fontSize: 12.5 }}>
