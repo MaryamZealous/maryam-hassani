@@ -104,7 +104,7 @@ function Posture({ staged, evalById }) {
 
 /* ---- Ranked queue row -------------------------------------------------- */
 function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
-  const b = prio.urgency >= 0.6 ? "critical" : prio.urgency >= 0.5 ? "high" : "moderate";
+  const b = prio.weakness >= 0.52 ? "critical" : prio.weakness >= 0.45 ? "high" : "moderate";
   return (
     <div className={`act-row band-${b} ${selected ? "sel" : ""}`} onClick={() => onSelect(p.id)}>
       <div className="act-rank mono">{String(rank).padStart(2, "0")}</div>
@@ -115,16 +115,15 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
             <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--bc)" }} title="Priority score">P{prio.score}</span>
             <Fx payload={{
               kicker: "Priority · computed", title: "Why this rank",
-              text: "Priority ranks the PROBLEM, not the plan you're eyeing. It is led by how fragile the addressed sector is — its consequence-weighted DRI, the same number behind the sector score on the Overview — plus a closing-window factor for time-sensitivity that fragility can't see. That urgency is then weighed against the stakes: the points the recommended scope would recover.",
-              formula: "Priority = 0.55·urgency + 0.45·stakes · urgency = 0.65·fragility + 0.35·window",
+              text: "Priority ranks the PROBLEM, not the plan you're eyeing. It's a flat blend of three things: how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own.",
+              formula: "Priority  =  0.5 × Weakness  +  0.3 × Payoff  +  0.2 × Time-pressure",
               inputs: [
-                { k: "Sector fragility (DRI)", v: prio.wdri + " / 100 — " + p.sector + " sector" },
-                { k: "Closing-window factor", v: p.window.toFixed(2) + (p.window >= 0.75 ? " — time-critical" : p.window <= 0.4 ? " — no clock" : "") },
-                { k: "→ Urgency", v: prio.urgency.toFixed(2) },
-                { k: "Stakes (recommended-scope pts, scaled)", v: prio.stakes.toFixed(2) },
+                { k: "Weakness (sector DRI)", v: prio.wdri + " / 100" },
+                { k: "Payoff — points the recommended fix recovers", v: (prio.payoff * 100).toFixed(0) + " / 100" },
+                { k: "Time-pressure", v: (p.window * 100).toFixed(0) + " / 100" + (p.window >= 0.75 ? " — closing clock" : p.window <= 0.4 ? " — no clock" : "") },
                 { k: "→ Priority", v: prio.score + " / 100" },
               ],
-              assumption: "Urgency is fragility-led, so the queue tracks where the model is actually weakest. The window factor is the only hand-set part of the rank, shown explicitly — it is why a sector can sit above or below its raw DRI order (chips' export-licence window lifts Defence; Finance's depth and absent clock keep it low).",
+              assumption: "Weakness leads (half the weight), so the queue follows where the model is actually weakest. Time-pressure is the only hand-set factor — it's why a sector can sit above or below its raw DRI order (chips' export-licence clock lifts Defence; Finance's depth and absent clock keep it low).",
             }} />
           </span>
         </div>
@@ -383,7 +382,7 @@ function ActView() {
       <div className="grid cols-2" style={{ gridTemplateColumns: "minmax(360px, 0.95fr) 1.45fr", alignItems: "start", marginTop: 16 }}>
         <div className="stack act-left">
         <Panel title="National response queue" icon="ops" label={ACT.PLAYS.length + " RESPONSES · RANKED BY PRIORITY"}
-          right={<span className="helper" style={{ marginLeft: "auto" }}>Ranked by problem urgency &amp; stakes</span>}>
+          right={<span className="helper" style={{ marginLeft: "auto" }}>Ranked by weakness, payoff &amp; time-pressure</span>}>
           <div className="act-queue">
             {ranked.map(({ p, r }, i) => (
               <QueueRow key={p.id} p={p} rank={i + 1} prio={prio[p.id]} r={r}
@@ -392,7 +391,7 @@ function ActView() {
             ))}
           </div>
           <div className="helper" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-            Ranked by <b>priority</b>, led by each sector&#8217;s <b>fragility</b> &mdash; its consequence-weighted <b>DRI</b> (shown on every row, the same number behind the sector score) &mdash; plus a <b>closing-window</b> factor for time-sensitivity fragility can&#8217;t see, weighed against the <b>stakes</b> (points the recommended scope recovers). So the queue tracks where the model is actually weakest; any departure from raw DRI order is an explicit window adjustment, openable on each row. Priority is a property of the <b>problem</b>, so the order stays fixed while you work. <b>Speed</b> and <b>value for money</b> aren&#8217;t here &mdash; they&#8217;re the lens for the <b>scope decision</b> on the right.
+            Ranked by <b>priority</b> — a flat blend of how <b>weak</b> the sector is (its <b>DRI</b>, shown on every row), how much the recommended fix would <b>pay off</b>, and any <b>time-pressure</b> the weakness can&#8217;t show on its own. Weakness leads, so the queue follows where the model is weakest. Priority is a property of the <b>problem</b>, so the order stays fixed while you work. <b>Speed</b> and <b>value for money</b> aren&#8217;t here — they&#8217;re the lens for the <b>scope decision</b> on the right.
           </div>
         </Panel>
         <TagLegend />

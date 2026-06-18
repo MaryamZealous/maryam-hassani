@@ -494,27 +494,26 @@ window.ACT = (function () {
     };
   }
 
-  /* Priority 0–100 — a property of the PROBLEM, not the chosen plan.
-     It blends URGENCY with STAKES (the points the recommended scope would
-     recover, scaled against the largest such across all plays). Both are
-     tier-independent, so exploring or staging a scope never reorders the queue.
+  /* Priority 0–100 — a property of the PROBLEM, not the plan you pick.
+     One flat line, three named factors, round weights:
 
-     URGENCY itself is now COMPUTED, not hand-set. It is led by the addressed
-     sector's FRAGILITY — its consequence-weighted DRI, the same number that
-     drives the sector score on the Overview — plus a smaller hand-set WINDOW
-     factor for the genuine time-sensitivity fragility can't see (e.g. an export
-     licence that is open today but could shut). So the queue tracks where the
-     model is actually weakest, and any departure from that ordering is an
-     explicit, named closing-window adjustment rather than a silent judgement.
+       Priority = 0.5·Weakness + 0.3·Payoff + 0.2·Time-pressure
 
-     Speed and value-for-money are deliberately NOT here — they are the lens for
-     the *scope decision* on the right, not for ranking which problem matters
-     most. Weights are editable. */
+       • Weakness  — how fragile the sector is: its consequence-weighted DRI,
+                     the same number behind the sector score on the Overview.
+       • Payoff    — points the recommended fix would recover, scaled to the
+                     biggest such across all plays.
+       • Time-pressure — the one hand-set factor: a closing-clock the fragility
+                     number can't see (e.g. an export licence open today).
+
+     Weakness leads, so the queue tracks where the model is actually weakest.
+     All three are tier-independent, so exploring or staging a scope never
+     reorders the queue. Speed and value-for-money are deliberately NOT here —
+     they're the lens for the *scope decision* on the right. Weights editable. */
   const _recPts = (p) => { const t = p.tiers.find((x) => x.recommended) || p.tiers[0]; return t.livePts + t.ceilPts; };
   const REF_PTS = Math.max(0.1, ...PLAYS.map(_recPts));
-  // Sector fragility = consequence-weighted mean DRI / 100 (0–1). Same basis as
-  // the sector score (which is 100 − that wDRI), so fragility and the Overview
-  // sector grid always agree.
+  // Weakness = consequence-weighted mean DRI / 100 (0–1). Same basis as the
+  // sector score (100 − that wDRI), so it always agrees with the Overview grid.
   function sectorFragility(sectorId) {
     const ps = RD.precursors.filter((x) => x.sector === sectorId);
     if (!ps.length) return 0.5;
@@ -522,18 +521,14 @@ window.ACT = (function () {
     const wdri = ps.reduce((a, x) => a + x.dri * x.consequence, 0) / cw;
     return Math.min(1, wdri / 100);
   }
-  const U_FRAG = 0.65, U_WINDOW = 0.35; // urgency = fragility-led, window-adjusted
-  function urgencyOf(p) {
-    return U_FRAG * sectorFragility(p.sector) + U_WINDOW * (p.window != null ? p.window : 0.5);
-  }
+  const W_WEAK = 0.5, W_PAYOFF = 0.3, W_TIME = 0.2;
   function priorities(evals) {
     return evals.map((e) => {
-      const fragility = sectorFragility(e.p.sector);
-      const window = e.p.window != null ? e.p.window : 0.5;
-      const urgency = U_FRAG * fragility + U_WINDOW * window;
-      const stakes = Math.min(1, _recPts(e.p) / REF_PTS); // recommended-scope points → tier-independent
-      const score = 100 * (0.55 * urgency + 0.45 * stakes);
-      return { id: e.p.id, score: +score.toFixed(0), stakes, urgency, fragility, window, wdri: +(fragility * 100).toFixed(1) };
+      const weakness = sectorFragility(e.p.sector);
+      const payoff = Math.min(1, _recPts(e.p) / REF_PTS); // recommended-scope pts → tier-independent
+      const time = e.p.window != null ? e.p.window : 0.5;
+      const score = 100 * (W_WEAK * weakness + W_PAYOFF * payoff + W_TIME * time);
+      return { id: e.p.id, score: +score.toFixed(0), weakness, payoff, time, wdri: +(weakness * 100).toFixed(1) };
     });
   }
 
@@ -547,5 +542,5 @@ window.ACT = (function () {
     return "AED " + Math.round(b * 1000) + "m";
   }
 
-  return { PLAYS, evalPlay, priorities, sectorFragility, urgencyOf, fmtDays, fmtAED };
+  return { PLAYS, evalPlay, priorities, sectorFragility, fmtDays, fmtAED };
 })();

@@ -276,7 +276,7 @@ function Drawer({ payload, onClose }) {
           {payload.formula && (
             <div className="exp-sec">
               <h4>How it is computed</h4>
-              <div className="formula">{fmt(payload.formula)}</div>
+              <div className="formula">{payload.formula.split("\n").map((ln, i) => (<div key={i}>{fmt(ln)}</div>))}</div>
             </div>
           )}
           {payload.inputs && (
