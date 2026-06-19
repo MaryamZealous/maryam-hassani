@@ -49,12 +49,6 @@
       REAL.meteo = { sea, uaeTemp: uae ? uae.temperature_2m : null, ts: Date.now() };
       setStatus("meteo", "live");
       RD.sources.meteo && (RD.sources.meteo._ts = Date.now());
-
-      // real heat → Climate actor confidence (model already tracks "heat / desalination demand")
-      if (uae && uae.temperature_2m != null) {
-        const climate = RD.actors.find((a) => a.id === "climate");
-        if (climate) climate.confidence = Math.max(5, Math.min(60, Math.round((uae.temperature_2m - 20) * 1.7)));
-      }
     } catch (e) { setStatus("meteo", "sim"); }
   }
 

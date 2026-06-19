@@ -5,7 +5,7 @@ const { useState, useEffect, useRef } = React;
 const NAV = [
   { group: "Monitor", items: [
     { id: "overview", label: "Overview", icon: "gauge" },
-    { id: "threats", label: "Live threats", icon: "threat", badge: "3", crit: true },
+    { id: "threats", label: "Live signals", icon: "threat" },
     { id: "map", label: "Asset map", icon: "map" },
   ]},
   { group: "Analyze", items: [
@@ -23,7 +23,7 @@ const NAV = [
   ]},
 ];
 const TITLES = {
-  overview: "Overview", threats: "Live threats", map: "Asset map", cascade: "Cascade",
+  overview: "Overview", threats: "Live signals", map: "Asset map", cascade: "Cascade",
   scenarios: "Scenarios", dependencies: "Dependencies", act: "Response & pre-mortem", control: "Control layer",
   operations: "Operationalize", methodology: "How this works",
 };
@@ -108,13 +108,21 @@ function App() {
             {NAV.map((g) => (
               <div className="nav-group" key={g.group}>
                 <div className="nav-group-label">{g.group}</div>
-                {g.items.map((it) => (
+                {g.items.map((it) => {
+                  let badge = it.badge, crit = it.crit;
+                  if (it.id === "threats") {
+                    const hot = RD.chokepoints.filter((c) => c.band === "critical" || c.band === "high");
+                    badge = hot.length ? String(hot.length) : null;
+                    crit = hot.some((c) => c.band === "critical");
+                  }
+                  return (
                   <button key={it.id} className={`nav-item ${view === it.id ? "active" : ""}`} onClick={() => go(it.id)}>
                     <Icon name={it.icon} size={16} className="nav-ico" />
                     <span>{it.label}</span>
-                    {it.badge && <span className={`nav-badge ${it.crit ? "crit" : ""}`}>{it.badge}</span>}
+                    {badge && <span className={`nav-badge ${crit ? "crit" : ""}`} title="Chokepoints currently in a high or critical band">{badge}</span>}
                   </button>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </div>

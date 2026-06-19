@@ -1,5 +1,5 @@
 /* ============================================================================
-   Views, part 1 — Overview, Live Threats, Cascade, Scenarios
+   Views, part 1 — Overview, Live signals, Cascade, Scenarios
    ========================================================================== */
 const { useState } = React;
 
@@ -285,7 +285,7 @@ function OverviewView({ go }) {
 
         {/* top signals */}
         <Panel title="Live signals" icon="threat" label="TOP 4"
-          right={<button className="exp" style={{ marginLeft: "auto" }} onClick={() => go("threats")}>All threats →</button>}>
+          right={<button className="exp" style={{ marginLeft: "auto" }} onClick={() => go("threats")}>All signals →</button>}>
           {RD.indicators.slice(0, 4).map((ind) => (
             <div className={`indi band-${ind.status}`} key={ind.id}>
               <span className="indi-led"></span>
@@ -300,7 +300,7 @@ function OverviewView({ go }) {
   );
 }
 
-/* ---------- Live Threats ------------------------------------------------- */
+/* ---------- Live signals ------------------------------------------------ */
 function ProvenanceLedger() {
   const live = RD.headline.live;
   const choke = RD.chokepoints.map((c) => ({
@@ -460,7 +460,7 @@ function ThreatsView() {
   return (
     <div className="view fade-in">
       <div className="view-head">
-        <div className="view-title">Live threats</div>
+        <div className="view-title">Live signals</div>
         <div className="view-sub">Chokepoint activity, converging signals and leading indicators — the fast-moving inputs to the Live Stress score.</div>
       </div>
 
@@ -653,6 +653,42 @@ function CascadeView() {
 }
 
 /* ---------- Scenarios ---------------------------------------------------- */
+/* Resolve a scenario watch-item to a live, sourced signal row. */
+function resolveWatch(w) {
+  if (w.k === "choke") {
+    const c = RD.chokepoints.find((x) => x.id === w.id);
+    if (!c) return null;
+    return { label: c.name + " — transit calls", value: c.vessels + "/day", ref: "vs " + c.baseline + " norm · −" + c.drop + "%", band: c.band, src: "ais", live: true };
+  }
+  if (w.k === "news") {
+    const labelMap = { hormuz: "Hormuz news pressure", redsea: "Red Sea news pressure", suez: "Suez news pressure", general: "Global trade-disruption news" };
+    const n = LIVE.real && LIVE.real.news && LIVE.real.news[w.id];
+    if (!n) return { label: labelMap[w.id] || "News pressure", value: "connecting…", ref: "Google News · re-polls every 6 min", band: "good", src: "gdelt", live: false };
+    const pct = Math.round((n.score || 0) * 100);
+    const b = pct >= 66 ? "critical" : pct >= 33 ? "high" : pct > 5 ? "moderate" : "good";
+    return { label: labelMap[w.id] || "News pressure", value: n.vol != null ? n.vol + " articles" : "no data", ref: pct + "% of full pressure · vs route's normal volume", band: b, src: "gdelt", live: true };
+  }
+  if (w.k === "sea") {
+    const nameMap = { hormuz: "Hormuz sea state", redsea: "Bab-el-Mandeb sea state" };
+    const s = LIVE.real && LIVE.real.meteo && LIVE.real.meteo.sea && LIVE.real.meteo.sea[w.id];
+    if (!s || s.wave == null) return { label: nameMap[w.id] || "Sea state", value: "—", ref: "Open-Meteo · transit drag starts >1.2 m", band: "good", src: "meteo", live: false };
+    const b = s.wave > 2.5 ? "high" : s.wave > 1.2 ? "moderate" : "good";
+    return { label: nameMap[w.id] || "Sea state", value: s.wave.toFixed(1) + " m" + (s.wind != null ? " · " + Math.round(s.wind) + " kn" : ""), ref: "transit drag starts >1.2 m", band: b, src: "meteo", live: true };
+  }
+  if (w.k === "acled") {
+    const a = LIVE.conflictFor(w.c);
+    if (!a || !a.tracked) return { label: w.c + " — conflict activity", value: a && a.live ? "0/30d" : "connecting…", ref: "ACLED · battle / remote-violence events", band: "good", src: "acled", live: !!(a && a.live) };
+    return { label: a.country + " — conflict activity", value: a.events + "/30d events", ref: "ACLED · battle / remote-violence, last 30 days", band: a.band, src: "acled", live: true };
+  }
+  if (w.k === "market") {
+    const m = RD.indicators.find((x) => x.id === w.id);
+    if (!m) return null;
+    return { label: m.name, value: m.value + (m.unit ? " " + m.unit : ""), ref: m.note || "live market feed", band: m.status || "good", src: m.src, live: true };
+  }
+  if (w.k === "note") return { note: true, label: w.t };
+  return null;
+}
+
 function ScenariosView() {
   LIVE.useLiveTick();
   const [pick, setPick] = useState("combined");
@@ -673,7 +709,7 @@ function ScenariosView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Scenario simulator</div>
-        <div className="view-sub">Pre-built stress tests. Select one to see how each sector and the national score respond — and who would most plausibly be behind it.</div>
+        <div className="view-sub">Pre-built stress tests. Select one to see how each sector and the national score respond — and what would warn you first.</div>
       </div>
 
       <div className="grid cols-2" style={{ gridTemplateColumns: "0.9fr 1.3fr", alignItems: "start" }}>
@@ -727,25 +763,37 @@ function ScenariosView() {
             </div>
           </Panel>
 
-          <Panel title="Plausible actors behind it" icon="threat" label="CONFIDENCE · LIVE ACLED ACTIVITY">
-            {RD.actors.slice().sort((a, b) => b.confidence - a.confidence).map((a) => {
-              const ac = (a.acled || []).map((c) => LIVE.conflictFor(c)).filter((x) => x.tracked);
-              const top = ac.sort((x, y) => y.events - x.events)[0];
-              return (
-              <div className={`band-${a.band}`} key={a.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", borderBottom: "1px solid var(--line)" }}>
-                <span style={{ fontSize: 13, fontWeight: 600, minWidth: 90 }}>{a.name}</span>
-                <span className="helper" style={{ flex: 1 }}>{a.vector}</span>
-                {top
-                  ? <span className={`tag-band band-${top.band}`} title={`${top.events} battle / remote-violence events in ${top.country} over the last 30 days (ACLED).`} style={{ whiteSpace: "nowrap" }}><span></span>{top.events}/30d</span>
-                  : a.acled ? <span className="helper" style={{ fontSize: 10 }} title="ACLED not connected">—</span> : null}
-                <div className="bar-track" style={{ width: 90 }}><div className="bar-fill" style={{ width: a.confidence + "%" }}></div></div>
-                <span className="mono" style={{ fontSize: 12, minWidth: 36, textAlign: "right", color: "var(--bc)" }}>{a.confidence}%</span>
-              </div>
-              );
-            })}
-            <div className="helper" style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              Confidence is an analyst-assigned prior <SourceTag src="assumption" />. The <b>/30d</b> chip is live conflict activity in each actor's territory <SourceTag src="acled" />.
+          <Panel title="Trigger & early warning" icon="alert"
+            label={scn.id === "baseline" ? "CALM-DAY REFERENCE" : "LIVE SIGNALS TO WATCH"}>
+            <div style={{ marginBottom: 14 }}>
+              <span className="label">What sets it off</span>
+              <p style={{ fontSize: 13.5, lineHeight: 1.55, margin: "5px 0 0", color: "var(--ink)" }}>{scn.trigger}</p>
             </div>
+            {scn.watch && scn.watch.length ? (
+              <>
+                <span className="label">What would warn us first</span>
+                <div style={{ display: "flex", flexDirection: "column", marginTop: 6 }}>
+                  {scn.watch.map((w, i) => {
+                    const r = resolveWatch(w);
+                    if (!r) return null;
+                    if (r.note) return <div key={i} className="helper" style={{ padding: "9px 0 9px 8px", borderBottom: "1px solid var(--line)" }}>{r.label}</div>;
+                    return (
+                      <div className={`band-${r.band}`} key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0 10px 8px", borderBottom: "1px solid var(--line)", borderLeft: "2px solid var(--bc)" }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, minWidth: 184 }}>{r.label}</span>
+                        <span className="helper" style={{ flex: 1 }}>{r.ref}</span>
+                        <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: r.live ? "var(--bc)" : "var(--faint)", minWidth: 92, textAlign: "right" }}>{r.value}</span>
+                        <SourceTag src={r.src} />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="helper" style={{ marginTop: 10 }}>
+                  These are the live, sourced signals that move <i>before</i> the score does. The system does not assign a probability to the scenario itself — it shows what to monitor and how hot each signal is right now.
+                </div>
+              </>
+            ) : (
+              <div className="helper" style={{ padding: "4px 0" }}>No stress applied, so nothing is elevated. Select a scenario to see the live signals that would warn of it first.</div>
+            )}
           </Panel>
         </div>
       </div>
