@@ -172,7 +172,7 @@ window.RD = (function () {
     { id: "romembrane", name: "RO membrane stock", value: "47", unit: "of 75 days", delta: -1, dir: "down",
       status: "high", src: "curated", spark: [75,68,62,57,53,50,48,47], note: "Drawing down; reorder lead-time is the watch item." },
     { id: "gpsjam", name: "GPS jamming events", value: "12", unit: "this week", delta: 50, dir: "up",
-      status: "high", src: "acled", spark: [4,5,6,5,8,9,11,12], note: "Elevated interference across the lower Gulf." },
+      status: "high", src: "acled", spark: [4,5,6,5,8,9,11,12], note: "Proxy — scaled from live ACLED armed-conflict intensity across the Gulf / Yemen / Iran theatre, not a direct jamming-sensor count." },
     { id: "brent", name: "Brent crude", value: "$93.09", unit: "/ barrel", delta: 4, dir: "up",
       status: "moderate", src: "yfinance", spark: [84,86,85,88,90,91,92,93], note: "Live from market feed. Within normal range." },
     { id: "natgas", name: "Natural gas", value: "$3.23", unit: "/ MMBTU", delta: 1, dir: "flat",
@@ -184,22 +184,35 @@ window.RD = (function () {
   // ---- Scenarios -----------------------------------------------------------
   const scenarios = [
     { id: "baseline", name: "Baseline", sub: "No active stress applied", severity: 0,
+      trigger: "No active stress — the calm-day reference state.", watch: [],
       deltas: { energy:0, water:0, defence:0, food:0, logistics:0, finance:0, health:0 }, overall: 0 },
     { id: "hormuz", name: "Hormuz closure", sub: "Strait transits collapse to near-zero", severity: 3,
+      trigger: "A naval incident, mining, or blockade collapses transits through the Strait of Hormuz.",
+      watch: [{ k:"choke", id:"hormuz" }, { k:"news", id:"hormuz" }, { k:"sea", id:"hormuz" }, { k:"acled", c:"Iran" }],
       deltas: { energy:-6, water:-9, defence:-4, food:-3, logistics:-35, finance:0, health:-5 }, overall: -22 },
     { id: "chips", name: "Silicon access cut", sub: "US export controls restrict advanced-silicon access (what-if)", severity: 2,
+      trigger: "A new US export-control tranche restricts the UAE's access to advanced silicon.",
+      watch: [{ k:"market", id:"sanctions" }, { k:"news", id:"general" }, { k:"note", t:"No direct live feed for export-control policy — watched via sanctions updates and trade-policy news." }],
       deltas: { energy:-3, water:-1, defence:-18, food:0, logistics:-2, finance:0, health:-2 }, overall: -14 },
     { id: "dolphin", name: "Dolphin pressure", sub: "Qatar pipeline gas constrained", severity: 2,
+      trigger: "Qatar curtails Dolphin pipeline gas — by political dispute or technical outage.",
+      watch: [{ k:"market", id:"natgas" }, { k:"news", id:"general" }, { k:"note", t:"Pipeline flow is not publicly metered live — gas price and regional news are the leading proxies." }],
       deltas: { energy:-12, water:-10, defence:-2, food:-1, logistics:-3, finance:0, health:-3 }, overall: -16 },
     { id: "combined", name: "Combined", sub: "Hormuz + Dolphin together", severity: 4,
+      trigger: "Hormuz closure and Dolphin curtailment strike together.",
+      watch: [{ k:"choke", id:"hormuz" }, { k:"market", id:"natgas" }, { k:"news", id:"hormuz" }, { k:"acled", c:"Iran" }],
       // Compounded element-wise: each sector takes the worse of the two shocks
       // plus 0.6x the lesser (overlapping corridors compound), so Combined is
       // never milder than either component anywhere. Energy & water (both gas-
       // and sea-fed) are hit hardest.
       deltas: { energy:-15.6, water:-15.4, defence:-5.2, food:-3.6, logistics:-36.8, finance:0, health:-6.8 }, overall: -28.0 },
     { id: "redsea", name: "Red Sea persistent", sub: "Sustained Bab-el-Mandeb disruption", severity: 2,
+      trigger: "Sustained Houthi attacks keep Bab-el-Mandeb effectively closed.",
+      watch: [{ k:"choke", id:"redsea" }, { k:"news", id:"redsea" }, { k:"sea", id:"redsea" }, { k:"acled", c:"Yemen" }],
       deltas: { energy:-2, water:-1, defence:-2, food:-4, logistics:-14, finance:0, health:-2 }, overall: -9 },
     { id: "max", name: "Combined Maximum", sub: "All shocks at 4× severity (stress test)", severity: 5,
+      trigger: "Every modelled shock at once, at 4× severity — a deliberate stress-test ceiling, not a forecast.",
+      watch: [{ k:"choke", id:"hormuz" }, { k:"choke", id:"redsea" }, { k:"news", id:"general" }, { k:"acled", c:"Iran" }],
       deltas: { energy:-22, water:-31, defence:-30, food:-12, logistics:-48, finance:-2, health:-14 }, overall: -58 },
   ];
 
@@ -246,16 +259,6 @@ window.RD = (function () {
     { day: 45, text: "EDGE Group production begins to slow", band: "moderate" },
     { day: 60, text: "Guided-systems manufacturing stalls", band: "high" },
     { day: 90, text: "Full production halt — Defence falls into the critical band", band: "critical" },
-  ];
-
-  // ---- Threat actors -------------------------------------------------------
-  const actors = [
-    { id: "iran", name: "Iran", confidence: 70, vector: "Military posturing in the Gulf", band: "critical", acled: ["Iran"] },
-    { id: "houthi", name: "Houthis", confidence: 40, vector: "Autonomous attacks on shipping", band: "high", acled: ["Yemen"] },
-    { id: "cyber", name: "Cyber actors", confidence: 30, vector: "Coordinated infrastructure intrusion", band: "high" },
-    { id: "china", name: "China", confidence: 20, vector: "Technology / export leverage", band: "moderate" },
-    { id: "russia", name: "Russia", confidence: 15, vector: "Geopolitical opportunism", band: "moderate", acled: ["Russia"] },
-    { id: "climate", name: "Climate", confidence: 25, vector: "Heat / desalination demand spikes", band: "moderate" },
   ];
 
   // ---- Control layer -------------------------------------------------------
@@ -456,7 +459,7 @@ window.RD = (function () {
 
   return {
     BANDS, band, headline, capacity, sectors, precursors, chokepoints, shocks, convergence,
-    indicators, scenarios, cascade, chipTimeline, actors, sovereign, foreignAssets,
+    indicators, scenarios, cascade, chipTimeline, sovereign, foreignAssets,
     agreements, obligations, workforce, water, health, validation, roadmap, sources, assets,
   };
 })();
