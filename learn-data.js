@@ -92,6 +92,12 @@ window.LEARN = {
       note: "Shoshana Zuboff on how human experience became raw material for prediction and profit — the new logic of power." },
     { id: "philosopher", label: "The Philosopher in the Valley", type: "book", cluster: "world", x: 0.75, y: 0.43,
       note: "Michael Steinberger on Alex Karp and Palantir — data, defense, and the rise of the surveillance state from inside Silicon Valley." },
+    { id: "wmd", label: "Weapons of Math Destruction", type: "book", cluster: "world", x: 0.89, y: 0.31,
+      note: "Cathy O'Neil on how opaque algorithms quietly encode bias and scale it across society — the case for demanding that models show their work." },
+    { id: "nineteen84", label: "1984", type: "book", cluster: "world", x: 0.83, y: 0.49,
+      note: "George Orwell's blueprint of surveillance, censorship, and language as control — the dystopia every conversation about state power still measures itself against." },
+    { id: "bravenew", label: "Brave New World", type: "book", cluster: "world", x: 0.94, y: 0.47,
+      note: "Aldous Huxley's softer dystopia — control through pleasure and distraction rather than force. The warning that we might engineer away our own freedom." },
 
     // ---- Building & Product (added books) ----
     { id: "startupcomm", label: "The Startup Community Way", type: "book", cluster: "build", x: 0.05, y: 0.83,
@@ -106,6 +112,10 @@ window.LEARN = {
       note: "Mitch Albom's parable on how every life quietly touches others — meaning found in connections you never noticed." },
     { id: "strangers", label: "Talking to Strangers", type: "book", cluster: "live", x: 0.93, y: 0.82,
       note: "Malcolm Gladwell on why we misread people we don't know — the hidden assumptions behind our worst misunderstandings." },
+    { id: "courage", label: "The Courage to Be Disliked", type: "book", cluster: "live", x: 0.70, y: 0.66,
+      note: "Kishimi and Koga on Adlerian psychology, in dialogue form — freedom as the willingness to be disliked, and happiness as a present-tense choice." },
+    { id: "prophet", label: "The Prophet", type: "book", cluster: "live", x: 0.59, y: 0.84,
+      note: "Kahlil Gibran's prose-poetry on love, work, and freedom — a wanderer's parting wisdom on how to live, read and reread the world over." },
   ],
   // edges connect related ideas; cross-cluster links are the interesting ones
   edges: [
@@ -150,5 +160,10 @@ window.LEARN = {
     ["moonshots","lennys"],["moonshots","cleo"],
     ["fivepeople","meditations"],["fivepeople","life3d"],
     ["strangers","lex"],["strangers","academy"],
+    ["wmd","surveillance"],["wmd","hownotwrong"],["wmd","systems"],
+    ["nineteen84","surveillance"],["nineteen84","bravenew"],["nineteen84","academy"],
+    ["bravenew","surveillance"],["bravenew","academy"],
+    ["courage","academy"],["courage","meditations"],
+    ["prophet","meditations"],["prophet","fivepeople"],["prophet","academy"],
   ],
 };

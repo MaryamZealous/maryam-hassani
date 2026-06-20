@@ -74,7 +74,7 @@ function LearnGraph() {
         const p = toPx(st[id].ax, st[id].ay);
         pos[id] = { x: p.x, y: p.y };
       }
-      const MX = 18, MY = 14; // margin incl. drift amplitude
+      const MX = 22, MY = 16; // margin incl. drift amplitude
       const K = 0.5;           // damping — converge gently, never explode
       // cluster labels are fixed obstacles: nodes move around them
       const obstacles = [...(wrapRef.current ? wrapRef.current.querySelectorAll('.lg-cluster') : [])].map(el => {
@@ -184,8 +184,8 @@ function LearnGraph() {
         ctx.moveTo(a.x, a.y);
         ctx.quadraticCurveTo(mx, my, b.x, b.y);
         if (isActive) { ctx.strokeStyle = "rgba(43,80,224,0.55)"; ctx.lineWidth = 1.6; }
-        else if (active || dimmedByFilter) { ctx.strokeStyle = "rgba(21,20,15,0.05)"; ctx.lineWidth = 1; }
-        else { ctx.strokeStyle = "rgba(21,20,15,0.12)"; ctx.lineWidth = 1; }
+        else if (active || dimmedByFilter) { ctx.strokeStyle = "rgba(21,20,15,0.03)"; ctx.lineWidth = 0.8; }
+        else { ctx.strokeStyle = "rgba(21,20,15,0.06)"; ctx.lineWidth = 0.8; }
         ctx.stroke();
       });
 
