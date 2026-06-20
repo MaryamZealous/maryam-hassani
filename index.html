@@ -1,39 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>UAE National Resilience Intelligence System</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=14" />
-</head>
-<body>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maryam Hassani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="home.css" />
+<style>
+  html, body, #root { height: 100%; }
+  #root { width: 100vw; }
+</style>
 <template id="__bundler_thumbnail">
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" fill="#0A0E12"/>
-    <path d="M50 18l22 11v16c0 14-9.5 23-22 27-12.5-4-22-13-22-27V29l22-11z" fill="none" stroke="#5B93F0" stroke-width="3"/>
-    <path d="M50 33v22M39 44h22" stroke="#5B93F0" stroke-width="3" stroke-linecap="round"/>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#FAF9F5"/>
+    <g stroke="#2B50E0" stroke-width="1.1" fill="none" stroke-linecap="round" opacity="0.85" transform="translate(50,78)">
+      <path d="M0,0 L0,-20"/>
+      <path d="M0,-20 L-10,-32 M0,-20 L10,-32"/>
+      <path d="M-10,-32 L-16,-40 M-10,-32 L-5,-41 M10,-32 L5,-41 M10,-32 L16,-40"/>
+    </g>
   </svg>
 </template>
-
+</head>
+<body>
 <div id="root"></div>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 
-<script src="data.js?v=14"></script>
-<script src="actions.js?v=14"></script>
-<script src="live.js?v=14"></script>
-<script src="feeds.js?v=14"></script>
-<script type="text/babel" src="components.jsx?v=14"></script>
-<script type="text/babel" src="cascade.jsx?v=14"></script>
-<script type="text/babel" src="views1.jsx?v=14"></script>
-<script type="text/babel" src="views2.jsx?v=14"></script>
-<script type="text/babel" src="act.jsx?v=14"></script>
-<script type="text/babel" src="app.jsx?v=14"></script>
+<script type="text/babel" src="fractal.jsx"></script>
+<script type="text/babel" src="homepages.jsx"></script>
+<script type="text/babel">
+  ReactDOM.createRoot(document.getElementById('root')).render(<HomeC />);
+</script>
 </body>
 </html>
