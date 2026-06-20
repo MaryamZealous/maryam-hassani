@@ -7,7 +7,7 @@
 
 /* graph stage */
 .lg-stage{max-width:1280px;margin:18px auto 0;padding:0 24px}
-.lg-wrap{position:relative;width:100%;height:min(74vh,720px);min-height:560px;
+.lg-wrap{position:relative;width:100%;height:min(86vh,940px);min-height:640px;
   border:1px solid var(--line);border-radius:10px;overflow:hidden;
   background:
     radial-gradient(80% 70% at 50% 42%, #FCFBF8 0%, var(--paper) 60%, var(--paper-2) 100%);}
@@ -21,15 +21,15 @@
 .lg-cluster-sub{color:var(--faint);text-transform:none;letter-spacing:.02em;font-weight:400;font-size:11px}
 
 /* nodes */
-.lg-node{position:absolute;left:0;top:0;z-index:3;display:inline-flex;align-items:center;gap:8px;
-  padding:7px 13px 7px 11px;border:1px solid transparent;border-radius:999px;background:transparent;cursor:grab;
+.lg-node{position:absolute;left:0;top:0;z-index:3;display:inline-flex;align-items:center;gap:7px;
+  padding:5px 10px 5px 9px;border:1px solid transparent;border-radius:999px;background:transparent;cursor:grab;
   font-family:var(--mono);transition:border-color .18s,box-shadow .18s,opacity .22s,background .18s;
   box-shadow:none;will-change:transform}
 .lg-node:active{cursor:grabbing}
-.lg-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 12%,transparent)}
-.lg-label{font-size:13px;color:var(--muted);letter-spacing:-.01em;white-space:nowrap;font-weight:400}
-.lg-node.hub{padding:9px 16px 9px 13px;background:#fff;border-color:rgba(21,20,15,.16);box-shadow:0 1px 0 rgba(21,20,15,.02)}
-.lg-node.hub .lg-label{font-weight:600;color:var(--ink);font-size:13.5px}
+.lg-dot{width:7px;height:7px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 10%,transparent)}
+.lg-label{font-size:12.5px;color:var(--muted);letter-spacing:-.01em;white-space:nowrap;font-weight:400}
+.lg-node.hub{padding:7px 13px 7px 11px;background:#fff;border-color:rgba(21,20,15,.16);box-shadow:0 1px 0 rgba(21,20,15,.02)}
+.lg-node.hub .lg-label{font-weight:600;color:var(--ink);font-size:13px}
 .lg-node.hub .lg-dot{width:10px;height:10px}
 .lg-node:hover{border-color:var(--c);background:#fff;box-shadow:0 8px 22px -8px color-mix(in srgb,var(--c) 50%,transparent)}
 .lg-node:hover .lg-label{color:var(--ink)}
@@ -38,6 +38,8 @@
 .lg-node.active .lg-label{color:var(--ink)}
 .lg-node.neighbor{border-color:color-mix(in srgb,var(--c) 55%,var(--line));background:#fff;z-index:4}
 .lg-node.neighbor .lg-label{color:var(--ink-2)}
+.lg-node.match{background:#fff;border-color:color-mix(in srgb,var(--c) 60%,var(--line));box-shadow:0 1px 0 rgba(21,20,15,.02)}
+.lg-node.match .lg-label{color:var(--ink)}
 .lg-node.dim{opacity:.32}
 .lg-node.selected{outline:2px solid var(--c);outline-offset:2px}
 

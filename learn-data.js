@@ -1,31 +1,45 @@
 // learn-data.js — Maryam's influence map: thinkers, books, channels, ideas.
-// Clusters: arab = Arab polymaths (center) · sci = science & curiosity ·
+// Clusters: poly = polymaths, any era (center) · sci = science & curiosity ·
 //           world = world & economics · build = building & product · live = how to live
 // Positions are normalized (0..1) anchors; the graph drifts gently around them.
 // Edit freely — add nodes, retag, repoint links.
 
 window.LEARN = {
   clusters: {
-    arab:  { label: "Arab Polymaths",       short: "the roots",          lx: 0.40, ly: 0.33 },
+    poly:  { label: "Polymaths",            short: "masters of many fields", lx: 0.40, ly: 0.33 },
     sci:   { label: "Science & Curiosity",  short: "how the world works", lx: 0.06, ly: 0.04 },
     world: { label: "World & Economics",    short: "why nations move",   lx: 0.72, ly: 0.04 },
     build: { label: "Building & Product",   short: "how to build",       lx: 0.07, ly: 0.95 },
     live:  { label: "How to Live",          short: "mind & meaning",     lx: 0.73, ly: 0.95 },
   },
   nodes: [
-    // ---- Arab Polymaths (center — everything radiates from here) ----
-    { id: "khwarizmi", label: "Al-Khwarizmi", type: "thinker", cluster: "arab", x: 0.42, y: 0.45, hub: true,
+    // ---- Polymaths (center — everything radiates from here) ----
+    { id: "khwarizmi", label: "Al-Khwarizmi", type: "thinker", cluster: "poly", x: 0.42, y: 0.45, hub: true,
       note: "Revolutionary mathematician whose name is the root of the word \u201Calgorithm\u201D — and who introduced algebra to the world. Every line of code traces back here." },
-    { id: "kindi", label: "Al-Kindi", type: "thinker", cluster: "arab", x: 0.31, y: 0.52,
+    { id: "kindi", label: "Al-Kindi", type: "thinker", cluster: "poly", x: 0.31, y: 0.52,
       note: "The philosopher of the Arabs. Brought Greek philosophy into Arabic thought, and broke ciphers with frequency analysis — cryptography's first scientist." },
-    { id: "firnas", label: "Abbas ibn Firnas", type: "thinker", cluster: "arab", x: 0.38, y: 0.66,
+    { id: "firnas", label: "Abbas ibn Firnas", type: "thinker", cluster: "poly", x: 0.38, y: 0.66,
       note: "Legendary inventor and engineer who made the earliest recorded scientific attempts at human flight — a thousand years before the Wright brothers." },
-    { id: "khaldun", label: "Ibn Khaldun", type: "thinker", cluster: "arab", x: 0.60, y: 0.50,
+    { id: "khaldun", label: "Ibn Khaldun", type: "thinker", cluster: "poly", x: 0.60, y: 0.50,
       note: "The father of modern sociology, historiography, and economics — famous for analyzing the dynamics of civilizations in his masterpiece, the Muqaddimah." },
-    { id: "battuta", label: "Ibn Battuta", type: "thinker", cluster: "arab", x: 0.50, y: 0.61,
+    { id: "battuta", label: "Ibn Battuta", type: "thinker", cluster: "poly", x: 0.50, y: 0.61,
       note: "Extraordinary scholar and traveler who covered over 73,000 miles across Africa, the Middle East, and Asia, documenting medieval civilizations as he went." },
-    { id: "wisdom", label: "House of Wisdom", type: "idea", cluster: "arab", x: 0.49, y: 0.38,
+    { id: "wisdom", label: "House of Wisdom", type: "idea", cluster: "poly", x: 0.49, y: 0.38,
       note: "Baghdad's Bayt al-Hikma — where Al-Khwarizmi and Al-Kindi worked side by side. Proof that golden ages are built, deliberately, by putting curious minds in one room." },
+
+    // ---- Polymaths (women across eras) ----
+    { id: "fihri", label: "Fatima al-Fihri", type: "thinker", cluster: "poly", x: 0.56, y: 0.30,
+      note: "Founded al-Qarawiyyin in Fez in 859 — by many accounts the oldest degree-granting university still running. She turned an inheritance into a thousand-year engine of learning." },
+    { id: "astrulabi", label: "Mariam al-Astrulabi", type: "thinker", cluster: "poly", x: 0.29, y: 0.39,
+      note: "Tenth-century Aleppo astronomer who designed and built intricate astrolabes — the handheld star-computers that let travelers find their place beneath the sky." },
+    { id: "sutayta", label: "Sutayta al-Mahamali", type: "thinker", cluster: "poly", x: 0.45, y: 0.57,
+      note: "Tenth-century Baghdad mathematician renowned for arithmetic and the algebra of inheritance — applied proof that the new mathematics belonged to everyone." },
+    { id: "hypatia", label: "Hypatia of Alexandria", type: "thinker", cluster: "poly", x: 0.61, y: 0.39,
+      note: "The great mathematician, astronomer, and philosopher of late-antique Alexandria — head of its Neoplatonist school, and ever since a symbol of reason itself." },
+    { id: "duchatelet", label: "Émilie du Châtelet", type: "thinker", cluster: "poly", x: 0.34, y: 0.29,
+      note: "Enlightenment physicist and mathematician who translated and corrected Newton — her commentary on the Principia is still the standard French edition." },
+    { id: "davinci", label: "Leonardo da Vinci", type: "thinker", cluster: "poly", x: 0.40, y: 0.31,
+      note: "The Renaissance ideal of the universal mind — painter, anatomist, engineer, inventor. His notebooks blur art and science until the line between them disappears." },
 
     // ---- Science & Curiosity (top-left) ----
     { id: "veritasium", url: "https://www.youtube.com/@veritasium", label: "Veritasium", type: "video", cluster: "sci", x: 0.10, y: 0.17, hub: true,
@@ -116,6 +130,18 @@ window.LEARN = {
       note: "Kishimi and Koga on Adlerian psychology, in dialogue form — freedom as the willingness to be disliked, and happiness as a present-tense choice." },
     { id: "prophet", label: "The Prophet", type: "book", cluster: "live", x: 0.59, y: 0.84,
       note: "Kahlil Gibran's prose-poetry on love, work, and freedom — a wanderer's parting wisdom on how to live, read and reread the world over." },
+
+    // ---- Ideas (concepts that thread the map together) ----
+    { id: "algorithms", label: "Algorithms", type: "idea", cluster: "poly", x: 0.33, y: 0.24,
+      note: "A recipe a machine can follow — named for Al-Khwarizmi himself. The single idea that turns mathematics into software, and software into power." },
+    { id: "fictions", label: "Shared Fictions", type: "idea", cluster: "world", x: 0.66, y: 0.37,
+      note: "Money, nations, laws, brands — stories we collectively agree to believe. Harari's claim that these fictions are what let strangers cooperate at scale." },
+    { id: "networkfx", label: "Network Effects", type: "idea", cluster: "build", x: 0.22, y: 0.70,
+      note: "Each new user makes the product more valuable to the rest — the compounding force behind why a few platforms become unstoppable and most never start." },
+    { id: "antifragile", label: "Antifragility", type: "idea", cluster: "sci", x: 0.15, y: 0.47,
+      note: "Some things don't just survive shocks — they get stronger from them. The property every resilient system, body, and portfolio is quietly chasing." },
+    { id: "freedom", label: "Freedom", type: "idea", cluster: "live", x: 0.80, y: 0.63,
+      note: "The recurring question under the dystopias and the philosophy alike — how much of it we really have, how easily it's engineered away, and what it costs to keep." },
   ],
   // edges connect related ideas; cross-cluster links are the interesting ones
   edges: [
@@ -165,5 +191,18 @@ window.LEARN = {
     ["bravenew","surveillance"],["bravenew","academy"],
     ["courage","academy"],["courage","meditations"],
     ["prophet","meditations"],["prophet","fivepeople"],["prophet","academy"],
+    // ---- ideas thread clusters together ----
+    ["algorithms","khwarizmi"],["algorithms","3b1b"],["algorithms","hownotwrong"],["algorithms","wmd"],["algorithms","comingwave"],
+    ["fictions","sapiens"],["fictions","wealth"],["fictions","lessons21"],["fictions","khaldun"],
+    ["networkfx","coldstart"],["networkfx","econx"],["networkfx","startupcomm"],["networkfx","lennys"],
+    ["antifragile","systems"],["antifragile","meditations"],["antifragile","comingwave"],
+    ["freedom","nineteen84"],["freedom","bravenew"],["freedom","courage"],["freedom","academy"],["freedom","meditations"],
+    // ---- women polymaths woven in ----
+    ["fihri","wisdom"],["fihri","khaldun"],
+    ["astrulabi","firnas"],["astrulabi","veritasium"],
+    ["sutayta","khwarizmi"],["sutayta","algorithms"],
+    ["hypatia","kindi"],["hypatia","khwarizmi"],["hypatia","3b1b"],
+    ["duchatelet","3b1b"],["duchatelet","veritasium"],["duchatelet","algorithms"],
+    ["davinci","firnas"],["davinci","astrulabi"],["davinci","veritasium"],["davinci","hypatia"],
   ],
 };

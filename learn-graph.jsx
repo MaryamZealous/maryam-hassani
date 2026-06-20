@@ -6,7 +6,7 @@ const { useRef, useState, useEffect, useMemo } = React;
 
 const TYPE_LABEL = { thinker: "Thinker", book: "Book", video: "Video", idea: "Idea" };
 const CLUSTER_COLOR = {
-  arab:  "#A66A1F",
+  poly:  "#A66A1F",
   sci:   "#138A8A",
   world: "#7A33C8",
   build: "#1F8A5B",
@@ -51,7 +51,7 @@ function LearnGraph() {
   }, []);
 
   // padding so nodes/labels don't clip
-  const PAD_X = 130, PAD_TOP = 64, PAD_BOT = 78;
+  const PAD_X = 96, PAD_TOP = 60, PAD_BOT = 72;
   const toPx = (ax, ay) => ({
     x: PAD_X + ax * (size.w - PAD_X * 2),
     y: PAD_TOP + ay * (size.h - PAD_TOP - PAD_BOT),
@@ -152,7 +152,7 @@ function LearnGraph() {
         const s = st[n.id];
         const base = toPx(s.ax, s.ay);
         if (!s.dragging) {
-          const amp = reduce ? 0 : 7;
+          const amp = reduce ? 0 : 5;
           s.x = base.x + Math.sin(ts * 0.0004 + s.ph) * amp;
           s.y = base.y + Math.cos(ts * 0.00033 + s.ph * 1.3) * amp;
         }
@@ -263,11 +263,12 @@ function LearnGraph() {
       {data.nodes.map(n => {
         const isActive = active === n.id;
         const isNeighbor = active && adj[active] && adj[active].has(n.id);
+        const isMatch = filter && n.type === filter;
         const dimmed = (active && !isActive && !isNeighbor) || (filter && n.type !== filter);
         const cls = [
           "lg-node", `t-${n.type}`, n.hub ? "hub" : "",
           isActive ? "active" : "", isNeighbor ? "neighbor" : "", dimmed ? "dim" : "",
-          selected === n.id ? "selected" : ""
+          isMatch ? "match" : "", selected === n.id ? "selected" : ""
         ].join(" ");
         return (
           <button key={n.id} className={cls}
