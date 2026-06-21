@@ -32,28 +32,32 @@ function geoPath(geom, P, wrap) {
 const UAE_LL = [54.4, 24.5];
 const CHOKE = { hormuz: [56.4, 26.6], redsea: [43.3, 12.6], suez: [32.5, 30.2] };
 const GEO_SRC = {
-  "United States of America": { label: "United States", who: "RO membranes · GNSS", cons: 0.90, lng: -98, lat: 39, tip: "Leading source of reverse-osmosis membranes within a concentrated US/Japan/Korea supplier set — the spine of UAE desalination — plus precision-timing modules." },
-  "Taiwan": { label: "Taiwan", who: "Leading-edge chips", cons: 0.85, lng: 121, lat: 23.6, tip: "Fabrication of advanced silicon for EDGE guided-systems concentrates here, but the binding risk is US export-control licensing, not a Taiwan supply halt — a channel that eased in late 2025." },
-  "India": { label: "India", who: "APIs · devices · labour", cons: 0.85, lng: 79, lat: 22.5, dy: 17, tip: "65% of active pharma ingredients and the largest share of critical-infrastructure workers." },
-  "Kazakhstan": { label: "Kazakhstan", who: "LEU nuclear fuel", cons: 0.80, lng: 67, lat: 48, tip: "Long-lead enriched-uranium fuel for Barakah — a 540-day buffer with no near alternative." },
-  "Qatar": { label: "Qatar", who: "Piped gas (Dolphin)", cons: 1.00, lng: 51.2, lat: 25.3, dx: -10, dy: -10, anchor: "end", tip: "25% of gas for power and water via the Dolphin pipeline. Contract runs to 2032." },
-  "Canada": { label: "Canada", who: "Potash · wheat", cons: 0.55, lng: -109, lat: 57, tip: "Fertiliser and grain feedstock — diversified, lower-risk food inputs." },
-  "Russia": { label: "Russia", who: "Potash · wheat", cons: 0.60, lng: 62, lat: 61, tip: "Alternate potash and wheat supply; counterpart risk elevated by sanctions exposure." },
-  "China": { label: "China", who: "Medical devices", cons: 0.65, lng: 103, lat: 35, tip: "40% of medical devices on a thin 45-day buffer, with rising counterpart risk." },
-  "Australia": { label: "Australia", who: "Wheat", cons: 0.60, lng: 134, lat: -25, tip: "Diversified grain supply that deepens national food reserves." },
+  "United States of America": { label: "United States", who: "RO membranes · ERD · GNSS · USD clearing", pre: ["ro","erd","gps","usdclearing"], cons: 0.88, lng: -98, lat: 39, tip: "Leading source of reverse-osmosis membranes and energy-recovery devices within a concentrated US/Japan/Korea supplier set — the spine of UAE desalination — plus precision-timing modules and correspondent-bank USD clearing." },
+  "Taiwan": { label: "Taiwan", who: "Leading-edge chips", pre: ["chips"], cons: 0.72, lng: 121, lat: 23.6, tip: "Fabrication of advanced silicon for EDGE guided-systems concentrates here, but the binding risk is US export-control licensing, not a Taiwan supply halt — a channel that eased in late 2025." },
+  "India": { label: "India", who: "APIs · devices · labour", pre: ["api"], cons: 0.78, lng: 79, lat: 22.5, dy: 17, tip: "65% of active pharma ingredients and the largest share of critical-infrastructure workers." },
+  "Kazakhstan": { label: "Kazakhstan", who: "LEU nuclear fuel", pre: ["leu"], cons: 0.72, lng: 67, lat: 48, tip: "Long-lead enriched-uranium fuel for Barakah — a 540-day buffer with no near alternative." },
+  "Qatar": { label: "Qatar", who: "Piped gas (Dolphin)", pre: ["gas"], cons: 1.00, lng: 51.2, lat: 25.3, dx: -10, dy: -10, anchor: "end", tip: "25% of gas for power and water via the Dolphin pipeline. Contract runs to 2032." },
+  "Canada": { label: "Canada", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.55, lng: -109, lat: 57, tip: "Fertiliser and grain feedstock — diversified, lower-risk food inputs." },
+  "Russia": { label: "Russia", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.60, lng: 62, lat: 61, tip: "Alternate potash and wheat supply; counterpart risk elevated by sanctions exposure." },
+  "China": { label: "China", who: "Solar PV · batteries · devices", pre: ["solarpv","libattery","devices"], cons: 0.70, lng: 103, lat: 35, tip: "Concentrates the clean-energy transition inputs — ~80%+ of solar polysilicon/modules and the bulk of lithium-ion cell supply — plus 40% of medical devices on a thin 45-day buffer. The Material World pattern: China as the processing chokepoint, with rising counterpart risk." },
+  "Australia": { label: "Australia", who: "Wheat", pre: ["wheat"], cons: 0.60, lng: 134, lat: -25, tip: "Diversified grain supply that deepens national food reserves." },
+  "Chile": { label: "Chile", who: "Copper (cathode / rod)", pre: ["copper"], cons: 0.60, lng: -71, lat: -33, tip: "The UAE mines no copper; refined cathode & rod — from Chile, Zambia and the global market — feed Ducab's cabling and the grid build-out. Material World's bottleneck metal of electrification: diversified today, structurally tight over the decade ahead." },
   "United Arab Emirates": { label: "UAE", hub: true, lng: 54.4, lat: 24.5, who: "Jebel Ali · Barakah · Taweelah", tip: "The hub. 60% of imports land at Jebel Ali, then re-export across the region — dependency runs both ways." },
 };
+const PRE_BY_ID = Object.fromEntries((window.RD ? RD.precursors : []).map((p) => [p.id, p]));
+const consOf = (s) => (s.pre && s.pre.length) ? Math.max(...s.pre.map((id) => (PRE_BY_ID[id] ? PRE_BY_ID[id].consequence : 0))) : (s.cons || 0);
 const FLOWS = [
   { from: "United States of America", via: "suez" }, { from: "Taiwan", via: null },
   { from: "India", via: "hormuz" }, { from: "Kazakhstan", via: null }, { from: "Qatar", via: null },
   { from: "Canada", via: "suez" }, { from: "Russia", via: null }, { from: "China", via: "hormuz" },
-  { from: "Australia", via: null },
+  { from: "Australia", via: null }, { from: "Chile", via: null },
 ];
 const OUTFLOWS = [
-  { label: "Crude → East Asia (via Hormuz)", to: [114, 27], via: "hormuz", type: "export", tip: "The bulk of energy exports still transit the Strait of Hormuz to East-Asian buyers — the UAE's largest, and most exposed, outbound flow." },
-  { label: "Fujairah bypass → Asia", from: [56.33, 25.17], to: [90, 8], via: null, type: "export", tip: "Fujairah's east-coast terminal ships crude straight to Asia WITHOUT entering the Strait of Hormuz — the UAE's strategic Hormuz bypass." },
-  { label: "Energy → Europe", to: [11, 45], via: "suez", type: "transit", tip: "Crude and product routed through the Red Sea and Suez to European markets." },
-  { label: "Re-export → East Africa", to: [40, 5], via: "redsea", type: "transit", tip: "Jebel Ali re-export hub supplies East-African markets — the UAE as regional entrepôt." },
+  { label: "Crude → East Asia (via Hormuz)", tag: "Crude → Asia", lp: [129, 14], to: [114, 27], via: "hormuz", type: "export", w: 3.8, tip: "The bulk of energy exports still transit the Strait of Hormuz to East-Asian buyers — the UAE's largest, and most exposed, outbound flow." },
+  { label: "Fujairah bypass → Asia", tag: "Fujairah bypass", lp: [94, -12], from: [56.33, 25.17], to: [90, 8], via: null, type: "export", w: 3.0, tip: "Fujairah's east-coast terminal ships crude straight to Asia WITHOUT entering the Strait of Hormuz — the UAE's strategic Hormuz bypass." },
+  { label: "Ammonia / urea → world markets", tag: "Ammonia / urea →", lp: [70, -3], from: [52.73, 24.11], to: [82, 16], via: "hormuz", type: "export", w: 2.6, tip: "Fertiglobe (ADNOC ~87%) ships urea & ammonia from Ruwais/Fertil to ~41 countries — the world's largest seaborne nitrogen exporter. The UAE's domestic gas leaves as fertiliser, not as a food-security input. Note the irony: this export sails OUT through Hormuz, so the fertiliser strength shares the same chokepoint exposure as the imports." },
+  { label: "Energy → Europe", tag: "Energy → Europe", lp: [-16, 41], to: [11, 45], via: "suez", type: "transit", w: 2.2, tip: "Crude and product routed through the Red Sea and Suez to European markets." },
+  { label: "Re-export → East Africa", tag: "Re-export → E. Africa", lp: [42, -14], to: [40, 5], via: "redsea", type: "transit", w: 1.6, tip: "Jebel Ali re-export hub supplies East-African markets — the UAE as regional entrepôt." },
 ];
 function arcD(a, b, lift) {
   const cx = (a[0] + b[0]) / 2 - (b[1] - a[1]) * lift, cy = (a[1] + b[1]) / 2 + (b[0] - a[0]) * lift;
@@ -174,20 +178,21 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
       </g>
       {/* flows */}
       {layers.imports && FLOWS.map((fl) => {
-        const s = GEO_SRC[fl.from]; const d = routeS(P(s.lng, s.lat), hubS, fl.via, 0.16); const w = 0.8 + s.cons * 3;
+        const s = GEO_SRC[fl.from]; const cons = consOf(s); const d = routeS(P(s.lng, s.lat), hubS, fl.via, 0.16); const w = 0.8 + cons * 3;
         return (
-          <g key={fl.from} className="flow-grp" onMouseEnter={() => onTip({ b: "Import → UAE", text: s.label + " — " + s.tip, who: s.who + " · import weight " + s.cons.toFixed(2) })} onMouseLeave={() => onTip(null)}>
+          <g key={fl.from} className="flow-grp" onMouseEnter={() => onTip({ b: "Import → UAE", text: s.label + " — " + s.tip, who: s.who + " · import weight " + cons.toFixed(2) })} onMouseLeave={() => onTip(null)}>
             <path className="flow-arc import" d={d} markerEnd="url(#mk-import)" strokeWidth={w} />
             <path className="flow-pulse import casc-pulse" d={d} strokeWidth={w} />
           </g>
         );
       })}
       {layers.exports && OUTFLOWS.map((fl, i) => {
-        const d = routeS(hubS, P(fl.to[0], fl.to[1]), fl.via, 0.16);
+        const origin = fl.from ? P(fl.from[0], fl.from[1]) : hubS;
+        const d = routeS(origin, P(fl.to[0], fl.to[1]), fl.via, 0.16); const w = fl.w || 2.4;
         return (
-          <g key={i} className="flow-grp" onMouseEnter={() => onTip({ b: fl.type === "export" ? "Export ← UAE" : "Transit · hub", text: fl.label + " — " + fl.tip })} onMouseLeave={() => onTip(null)}>
-            <path className={"flow-arc " + fl.type} d={d} markerEnd={`url(#mk-${fl.type})`} />
-            <path className={"flow-pulse casc-pulse " + fl.type} d={d} />
+          <g key={i} className="flow-grp" onMouseEnter={() => onTip({ b: fl.type === "export" ? "Export ← UAE" : "Transit · hub", text: fl.label + " — " + fl.tip, who: "outbound weight " + w.toFixed(1) })} onMouseLeave={() => onTip(null)}>
+            <path className={"flow-arc " + fl.type} d={d} markerEnd={`url(#mk-${fl.type})`} strokeWidth={w} />
+            <path className={"flow-pulse casc-pulse " + fl.type} d={d} strokeWidth={w} />
           </g>
         );
       })}
