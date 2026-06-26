@@ -63,7 +63,6 @@ window.LIVE = (function () {
   // leading-indicator anchors. fmt turns the number into the displayed value.
   const IND = {
     brent:      { anchor: 93.0, vol: 0.32, pull: 0.05, dp: 2, pre: "$", lo: 70,  hi: 130, pct: true, ref: 89.5 },
-    natgas:     { anchor: 3.22, vol: 0.03, pull: 0.05, dp: 2, pre: "$", lo: 2,   hi: 6,   pct: true, ref: 3.18 },
     gpsjam:     { anchor: 11,   vol: 0.55, pull: 0.10, dp: 0, pre: "",  lo: 0,   hi: 40,  pct: true, int: true, ref: 8 },
     dolphin:    { anchor: 86,   vol: 0.45, pull: 0.08, dp: 0, pre: "",  lo: 70,  hi: 100, pct: true, int: true, ref: 87 },
     romembrane: { anchor: 47,   vol: 0.10, pull: 0.03, dp: 0, pre: "",  lo: 30,  hi: 75,  pct: false, int: true, fixedDelta: -1 },
@@ -131,6 +130,26 @@ window.LIVE = (function () {
       i.dir = i.delta > 0.5 ? "up" : i.delta < -0.5 ? "down" : "flat";
     });
 
+    // 2b) gas replacement basis — DERIVED from live Brent, never Henry Hub.
+    // Marginal LNG = slope × Brent + shipping/regas; the basis-flip multiple is
+    // that marginal over the fixed Dolphin contract floor.
+    (function () {
+      const g = RD.gasNode; if (!g) return;
+      const brentNow = indState.brent;
+      const marg = g.slope * brentNow + g.shipConst;
+      g.marginal = +marg.toFixed(2);
+      g.multiple = +(marg / g.floor).toFixed(1);
+      g.brent = +brentNow.toFixed(2);
+      const ind = RD.indicators.find((x) => x.id === "gasbasis");
+      if (ind) {
+        ind.value = "$" + marg.toFixed(1);
+        ind.spark = ind.spark.slice(-7).concat(+marg.toFixed(1));
+        const refMarg = g.slope * (IND.brent.ref || 89.5) + g.shipConst;
+        ind.delta = Math.round(((marg - refMarg) / refMarg) * 100);
+        ind.dir = ind.delta > 0.5 ? "up" : ind.delta < -0.5 ? "down" : "flat";
+      }
+    })();
+
     // 3) Live Stress — decomposed into named drivers, real feeds add live drag
     const ck = {};
     RD.chokepoints.forEach((c) => { ck[c.id] = c.drop; });
@@ -162,7 +181,8 @@ window.LIVE = (function () {
     newsDrag = clamp(newsDrag, 0, 5);
 
     // (d) energy-market stress — REAL (markets): Brent / gas spikes above reference
-    const marketDrag = clamp(Math.max(0, (indState.brent - 96)) * 0.12 + Math.max(0, (indState.natgas - 3.6)) * 0.6, 0, 1.5);
+    const margNow = (RD.gasNode && RD.gasNode.marginal) || 12;
+    const marketDrag = clamp(Math.max(0, (indState.brent - 96)) * 0.12 + Math.max(0, (margNow - 14)) * 0.25, 0, 1.5);
 
     // (e) counterpart / sanctions — REAL (OpenSanctions): rise in SDN entities
     let sanctionDrag = 0;
@@ -196,7 +216,7 @@ window.LIVE = (function () {
       reads.meteo = "max wave " + mx.toFixed(1) + " m \u00b7 " + (seaStateDrag > 0.05 ? "impairing transit (>1.2 m)" : "calm (drag starts >1.2 m)");
     }
     if (status.yfinance === "live") {
-      reads.yfinance = "Brent $" + indState.brent.toFixed(2) + " \u00b7 gas $" + indState.natgas.toFixed(2) + " \u00b7 " + (marketDrag > 0.05 ? "above stress marks" : "below stress marks ($96 / $3.60)");
+      reads.yfinance = "Brent $" + indState.brent.toFixed(2) + " \u00b7 LNG replacement $" + margNow.toFixed(1) + " \u00b7 " + (marketDrag > 0.05 ? "above stress marks" : "below stress marks ($96 Brent)");
     }
     if (RD.sources.ofac._total != null && sanctionBase != null) {
       const added = RD.sources.ofac._total - sanctionBase;

@@ -66,7 +66,7 @@ window.RD = (function () {
   // change the arrow shows, preserved across recompute) and the plain note.
   const sectors = [
     { id: "energy", name: "Energy", trend: -1.7,
-      note: "Power and desalination draw on one shared gas envelope, so they move together under load. Piped Dolphin gas from Qatar is the highest-consequence input in the model; grid transformers and LEU fuel round out the legacy imports. The clean-energy buildout adds a newer class of dependency — solar PV, battery storage and copper — that swaps some gas-reliance for China-concentrated processing risk." },
+      note: "Power and desalination draw on one shared gas envelope, so they move together under load. The acute exposure is GAS-SIDE: piped Dolphin gas from Qatar is the highest-consequence input in the model — and because Dolphin is a fixed subsea pipeline (not a maritime chokepoint), and UAE crude EXPORTS bypass Hormuz via the Fujairah pipeline, Energy carries no oil-import chokepoint penalty. Its risk is single-counterpart concentration and a contract→oil-linked price-basis flip, not a Strait-of-Hormuz crude story. Grid transformers and LEU fuel round out the legacy imports. The clean-energy buildout adds a newer class of dependency — solar PV, battery storage and copper — that swaps some gas-reliance for China-concentrated processing risk." },
     { id: "water", name: "Water", trend: 0.5,
       note: "Desalination rests on two specialised imports: RO membranes (a competitive-but-concentrated field) and energy-recovery devices (one dominant US supplier). The binding constraint is reorder lead-time against buffers, not overnight single-source failure." },
     { id: "defence", name: "Defence", trend: 0,
@@ -96,8 +96,8 @@ window.RD = (function () {
       dims: { concentration: 20, substitutability: 17, route: 4, counterpart: 8 }, hormuz: false, dolphin: false,
       note: "The isobaric pressure-exchangers that recover energy from reject brine and cut SWRO power use by up to ~60% — without them desalination still runs, but at a far higher energy cost. The market is dominated by one US supplier (Energy Recovery Inc.); Flowserve and Danfoss are partial alternatives. Concentration is high, but the units are durable installed capital — a supply cut bites slowly (new builds and major repairs), not overnight, which is why immediacy is low." },
     { id: "gas", name: "Piped gas (Dolphin)", sector: "energy", source: "Qatar", buffer: 30, cfac: { ess: 1.00, svc: 1.00, imm: 1.00, brd: 1.00 }, dri: 61,
-      dims: { concentration: 23, substitutability: 18, route: 8, counterpart: 12 }, hormuz: false, dolphin: true,
-      note: "25% of gas for power + water. Contract runs to 2032. Highest consequence weight in the model." },
+      dims: { concentration: 23, substitutability: 18, route: 2, counterpart: 18 }, hormuz: false, dolphin: true,
+      note: "25% of gas for power + water; contract runs to 2032. The genuine exposure is gas-side and counterpart-driven, NOT a maritime chokepoint: Dolphin is a fixed subsea pipeline from Qatar, so route/chokepoint exposure is low (it does not transit Hormuz). What carries the risk is single-counterpart concentration (one neighbour, one corridor) and the price BASIS — losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8× the floor). Highest consequence weight in the model. UAE crude exports bypass Hormuz via Fujairah, so the energy line carries no oil-import chokepoint penalty — its acute exposure is gas feedstock." },
     { id: "api", name: "Active pharma ingredients", sector: "health", source: "India", buffer: 60, cfac: { ess: 0.90, svc: 0.75, imm: 0.70, brd: 0.60 }, dri: 55,
       dims: { concentration: 21, substitutability: 16, route: 10, counterpart: 8 }, hormuz: true, dolphin: false,
       note: "65% sourced from India. Hospital pharmacology depends on uninterrupted flow." },
@@ -184,11 +184,25 @@ window.RD = (function () {
       status: "high", src: "acled", spark: [4,5,6,5,8,9,11,12], note: "Proxy — scaled from live ACLED armed-conflict intensity across the Gulf / Yemen / Iran theatre, not a direct jamming-sensor count." },
     { id: "brent", name: "Brent crude", value: "$93.09", unit: "/ barrel", delta: 4, dir: "up",
       status: "moderate", src: "yfinance", spark: [84,86,85,88,90,91,92,93], note: "Live from market feed. Within normal range." },
-    { id: "natgas", name: "Natural gas", value: "$3.23", unit: "/ MMBTU", delta: 1, dir: "flat",
-      status: "good", src: "yfinance", spark: [3.1,3.2,3.15,3.18,3.22,3.2,3.21,3.23], note: "Stable. Live market feed." },
+    { id: "gasbasis", name: "Gas — replacement basis", value: "$12.0", unit: "/ MMBtu marginal", delta: 0, dir: "flat",
+      status: "moderate", src: "curated", twoState: true, spark: [11.3,11.6,11.4,11.8,12.1,11.9,12.0,12.0],
+      note: "Two price worlds at once. Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor; the molecule that would REPLACE it if Dolphin failed is sea-borne LNG, priced at ~12.5% of Brent (~$12 today, ≈8× the floor). The exposure is a price-BASIS flip from contract to oil-linked, not a volume gap against a buffer. Henry Hub (US ~$3) is the wrong benchmark for the UAE and is not used here." },
     { id: "sanctions", name: "OFAC SDN updates", value: "3", unit: "new this week", delta: 0, dir: "flat",
       status: "moderate", src: "ofac", spark: [1,0,2,1,2,1,0,3], note: "Feeds counterpart-risk adjustment." },
   ];
+
+  // ---- Two-state gas pricing node -----------------------------------------
+  // Replaces the single Henry Hub print. The UAE lives in two gas-price worlds:
+  // a fixed contracted Dolphin floor, and an oil-indexed marginal replacement
+  // (LNG ≈ slope × Brent + shipping). Losing Dolphin is a price-BASIS flip, not
+  // a volume gap. marginal/multiple are refreshed every tick by live.js from
+  // live Brent. floor ~$1.30–1.50/MMBtu is a widely-reported estimate (MEES,
+  // MEED, Energy Intelligence) — never officially published, so tagged as an
+  // assumption. Slope ~12.5% of Brent is the documented Qatari LNG convention.
+  const GAS = { floor: 1.50, slope: 0.125, slopeLo: 0.10, slopeHi: 0.15, shipConst: 0.40, brentRef: 93.0 };
+  GAS.marginal = +(GAS.slope * GAS.brentRef + GAS.shipConst).toFixed(2);
+  GAS.multiple = +(GAS.marginal / GAS.floor).toFixed(1);
+  GAS.brent = GAS.brentRef;
 
   // ---- Scenarios -----------------------------------------------------------
   const scenarios = [
@@ -203,13 +217,13 @@ window.RD = (function () {
       trigger: "A new US export-control tranche restricts the UAE's access to advanced silicon.",
       watch: [{ k:"market", id:"sanctions" }, { k:"news", id:"general" }, { k:"note", t:"No direct live feed for export-control policy — watched via sanctions updates and trade-policy news." }],
       deltas: { energy:-3, water:-1, defence:-18, food:0, logistics:-2, finance:0, health:-2 }, overall: -14 },
-    { id: "dolphin", name: "Dolphin pressure", sub: "Qatar pipeline gas constrained", severity: 2,
-      trigger: "Qatar curtails Dolphin pipeline gas — by political dispute or technical outage.",
-      watch: [{ k:"market", id:"natgas" }, { k:"news", id:"general" }, { k:"note", t:"Pipeline flow is not publicly metered live — gas price and regional news are the leading proxies." }],
+    { id: "dolphin", name: "Dolphin pressure", sub: "Marginal gas reprices: contract → oil-linked", severity: 2,
+      trigger: "Qatar curtails Dolphin pipeline gas — by political dispute or technical outage. The shortfall is met by sea-borne LNG, so the marginal molecule reprices from the fixed ~$1.50/MMBtu contract floor to an oil-linked ~$12/MMBtu (≈8×). This is a price-BASIS flip, not a volume gap against a buffer: power and desalination keep running, but on far costlier feedstock.",
+      watch: [{ k:"market", id:"gasbasis" }, { k:"market", id:"brent" }, { k:"news", id:"general" }, { k:"note", t:"Pipeline flow is not publicly metered live — the gas replacement basis (Brent-linked) and regional news are the leading proxies." }],
       deltas: { energy:-12, water:-10, defence:-2, food:-1, logistics:-3, finance:0, health:-3 }, overall: -16 },
     { id: "combined", name: "Combined", sub: "Hormuz + Dolphin together", severity: 4,
-      trigger: "Hormuz closure and Dolphin curtailment strike together.",
-      watch: [{ k:"choke", id:"hormuz" }, { k:"market", id:"natgas" }, { k:"news", id:"hormuz" }, { k:"acled", c:"Iran" }],
+      trigger: "Hormuz closure and Dolphin curtailment strike together — sea routes choke containerised imports while the lost Dolphin gas reprices to oil-linked LNG that must itself arrive by sea.",
+      watch: [{ k:"choke", id:"hormuz" }, { k:"market", id:"gasbasis" }, { k:"news", id:"hormuz" }, { k:"acled", c:"Iran" }],
       // Compounded element-wise: each sector takes the worse of the two shocks
       // plus 0.6x the lesser (overlapping corridors compound), so Combined is
       // never milder than either component anywhere. Energy & water (both gas-
@@ -235,8 +249,8 @@ window.RD = (function () {
 
       { id: "ro", layer: 1, label: "RO membranes", kind: "precursor", day: 0, band: "high",
         detail: "75-day buffer begins drawing down the moment resupply shipping stops. High-consequence input — desalination feeds nearly all potable water." },
-      { id: "gas", layer: 1, label: "Piped gas", kind: "precursor", day: 0, band: "high",
-        detail: "Dolphin flow is pipeline-fed, but LNG top-ups that balance the grid are sea-borne. Consequence 1.00." },
+      { id: "gas", layer: 1, label: "Sea-borne LNG", kind: "precursor", day: 0, band: "moderate",
+        detail: "This is NOT the Dolphin pipeline. Dolphin is piped from Qatar, does not transit Hormuz, and keeps flowing through a closure — so its VOLUME is unaffected, which is why it is not the direct hit here. What a Hormuz closure actually blocks is the sea-borne LNG the grid uses to balance peaks (imported via Jebel Ali, inside the Gulf). That lost balancing margin is the gas-side Hormuz exposure, and the replacement molecule is oil-linked (~12.5% of Brent, ≈8× the contract floor), so it also carries a price-BASIS flip. Secondary to RO membranes and cushioned by Dolphin's steady base flow." },
       { id: "chips", layer: 1, label: "Leading-edge chips", kind: "precursor", day: 15, band: "moderate",
         detail: "90-day buffer; not routed through Hormuz, so it degrades later and only if the shock widens." },
 
@@ -340,7 +354,7 @@ window.RD = (function () {
     { event: "Red Sea Houthi", predicted: -9, actual: -5, accuracy: "MODERATE" },
   ];
   const roadmap = [
-    { part: "Dependencies mapped", pct: 70 },
+    { part: "Dependencies mapped", pct: 80 },
     { part: "SWF buffer model", pct: 100 },
     { part: "Cascade engine", pct: 95 },
     { part: "Live data feeds", pct: 100 },
@@ -348,7 +362,7 @@ window.RD = (function () {
     { part: "Multi-scenario", pct: 100 },
     { part: "Response & pre-mortem", pct: 90 },
     { part: "Automation", pct: 85 },
-    { part: "Calibration & tuning", pct: 30 },
+    { part: "Calibration & tuning", pct: 55 },
   ];
 
   // ---- Data sources / freshness -------------------------------------------
@@ -464,11 +478,83 @@ window.RD = (function () {
     headline.live.cap.label = "ceiling = baseline " + ceil.toFixed(1);
     headline.live.cap.body = "— live sits below the structural ceiling (" + ceil.toFixed(1) + ") by the size of today's active load. As that load clears, it climbs back to full strength.";
     headline.live.inputs[0] = { k: "Structural ceiling", v: ceil.toFixed(1) + " — the day's maximum", src: "curated" };
+
+    // 6 · UNCERTAINTY — sensitivity of the deterministic scores to their
+    //     editable assumptions. We re-evaluate the whole spine with each key
+    //     assumption pushed to the ends of a plausible range, then combine the
+    //     swings in quadrature (independent-assumption propagation) into a ±band
+    //     and a confidence tier. This makes the model's inherent uncertainty
+    //     explicit instead of implying false precision in a single value.
+    const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    function evalModel(o) {
+      const e = o.essW, rest = 1 - e;
+      // hold the relative split of the non-essentiality weights (25/20/15 → /60)
+      const CWv = { ess: e, svc: rest * (0.25 / 0.60), imm: rest * (0.20 / 0.60), brd: rest * (0.15 / 0.60) };
+      const cons = {};
+      precursors.forEach((p) => { const c = p.cfac; cons[p.id] = CWv.ess * c.ess + CWv.svc * c.svc + CWv.imm * c.imm + CWv.brd * c.brd; });
+      const sScore = {};
+      sectors.forEach((s) => {
+        const ps = precursors.filter((p) => p.sector === s.id);
+        const cwt = ps.reduce((a, p) => a + cons[p.id], 0) || 1;
+        const wdri = ps.reduce((a, p) => a + clampN(p.dri + o.driJ, 0, 100) * cons[p.id], 0) / cwt;
+        sScore[s.id] = 100 - wdri;
+      });
+      const cwAll = precursors.reduce((a, p) => a + cons[p.id], 0);
+      const aw = precursors.reduce((a, p) => a + cons[p.id] * Math.min(p.buffer / o.bench, 1), 0);
+      const absorb = (aw / cwAll) * 100;
+      const meanSub2 = precursors.reduce((a, p) => a + p.dims.substitutability, 0) / precursors.length;
+      const resourcing2 = 100 - meanSub2 * 4;
+      const recover2 = 0.5 * o.fin + 0.5 * resourcing2;
+      const adapt2 = (PLAN_SECTORS.length / sectors.length) * 100;
+      const blend2 = (absorb + recover2 + adapt2) / 3;
+      const exposed2 = Math.min(...Object.values(sScore));
+      const structural = o.anchor * exposed2 + (1 - o.anchor) * blend2;
+      return { structural, sScore };
+    }
+    const DEF = { anchor: 0.60, bench: 90, fin: FINANCIAL, essW: 0.40, driJ: 0 };
+    const AXES = [
+      { k: "Exposure-anchor weight (0.60)",   lo: { anchor: 0.50 }, hi: { anchor: 0.70 } },
+      { k: "Absorb benchmark (90 days)",      lo: { bench: 120 },   hi: { bench: 60 } },
+      { k: "Sovereign-buffer sub-score (72)", lo: { fin: 62 },      hi: { fin: 82 } },
+      { k: "Essentiality weight (0.40)",      lo: { essW: 0.30 },   hi: { essW: 0.50 } },
+      { k: "DRI scoring granularity (±4)",    lo: { driJ: 4 },      hi: { driJ: -4 } },
+    ];
+    const quad = (arr) => Math.sqrt(arr.reduce((s, x) => s + x.d * x.d, 0));
+    const tier = (h) => h < 2 ? { k: "high", label: "High confidence" } : h < 4 ? { k: "moderate", label: "Moderate confidence" } : { k: "indicative", label: "Indicative" };
+    const sStruct = AXES.map((a) => ({ k: a.k, d: Math.abs(evalModel({ ...DEF, ...a.hi }).structural - evalModel({ ...DEF, ...a.lo }).structural) / 2 }));
+    const sHalf = round1(quad(sStruct));
+    headline.structural.rangeHalf = sHalf;
+    headline.structural.confidence = tier(sHalf);
+    headline.structural.sensitivity = sStruct.map((x) => ({ k: x.k, d: round1(x.d) })).sort((a, b) => b.d - a.d);
+
+    // Live Stress: structural-ceiling uncertainty + a live-load measurement band
+    const LIVE_LOAD_SD = 1.6;
+    const lHalf = round1(Math.sqrt(sHalf * sHalf + LIVE_LOAD_SD * LIVE_LOAD_SD));
+    headline.live.rangeHalf = lHalf;
+    headline.live.confidence = tier(lHalf);
+    headline.live.sensitivity = [
+      { k: "Structural ceiling", d: sHalf },
+      { k: "Live-load measurement (6 feeds)", d: round1(LIVE_LOAD_SD) },
+    ].sort((a, b) => b.d - a.d);
+
+    // Per-sector bands — sectors move only with essentiality weight & DRI
+    // granularity (anchor / benchmark / sovereign terms don't touch them).
+    sectors.forEach((s) => {
+      const dJ = Math.abs(evalModel({ ...DEF, driJ: -4 }).sScore[s.id] - evalModel({ ...DEF, driJ: 4 }).sScore[s.id]) / 2;
+      const dE = Math.abs(evalModel({ ...DEF, essW: 0.50 }).sScore[s.id] - evalModel({ ...DEF, essW: 0.30 }).sScore[s.id]) / 2;
+      const h = round1(Math.sqrt(dJ * dJ + dE * dE));
+      s.rangeHalf = h;
+      s.confidence = tier(h);
+      s.sensitivity = [
+        { k: "DRI scoring granularity (±4)", d: round1(dJ) },
+        { k: "Essentiality weight (0.40)", d: round1(dE) },
+      ].sort((a, b) => b.d - a.d);
+    });
   })();
 
   return {
     BANDS, band, headline, capacity, sectors, precursors, chokepoints, shocks, convergence,
     indicators, scenarios, cascade, chipTimeline, sovereign, foreignAssets,
-    agreements, obligations, workforce, water, health, validation, roadmap, sources, assets,
+    agreements, obligations, workforce, water, health, validation, roadmap, sources, assets, gasNode: GAS,
   };
 })();

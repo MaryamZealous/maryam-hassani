@@ -137,6 +137,10 @@ function headlineDrivers(d) {
 function ScoreCard({ d }) {
   const b = RD.band(d.value);
   const dr = headlineDrivers(d);
+  const half = d.rangeHalf || 0;
+  const lo = Math.max(0, +(d.value - half).toFixed(1));
+  const hi = Math.min(100, +(d.value + half).toFixed(1));
+  const conf = d.confidence;
   return (
     <div className={`score-card band-${b.key}`}>
       <div className="score-top">
@@ -171,9 +175,17 @@ function ScoreCard({ d }) {
         <div className="score-meta">
           <span className="score-band"><span className="sq"></span>{b.label}</span>
           <Trend now={d.value} prev={d.prev} horizon={d.horizon || "24h"} />
+          {conf && (
+            <span className={`conf-chip conf-${conf.k}`} title={`Sensitivity range under plausible assumption bounds: ${lo.toFixed(1)}–${hi.toFixed(1)} (±${half.toFixed(1)}). The single value is the central estimate, not a precise reading.`}>
+              <span className="conf-dot"></span>{conf.label} · {lo.toFixed(1)}–{hi.toFixed(1)}
+            </span>
+          )}
         </div>
       </div>
       <div className="score-track" style={{ position: "relative" }}>
+        {half > 0 ? (
+          <div className="score-range-band" title={`±${half.toFixed(1)} pts · sensitivity range`} style={{ left: lo + "%", width: (hi - lo) + "%" }}></div>
+        ) : null}
         <div className="score-fill" style={{ width: d.value + "%" }}></div>
         {d.cap ? (
           <div className="score-frontier" style={{ left: d.cap.at + "%" }} title={d.cap.label}>
@@ -194,6 +206,8 @@ function ScoreCard({ d }) {
           <button className="exp" onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
             kicker: "Score methodology", title: d.name, text: d.explain, formula: d.formula,
             inputs: d.inputs, assumption: d.assumption,
+            range: d.rangeHalf != null ? { lo, hi, half, confidence: conf } : undefined,
+            sensitivity: d.sensitivity,
           }); }}>How is this calculated?</button>
         </span>
       </div>
@@ -205,6 +219,9 @@ function ScoreCard({ d }) {
 function SectorCard({ s, onOpen }) {
   const b = RD.band(s.score);
   const explain = useExplain();
+  const shalf = s.rangeHalf || 0;
+  const slo = Math.max(0, +(s.score - shalf).toFixed(1));
+  const shi = Math.min(100, +(s.score + shalf).toFixed(1));
   const ps = RD.precursors.filter((p) => p.sector === s.id);
   const cw = ps.reduce((a, p) => a + p.consequence, 0) || 1;
   const driInputs = ps.map((p) => ({
@@ -227,6 +244,9 @@ function SectorCard({ s, onOpen }) {
         <span className={`mini-trend ${s.score >= s.prev ? "up" : "down"}`}>
           {s.score >= s.prev ? "▲" : "▼"} {Math.abs(+(s.score - s.prev).toFixed(1))}
         </span>
+        {shalf > 0 && (
+          <span className="sector-conf mono" title={`Sensitivity range ${slo.toFixed(1)}–${shi.toFixed(1)}${s.confidence ? " · " + s.confidence.label : ""}`}>±{shalf.toFixed(1)}</span>
+        )}
         <span style={{ marginLeft: "auto" }}>
           <Fx payload={{
             kicker: "Sector score · computed", title: s.name + " resilience",
@@ -234,6 +254,8 @@ function SectorCard({ s, onOpen }) {
             formula: "Sector  =  100  −  ( Σ(DRI × consequence) / Σ consequence )",
             inputs: driInputs,
             assumption: "A deterministic function of the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. DRI's own four dimensions are equally weighted (0–25 each). Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
+            range: s.rangeHalf != null ? { lo: slo, hi: shi, half: shalf, confidence: s.confidence } : undefined,
+            sensitivity: s.sensitivity,
           }} />
         </span>
       </div>
@@ -290,6 +312,39 @@ function Drawer({ payload, onClose }) {
               ))}
             </div>
           )}
+          {payload.range && (
+            <div className="exp-sec">
+              <h4>Confidence &amp; range</h4>
+              <div className="conf-row">
+                <span className={`conf-chip conf-${payload.range.confidence ? payload.range.confidence.k : "moderate"}`}>
+                  <span className="conf-dot"></span>{payload.range.confidence ? payload.range.confidence.label : "Range"}
+                </span>
+                <span className="conf-range mono">{payload.range.lo.toFixed(1)} – {payload.range.hi.toFixed(1)}</span>
+                <span className="faint" style={{ fontSize: 11 }}>±{payload.range.half.toFixed(1)} pts</span>
+              </div>
+              <p className="exp-text" style={{ marginTop: 9 }}>The headline is a central estimate, not a precise reading. This range is how far it moves when each editable assumption is pushed across a plausible band and the swings are combined in quadrature. A tighter range means higher confidence.</p>
+            </div>
+          )}
+          {(() => {
+            const list = (payload.sensitivity || []).filter((s) => s.d >= 0.05);
+            if (!list.length) return null;
+            const mx = Math.max.apply(null, list.map((x) => x.d)) || 1;
+            return (
+              <div className="exp-sec">
+                <h4>What moves it most</h4>
+                <div className="tornado">
+                  {list.map((s, i) => (
+                    <div className="torn-row" key={i}>
+                      <span className="torn-k">{s.k}</span>
+                      <div className="torn-track"><div className="torn-fill" style={{ width: (s.d / mx) * 100 + "%" }}></div></div>
+                      <span className="torn-v mono">±{s.d.toFixed(1)}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="exp-text" style={{ marginTop: 9 }}>Each bar is one assumption's own contribution to the range — the longest bar is the lever worth pinning down first.</p>
+              </div>
+            );
+          })()}
           {payload.assumption && (
             <div className="exp-sec">
               <h4>Key assumption</h4>

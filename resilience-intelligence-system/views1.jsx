@@ -9,20 +9,55 @@ function magBand(d) {
   return a >= 25 ? "critical" : a >= 12 ? "high" : a >= 4 ? "moderate" : "good";
 }
 
+/* ---------- two-state gas node (contracted floor vs oil-linked marginal) -- */
+function gasBasisFx() {
+  const g = RD.gasNode || { floor: 1.5, marginal: 12, multiple: 8, brent: 93, shipConst: 0.4 };
+  return {
+    kicker: "Two-state gas node",
+    title: "Gas — contracted floor vs marginal replacement",
+    text: "The UAE lives in two gas-price worlds at once. Contracted Dolphin gas is a fixed ~$" + g.floor.toFixed(2) + "/MMBtu floor. The molecule that REPLACES it if Dolphin is curtailed is sea-borne LNG, priced off oil at ~12.5% of Brent. Losing Dolphin is therefore a price-BASIS flip from contract to oil-linked — a reprice of roughly ≈" + g.multiple.toFixed(1) + "× — not a volume gap against a buffer.",
+    formula: "Marginal replacement  =  slope × Brent  +  shipping/regas  =  0.125 × $" + g.brent.toFixed(0) + "  +  $" + g.shipConst.toFixed(2) + "  =  $" + g.marginal.toFixed(2) + " / MMBtu",
+    inputs: [
+      { k: "Contracted floor (Dolphin)", v: "$" + g.floor.toFixed(2) + " / MMBtu — fixed long-term contract", src: "assumption" },
+      { k: "Oil-indexed slope", v: "~12.5% of Brent (plausible 10–15%)", src: "curated" },
+      { k: "Brent (live)", v: "$" + g.brent.toFixed(2) + " / bbl", src: "yfinance" },
+      { k: "Marginal replacement cost", v: "$" + g.marginal.toFixed(2) + " / MMBtu  ·  ≈" + g.multiple.toFixed(1) + "× the floor" },
+    ],
+    assumption: "Dolphin's ~$1.30–1.50/MMBtu price is a widely-reported estimate (MEES, MEED, Energy Intelligence) — the parties have never published it, so it is tagged as an assumption, not a live feed. The ~12.5% Brent slope is the documented market convention for Qatari oil-indexed LNG. Henry Hub (US gas, ~$3) is deliberately NOT used — it is the wrong price basis for the UAE.",
+  };
+}
+function GasBasisRow({ ind }) {
+  const g = RD.gasNode || { floor: 1.5, multiple: 8 };
+  return (
+    <div className="indi band-moderate">
+      <span className="indi-led"></span>
+      <div className="indi-name" style={{ flex: "0 0 38%" }}>{ind.name}<br /><span className="u">two-state · contract vs oil-linked</span></div>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, flex: 1, flexWrap: "wrap" }}>
+        <span className="pill"><span className="sq" style={{ background: "var(--good)" }}></span>floor ${g.floor.toFixed(2)}</span>
+        <Icon name="arrowRight" size={13} style={{ color: "var(--faint)" }} />
+        <span className="pill band-high"><span className="sq"></span>marginal {ind.value} · ≈{g.multiple.toFixed(1)}×</span>
+      </div>
+      <Sparkline data={ind.spark} band="high" />
+      <Fx payload={gasBasisFx()} />
+      <SourceTag src="curated" />
+    </div>
+  );
+}
+
 /* ---------- "what changed" strip ---------------------------------------- */
 function WhatChanged() {
   const live = RD.headline.live, struct = RD.headline.structural;
   const hz = RD.chokepoints.find((c) => c.id === "hormuz");
   const ro = RD.indicators.find((i) => i.id === "romembrane");
   const brent = RD.indicators.find((i) => i.id === "brent");
-  const natgas = RD.indicators.find((i) => i.id === "natgas");
+  const gasb = RD.indicators.find((i) => i.id === "gasbasis");
   const lsd = +(live.value - live.prev).toFixed(1);
   const items = [
     { label: "Live Stress", v: (lsd > 0 ? "+" : "") + lsd, dir: lsd >= 0 ? "up" : "down", note: "vs yesterday's baseline", src: "ais" },
     { label: "Hormuz", v: "−" + hz.drop + "%", dir: "down", note: hz.vessels + " of " + hz.baseline + " transit calls/day", src: "ais" },
     { label: "RO stock", v: "−1 day", dir: "down", note: "now " + ro.value + " of 75-day buffer", src: "curated" },
     { label: "Brent", v: (brent.delta > 0 ? "+" : "") + brent.delta + "%", dir: brent.delta >= 0 ? "up" : "down", note: brent.value + " / barrel", src: "yfinance" },
-    { label: "Natural gas", v: (natgas.delta > 0 ? "+" : "") + natgas.delta + "%", dir: natgas.delta > 0 ? "up" : natgas.delta < 0 ? "down" : "flat", note: natgas.value + " / MMBtu", src: "yfinance" },
+    { label: "Gas basis", v: gasb.value, dir: "flat", note: "marginal LNG vs $" + (RD.gasNode ? RD.gasNode.floor.toFixed(2) : "1.50") + " floor", src: "curated" },
   ];
   return (
     <Panel title="What changed since yesterday" icon="spark" label="24-HOUR DELTA"
@@ -598,7 +633,7 @@ function ThreatsView() {
         </Panel>
 
         <Panel title="Leading indicators" icon="spark" label="EARLY SIGNALS">
-          {RD.indicators.map((ind) => (
+          {RD.indicators.map((ind) => ind.twoState ? <GasBasisRow key={ind.id} ind={ind} /> : (
             <div className={`indi band-${ind.status}`} key={ind.id}>
               <span className="indi-led"></span>
               <div className="indi-name" style={{ flex: "0 0 38%" }}>{ind.name}<br /><span className="u">{ind.unit}</span></div>
@@ -639,7 +674,7 @@ function CascadeView() {
       <div className="grid cols-3" style={{ marginTop: 16 }}>
         {[
           { n: "1", t: "Buffers, not bangs", d: "Nothing fails instantly. Each import has a published buffer in days; the shock simply starts the clock." },
-          { n: "2", t: "Consequence-weighted", d: "RO membranes (0.87) and piped gas (1.00) propagate hard; gold doré (0.23) barely moves the system." },
+          { n: "2", t: "Consequence-weighted", d: "RO membranes (0.87) and the gas balancing input (1.00) propagate hard; gold doré (0.23) barely moves the system." },
           { n: "3", t: "Non-compensatory end", d: "Once Water turns critical, the national score is capped — strong Finance and Food cannot buy it back." },
         ].map((c) => (
           <div className="method-q" key={c.n} style={{ marginBottom: 0 }}>
