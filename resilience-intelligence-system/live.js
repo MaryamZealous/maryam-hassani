@@ -64,8 +64,6 @@ window.LIVE = (function () {
   const IND = {
     brent:      { anchor: 93.0, vol: 0.32, pull: 0.05, dp: 2, pre: "$", lo: 70,  hi: 130, pct: true, ref: 89.5 },
     gpsjam:     { anchor: 11,   vol: 0.55, pull: 0.10, dp: 0, pre: "",  lo: 0,   hi: 40,  pct: true, int: true, ref: 8 },
-    dolphin:    { anchor: 86,   vol: 0.45, pull: 0.08, dp: 0, pre: "",  lo: 70,  hi: 100, pct: true, int: true, ref: 87 },
-    romembrane: { anchor: 47,   vol: 0.10, pull: 0.03, dp: 0, pre: "",  lo: 30,  hi: 75,  pct: false, int: true, fixedDelta: -1 },
     sanctions:  { anchor: 2.4,  vol: 0.45, pull: 0.10, dp: 0, pre: "",  lo: 0,   hi: 6,   pct: false, int: true, ref: 2.4 },
   };
   const indState = {};
@@ -148,6 +146,47 @@ window.LIVE = (function () {
         ind.delta = Math.round(((marg - refMarg) / refMarg) * 100);
         ind.dir = ind.delta > 0.5 ? "up" : ind.delta < -0.5 ? "down" : "flat";
       }
+    })();
+
+    // 2c) Dolphin gas flow — PINNED at contractual nominal (100%), NOT a random
+    // walk. Dolphin is piped and does not transit Hormuz, so there is no basis
+    // for a standing shortfall and no public live flow meter. It deflects below
+    // 100 ONLY when the live regional news / conflict proxy indicates an actual
+    // disturbance in the Gulf–Qatar theatre — so every dip is traceable to an
+    // event, never a hardcoded guess. With no live news feed, it holds at 100.
+    (function () {
+      const ind = RD.indicators.find((x) => x.id === "dolphin");
+      if (!ind) return;
+      let defl = 0;
+      if (REAL.news) {
+        const sc = (id) => (REAL.news[id] && REAL.news[id].score != null) ? clamp(REAL.news[id].score, 0, 1) : 0;
+        defl = clamp(sc("hormuz") * 18 + sc("general") * 10, 0, 30);   // regional disturbance → flow risk
+      }
+      const flow = Math.round(clamp(100 - defl, 70, 100));
+      ind.value = String(flow);
+      ind.spark = ind.spark.slice(-7).concat(flow);
+      ind.delta = flow - 100;
+      ind.dir = ind.delta < -0.5 ? "down" : "flat";
+      ind.status = flow >= 97 ? "good" : flow >= 90 ? "moderate" : "high";
+      ind.statusText = defl > 0.5 ? "disrupted" : "";
+    })();
+
+    // 2d) RO membrane stock — the ~75-day reserve is a STATED buffer, never a
+    // fabricated countdown. The only live element is resupply STATUS: membranes
+    // are sea-borne, so the route-disruption proxy (Hormuz / Red Sea) flips it
+    // between clear / strained / impaired. Day-by-day drawdown is modelled in
+    // the cascade & scenario simulator, not animated against the wall clock.
+    (function () {
+      const ro = RD.indicators.find((x) => x.id === "romembrane");
+      if (ro == null) return;
+      const dropOf = (id) => { const c = RD.chokepoints.find((x) => x.id === id); return c ? c.drop : 0; };
+      const routeStress = clamp(dropOf("hormuz") * 0.012 + dropOf("redsea") * 0.006, 0, 1);
+      ro.value = "75";
+      ro.delta = 0;
+      ro.dir = "flat";
+      if (routeStress > 0.5) { ro.status = "high"; ro.statusText = "impaired"; }
+      else if (routeStress > 0.2) { ro.status = "moderate"; ro.statusText = "strained"; }
+      else { ro.status = "good"; ro.statusText = "clear"; }
     })();
 
     // 3) Live Stress — decomposed into named drivers, real feeds add live drag

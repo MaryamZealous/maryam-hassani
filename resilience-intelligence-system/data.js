@@ -8,7 +8,7 @@ window.RD = (function () {
   // ---- Semantic bands (higher score = more resilient) ----------------------
   const BANDS = [
     { key: "critical", label: "CRITICAL", min: 0,  max: 40,  desc: "Acute load across several sectors" },
-    { key: "high",     label: "HIGH RISK",min: 40, max: 60,  desc: "Operating under load, with cascade exposure to watch" },
+    { key: "high",     label: "STRAINED", min: 40, max: 60,  desc: "Operating under load, with cascade exposure to watch" },
     { key: "moderate", label: "MODERATE", min: 60, max: 75,  desc: "Stable, absorbing active load" },
     { key: "good",     label: "GOOD",     min: 75, max: 90,  desc: "Strong foundations" },
     { key: "strong",   label: "STRONG",   min: 90, max: 100, desc: "Highly resilient" },
@@ -176,10 +176,33 @@ window.RD = (function () {
 
   // ---- Leading indicators --------------------------------------------------
   const indicators = [
-    { id: "dolphin", name: "Dolphin gas flow", value: "85", unit: "% of contract", delta: -2, dir: "flat",
-      status: "moderate", src: "curated", spark: [88,87,88,86,87,85,86,85], note: "Within normal contractual band." },
-    { id: "romembrane", name: "RO membrane stock", value: "47", unit: "of 75 days", delta: -1, dir: "down",
-      status: "high", src: "curated", spark: [75,68,62,57,53,50,48,47], note: "Drawing down; reorder lead-time is the watch item." },
+    { id: "dolphin", name: "Dolphin gas flow", value: "100", unit: "% of contracted volume", delta: 0, dir: "flat",
+      status: "good", src: "assumption", pinned: true, statusText: "", spark: [100, 100, 100, 100, 100, 100, 100, 100],
+      note: "Pinned at contractual nominal. Dolphin is a fixed subsea pipeline that does NOT transit Hormuz, so absent a specific disruption it delivers at contract — there is no basis to assume a standing shortfall. No public live flow meter exists; this only deflects below 100 when the live regional conflict / news proxy fires.",
+      fx: { kicker: "Leading indicator · assumption", title: "Dolphin gas flow — pinned at nominal",
+        text: "Dolphin is piped gas from Qatar that does not transit Hormuz, and there is no public live meter on its flow. Absent a specific disruption it delivers at the contracted volume, so its calm-state value is 100% of contract. It only deflects below 100 when the live regional conflict / news proxy indicates a disturbance in the Gulf–Qatar theatre — so any dip is traceable to a real event rather than an assumed shortfall.",
+        formula: "Flow %  =  100 (contractual nominal)  −  live regional-disturbance deflection",
+        inputs: [
+          { k: "Calm-state baseline", v: "100% of contracted volume", src: "assumption" },
+          { k: "Why not <100% by default", v: "piped supply, does not transit Hormuz — no standing degradation" },
+          { k: "Deflects only on", v: "live Gulf–Qatar news / conflict intensity", src: "gdelt" },
+          { k: "Live flow meter", v: "none public — Dolphin throughput isn't metered in real time" },
+        ],
+        assumption: "Held at contractual nominal because there is no observed shortfall and no live flow feed. Any dip is driven only by the live conflict/news proxy. The structural Dolphin risk — renewal / repricing at the ~2032 contract expiry — is captured by the gas replacement-basis node, not by a daily-flow signal." } },
+    { id: "romembrane", name: "RO membrane stock", value: "75", valueText: "75 days", unit: "emergency reserve · resupply status", delta: 0, dir: "flat",
+      status: "good", src: "assumption", pinned: true, statusText: "clear", spark: [75, 75, 75, 75, 75, 75, 75, 75],
+      note: "A stated ~75-day emergency reserve of desalination membranes — a fixed buffer, not a live-measured stock (there is no public inventory feed). The live element is resupply STATUS: membranes are sea-borne, so when the maritime-throughput proxy on their routes (Hormuz / Red Sea) shows disruption, resupply reads impaired. The day-by-day drawdown of the buffer is modelled in the cascade and scenario simulator, not animated here.",
+      fx: { kicker: "Leading indicator · assumption", title: "RO membrane stock — buffer + resupply status",
+        text: "Two honest parts in one signal. The ~75-day figure is a STATED emergency reserve of reverse-osmosis membranes — a fixed buffer, not an observed stock, because there is no public live inventory feed. The live part is resupply STATUS: membranes are sea-borne imports, so the indicator reads 'impaired' when the live maritime-throughput proxy on its routes (Hormuz / Red Sea) drops, and 'clear' when they're open. It deliberately does NOT animate a count down from 75 — real depletion is one buffer-day per blocked calendar day, which a live dashboard clock can't represent honestly. The day-by-day drawdown is modelled where it belongs: the cascade and scenario simulator.",
+        formula: "Reserve  =  ~75 days (stated)      ·      Resupply status  =  f( live maritime throughput on Hormuz / Red Sea )",
+        inputs: [
+          { k: "Stated reserve", v: "~75 days emergency buffer", src: "assumption" },
+          { k: "Resupply route", v: "sea-borne (mainly US) via Hormuz / Red Sea", src: "ais" },
+          { k: "Live read", v: "routes open → resupply clear · routes disrupted → impaired" },
+          { k: "Live inventory feed", v: "none public — on-hand stock isn't reported in real time" },
+          { k: "Day-by-day drawdown", v: "modelled in the cascade & scenario simulator, not here" },
+        ],
+        assumption: "The 75-day buffer is a stated reserve, not an observed stock. The only live element is resupply-route status, taken from the same maritime-throughput proxy behind the chokepoint signals — there is no fabricated countdown or erosion coefficient." } },
     { id: "gpsjam", name: "GPS jamming events", value: "12", unit: "this week", delta: 50, dir: "up",
       status: "high", src: "acled", spark: [4,5,6,5,8,9,11,12], note: "Proxy — scaled from live ACLED armed-conflict intensity across the Gulf / Yemen / Iran theatre, not a direct jamming-sensor count." },
     { id: "brent", name: "Brent crude", value: "$93.09", unit: "/ barrel", delta: 4, dir: "up",
@@ -187,8 +210,19 @@ window.RD = (function () {
     { id: "gasbasis", name: "Gas — replacement basis", value: "$12.0", unit: "/ MMBtu marginal", delta: 0, dir: "flat",
       status: "moderate", src: "curated", twoState: true, spark: [11.3,11.6,11.4,11.8,12.1,11.9,12.0,12.0],
       note: "Two price worlds at once. Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor; the molecule that would REPLACE it if Dolphin failed is sea-borne LNG, priced at ~12.5% of Brent (~$12 today, ≈8× the floor). The exposure is a price-BASIS flip from contract to oil-linked, not a volume gap against a buffer. Henry Hub (US ~$3) is the wrong benchmark for the UAE and is not used here." },
-    { id: "sanctions", name: "OFAC SDN updates", value: "3", unit: "new this week", delta: 0, dir: "flat",
-      status: "moderate", src: "ofac", spark: [1,0,2,1,2,1,0,3], note: "Feeds counterpart-risk adjustment." },
+    { id: "sanctions", name: "OFAC SDN updates", value: "2", unit: "new designations · partner-dependency risk", delta: 0, dir: "flat",
+      status: "moderate", src: "ofac", spark: [1,0,2,1,2,1,0,3],
+      note: "Counts entities and individuals added this week to the US Treasury OFAC Specially Designated Nationals (SDN) list that touch UAE-relevant counterparties — banks, trading houses, shipping and front companies operating in or through the Emirates. New designations can freeze dollar-clearing access and force counterparties to be dropped, so this feeds the counterpart-risk adjustment on the finance and logistics dependencies.",
+      fx: { kicker: "Leading indicator · live feed", title: "OFAC SDN updates — new UAE-linked designations",
+        text: "This tracks additions to the US Treasury's Specially Designated Nationals (SDN) list — the sanctions roster that bars US persons and the dollar system from dealing with the named party. The count shown is new designations this week that are relevant to UAE counterparties: entities or individuals in banking, commodity trading, shipping or corporate fronts operating in or through the Emirates. It is an early-warning signal because a fresh designation can abruptly cut a counterparty's dollar-clearing access and force UAE firms to unwind exposure.",
+        formula: "Value  =  count of new UAE-relevant SDN additions in the trailing 7 days",
+        inputs: [
+          { k: "Source list", v: "US Treasury OFAC SDN list", src: "ofac" },
+          { k: "Filter", v: "designations touching UAE-linked counterparties (banking / trade / shipping)" },
+          { k: "Window", v: "new additions in the trailing 7 days" },
+          { k: "Why it matters", v: "a designation can freeze dollar-clearing and force counterparty exits" },
+        ],
+        assumption: "The UAE-relevance filter is a curated judgement over the raw SDN delta feed — not every global designation is counted, only those with a plausible UAE counterparty nexus." } },
   ];
 
   // ---- Two-state gas pricing node -----------------------------------------

@@ -64,14 +64,14 @@ function Fx({ payload }) {
 }
 
 /* ---- sparkline ---------------------------------------------------------- */
-function Sparkline({ data, w = 84, h = 26, band = "moderate" }) {
+function Sparkline({ data, w = 84, h = 26, band = "moderate", fluid = false }) {
   const min = Math.min(...data), max = Math.max(...data), rng = max - min || 1;
   const pts = data.map((v, i) => [ (i / (data.length - 1)) * w, h - ((v - min) / rng) * (h - 4) - 2 ]);
   const line = pts.map((p) => p.join(",")).join(" ");
   const area = `0,${h} ${line} ${w},${h}`;
   const last = pts[pts.length - 1];
   return (
-    <svg className={`spark band-${band}`} width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+    <svg className={`spark band-${band}`} width={fluid ? "100%" : w} height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio={fluid ? "none" : "xMidYMid meet"} style={{ display: "block" }}>
       <polygon points={area} fill="var(--bc)" opacity="0.10"></polygon>
       <polyline points={line} fill="none" stroke="var(--bc)" strokeWidth="1.5" strokeLinejoin="round"></polyline>
       <circle cx={last[0]} cy={last[1]} r="2.4" fill="var(--bc)"></circle>
@@ -84,10 +84,15 @@ function Trend({ now, prev, suffix = "", horizon = "24h" }) {
   const d = +(now - prev).toFixed(1);
   const dir = d > 0.05 ? "up" : d < -0.05 ? "down" : "flat";
   const ic = dir === "up" ? "arrowUp" : dir === "down" ? "arrowDown" : "flat";
+  const tip = dir === "up"
+    ? `Resilience rose ${d} pts over ${horizon} — higher is stronger, so this is an improvement.`
+    : dir === "down"
+    ? `Resilience fell ${Math.abs(d)} pts over ${horizon} — higher is stronger, so a drop is an erosion.`
+    : `Effectively flat over ${horizon}.`;
   return (
-    <span className={`trend ${dir}`}>
+    <span className={`trend ${dir}`} title={tip}>
       <Icon name={ic} size={13} />{d > 0 ? "+" : ""}{d}{suffix}
-      <span className="faint" style={{ fontSize: 10 }}>{horizon}</span>
+      <span className="faint" style={{ fontSize: 10 }}>{horizon} · resilience</span>
     </span>
   );
 }
@@ -124,12 +129,14 @@ function headlineDrivers(d) {
     const gap = +(RD.headline.structural.value - d.value).toFixed(1);
     return {
       kicker: "Live factors · updating hourly",
+      caption: `${gap} pts under the ${RD.headline.structural.value.toFixed(1)} ceiling — clears as today's load eases`,
       text: `Hormuz & Red Sea pressure active, Guinea/EGA bauxite easing. Maritime disruption is counted once — through measured ship transits, which already reflect the escalation — and live sits ${gap} pts below the ceiling.`,
     };
   }
   const weakest = RD.sectors.reduce((a, b) => (b.score < a.score ? b : a));
   return {
     kicker: "Drivers · refreshed monthly",
+    caption: `Most-exposed sector: ${weakest.name} ${weakest.score.toFixed(1)} · realistic ceiling ~72, not 100`,
     text: `Capacity — Absorb · Recover · Adapt — set against the most-exposed sector (${weakest.name} ${weakest.score.toFixed(1)}). Recomputed monthly from public data.`,
   };
 }
@@ -193,23 +200,18 @@ function ScoreCard({ d }) {
           </div>
         ) : null}
       </div>
-      {d.cap ? (
-        <div className="score-ceiling"><b>{d.cap.lead}</b> {d.cap.body}</div>
-      ) : null}
-      <div className="score-drivers">
-        <span className="score-drivers-k">{dr.kicker}</span>
-        <span className="score-drivers-t">{dr.text}</span>
-      </div>
-      <div className="score-foot">
-        <Icon name="info" size={14} style={{ flex: "0 0 auto", color: "var(--faint)", marginTop: 1 }} />
-        <span>{b.desc}.&nbsp;
-          <button className="exp" onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
-            kicker: "Score methodology", title: d.name, text: d.explain, formula: d.formula,
-            inputs: d.inputs, assumption: d.assumption,
-            range: d.rangeHalf != null ? { lo, hi, half, confidence: conf } : undefined,
-            sensitivity: d.sensitivity,
-          }); }}>How is this calculated?</button>
-        </span>
+      <div className="score-caption">
+        <span className="score-caption-t">{dr.caption}</span>
+        <button className="exp" onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
+          kicker: "Score methodology", title: d.name, text: d.explain, formula: d.formula,
+          inputs: d.inputs, assumption: d.assumption,
+          range: d.rangeHalf != null ? { lo, hi, half, confidence: conf } : undefined,
+          sensitivity: d.sensitivity,
+          context: [
+            { h: dr.kicker, t: dr.text },
+            d.cap ? { h: "Reading the scale", t: d.cap.lead + " " + d.cap.body } : null,
+          ].filter(Boolean),
+        }); }}>How is this calculated?</button>
       </div>
     </div>
   );
@@ -295,6 +297,12 @@ function Drawer({ payload, onClose }) {
               <p className="exp-text">{payload.text}</p>
             </div>
           )}
+          {payload.context && payload.context.map((c, i) => (
+            <div className="exp-sec" key={"ctx" + i}>
+              <h4>{c.h}</h4>
+              <p className="exp-text">{c.t}</p>
+            </div>
+          ))}
           {payload.formula && (
             <div className="exp-sec">
               <h4>How it is computed</h4>

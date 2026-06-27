@@ -31,13 +31,12 @@ function GasBasisRow({ ind }) {
   return (
     <div className="indi band-moderate">
       <span className="indi-led"></span>
-      <div className="indi-name" style={{ flex: "0 0 38%" }}>{ind.name}<br /><span className="u">two-state · contract vs oil-linked</span></div>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, flex: 1, flexWrap: "wrap" }}>
+      <div className="indi-name">{ind.name}<br /><span className="u">two-state · contract vs oil-linked</span></div>
+      <div style={{ gridColumn: "3 / 6", display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", justifyContent: "flex-end" }}>
         <span className="pill"><span className="sq" style={{ background: "var(--good)" }}></span>floor ${g.floor.toFixed(2)}</span>
         <Icon name="arrowRight" size={13} style={{ color: "var(--faint)" }} />
         <span className="pill band-high"><span className="sq"></span>marginal {ind.value} · ≈{g.multiple.toFixed(1)}×</span>
       </div>
-      <Sparkline data={ind.spark} band="high" />
       <Fx payload={gasBasisFx()} />
       <SourceTag src="curated" />
     </div>
@@ -45,8 +44,12 @@ function GasBasisRow({ ind }) {
 }
 
 /* ---------- "what changed" strip ---------------------------------------- */
-function WhatChanged() {
-  const live = RD.headline.live, struct = RD.headline.structural;
+/* ---------- Today's gap + 24h scan (merged live-delta panel) ------------- */
+function LiveGap() {
+  const s = RD.headline.structural.value;
+  const l = RD.headline.live.value;
+  const gap = +(s - l).toFixed(1);
+  const live = RD.headline.live;
   const hz = RD.chokepoints.find((c) => c.id === "hormuz");
   const ro = RD.indicators.find((i) => i.id === "romembrane");
   const brent = RD.indicators.find((i) => i.id === "brent");
@@ -55,14 +58,20 @@ function WhatChanged() {
   const items = [
     { label: "Live Stress", v: (lsd > 0 ? "+" : "") + lsd, dir: lsd >= 0 ? "up" : "down", note: "vs yesterday's baseline", src: "ais" },
     { label: "Hormuz", v: "−" + hz.drop + "%", dir: "down", note: hz.vessels + " of " + hz.baseline + " transit calls/day", src: "ais" },
-    { label: "RO stock", v: "−1 day", dir: "down", note: "now " + ro.value + " of 75-day buffer", src: "curated" },
+    { label: "RO buffer", v: "75 d", dir: ro.status === "high" ? "down" : "flat", note: ro.statusText || "resupply clear", src: "assumption" },
     { label: "Brent", v: (brent.delta > 0 ? "+" : "") + brent.delta + "%", dir: brent.delta >= 0 ? "up" : "down", note: brent.value + " / barrel", src: "yfinance" },
     { label: "Gas basis", v: gasb.value, dir: "flat", note: "marginal LNG vs $" + (RD.gasNode ? RD.gasNode.floor.toFixed(2) : "1.50") + " floor", src: "curated" },
   ];
   return (
-    <Panel title="What changed since yesterday" icon="spark" label="24-HOUR DELTA"
-      right={<span className="helper" style={{ marginLeft: "auto" }}>For the 30-second scan</span>}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 14 }}>
+    <Panel title="Today's gap" icon="spark"
+      right={<span className="helper" style={{ marginLeft: "auto" }}>{gap} pts of live load below the {s} ceiling — clears as it eases</span>}>
+      <div className="gapbar-track" style={{ marginTop: 30, marginBottom: 46 }}>
+        <div className="gapbar-live" style={{ width: l + "%" }}></div>
+        <div className="gapbar-gap" style={{ left: l + "%", width: (s - l) + "%" }}></div>
+        <div className="gapbar-ceil" style={{ left: s + "%" }}><span>ceiling {s}</span></div>
+        <div className="gapbar-livemark" style={{ left: l + "%" }}><span>live {l}</span></div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 14, paddingTop: 20, borderTop: "1px solid var(--line)" }}>
         {items.map((it, i) => (
           <div key={i} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span className="label">{it.label}</span>
@@ -73,31 +82,6 @@ function WhatChanged() {
         ))}
       </div>
     </Panel>
-  );
-}
-
-/* ---------- Gap bar: baseline vs live deviation -------------------------- */
-function GapBar() {
-  const s = RD.headline.structural.value;
-  const l = RD.headline.live.value;
-  const gap = +(s - l).toFixed(1);
-  return (
-    <div className="gapbar">
-      <div className="gapbar-head">
-        <span className="gapbar-k">Today's gap</span>
-        <span className="gapbar-val mono">{gap}</span>
-        <span className="gapbar-sub">points below baseline · live load</span>
-      </div>
-      <div className="gapbar-track">
-        <div className="gapbar-live" style={{ width: l + "%" }}></div>
-        <div className="gapbar-gap" style={{ left: l + "%", width: (s - l) + "%" }}></div>
-        <div className="gapbar-ceil" style={{ left: s + "%" }}><span>ceiling {s}</span></div>
-        <div className="gapbar-livemark" style={{ left: l + "%" }}><span>live {l}</span></div>
-      </div>
-      <div className="gapbar-foot">
-        The active load the system is absorbing today. As it clears, live recovers <i>toward</i> the ceiling — the feeds behind it are broken out below.
-      </div>
-    </div>
   );
 }
 
@@ -116,14 +100,8 @@ function DriverTrace() {
     model: { badge: "MODEL", cls: "model", sub: "modelled severity" },
   };
   return (
-    <Panel title="What's moving the score right now" icon="book" label="LIVE DRIVER ATTRIBUTION"
+    <Panel title="What's moving the score right now" icon="book"
       right={<span className="helper" style={{ marginLeft: "auto" }}>{liveN} of {drivers.length} drivers on a connected live feed</span>}>
-      <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
-        Each row is one named load on the score — its point contribution, current reading and source.
-        <span style={{ color: "var(--good)", fontWeight: 600 }}> LIVE</span> = a connected feed;
-        <span style={{ fontWeight: 600 }}> SIM</span> = a stand-in until its feed connects;
-        <span style={{ color: "var(--muted)", fontWeight: 600 }}> MODEL</span> = a curated severity judgement with no live feed.
-      </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         {drivers.map((d, i) => {
           const w = Math.round((d.v / maxV) * 100);
@@ -203,8 +181,8 @@ function Capacities() {
   ];
 
   return (
-    <Panel title="What Structural Resilience is made of" icon="layers" label="CAPACITY, AGAINST EXPOSURE"
-      right={<span className="helper" style={{ marginLeft: "auto" }}>Absorb · Recover · Adapt — the shared lens of OECD, IPCC &amp; Briguglio</span>}>
+    <Panel title="What Structural Resilience is made of" icon="layers"
+      right={<span className="helper" style={{ marginLeft: "auto" }}>Absorb · Recover · Adapt</span>}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
         {tiles.map((t) => {
           const b = RD.band(t.n);
@@ -256,8 +234,7 @@ function OverviewView({ go }) {
       <div className="view-head">
         <div className="view-title">The gap is the signal</div>
         <div className="view-sub">
-          Two readings of one system: <b>Structural Resilience</b> is the slow-moving ceiling — your fundamentals.
-          <b> Live Stress</b> is that ceiling minus today's active load. The <b>gap</b> between them is the signal: wide means focus here today, narrow means you're near full strength.
+          Two readings of one system: <b>Structural Resilience</b> is the ceiling; <b>Live Stress</b> is that ceiling minus today's active load. The <b>gap</b> between them is the signal.
         </div>
       </div>
 
@@ -268,13 +245,11 @@ function OverviewView({ go }) {
 
       <Capacities />
 
-      <GapBar />
+      <div style={{ marginTop: 16 }}><LiveGap /></div>
 
-      <div style={{ marginTop: 16 }}><DriverTrace /></div>
+      <div style={{ margin: "16px 0" }}><DriverTrace /></div>
 
-      <div style={{ marginBottom: 16 }}><WhatChanged /></div>
-
-      <Panel title="Sector resilience" icon="gauge" label="7 CRITICAL SECTORS"
+      <Panel title="Sector resilience" icon="gauge"
         right={<span className="helper" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
           Most-exposed sector sets the floor <Fx payload={{
             kicker: "Aggregation rule", title: "Non-compensatory: the weak link anchors the score",
@@ -289,7 +264,7 @@ function OverviewView({ go }) {
           }} />
         </span>}>
         <div className="sector-grid">
-          {RD.sectors.map((s) => <SectorCard key={s.id} s={s} onOpen={(sec) => go("dependencies", { sector: sec.id })} />)}
+          {RD.sectors.slice().sort((a, b) => a.score - b.score).map((s) => <SectorCard key={s.id} s={s} onOpen={(sec) => go("dependencies", { sector: sec.id })} />)}
         </div>
       </Panel>
 
@@ -297,8 +272,7 @@ function OverviewView({ go }) {
         {/* cascade CTA */}
         <section className="panel" style={{ display: "flex", flexDirection: "column" }}>
           <header className="panel-h"><Icon name="cascade" size={15} style={{ color: "var(--muted)" }} />
-            <span className="ttl">How a shock spreads</span>
-            <span className="label" style={{ marginLeft: "auto" }}>SIGNATURE VIEW</span></header>
+            <span className="ttl">How a shock spreads</span></header>
           <div className="panel-b" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
             <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
               The model's core idea: a single disruption doesn't stay put. Watch a Hormuz closure travel from
@@ -319,14 +293,14 @@ function OverviewView({ go }) {
         </section>
 
         {/* top signals */}
-        <Panel title="Live signals" icon="threat" label="TOP 4"
+        <Panel title="Live signals" icon="threat"
           right={<button className="exp" style={{ marginLeft: "auto" }} onClick={() => go("threats")}>All signals →</button>}>
           {RD.indicators.slice(0, 4).map((ind) => (
-            <div className={`indi band-${ind.status}`} key={ind.id}>
+            <div className={`indi compact band-${ind.status}`} key={ind.id}>
               <span className="indi-led"></span>
               <div className="indi-name">{ind.name} <span className="u">{ind.unit}</span></div>
-              <Sparkline data={ind.spark} band={ind.status} />
-              <div className="indi-val mono">{ind.value}</div>
+              <Sparkline data={ind.spark} band={ind.status} w={70} />
+              <div className="indi-val mono">{ind.valueText || ind.value}</div>
             </div>
           ))}
         </Panel>
@@ -551,7 +525,7 @@ function ThreatsView() {
         </div>
       </Panel>
 
-      <div className="grid cols-2" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <Panel title="Shock convergence" icon="alert" label="LAST 30 DAYS">
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {RD.shocks.map((s) => {
@@ -632,16 +606,19 @@ function ThreatsView() {
           </div>
         </Panel>
 
-        <Panel title="Leading indicators" icon="spark" label="EARLY SIGNALS">
+        <Panel title="Leading indicators" icon="spark">
           {RD.indicators.map((ind) => ind.twoState ? <GasBasisRow key={ind.id} ind={ind} /> : (
             <div className={`indi band-${ind.status}`} key={ind.id}>
               <span className="indi-led"></span>
               <div className="indi-name" style={{ flex: "0 0 38%" }}>{ind.name}<br /><span className="u">{ind.unit}</span></div>
-              <Sparkline data={ind.spark} band={ind.status} />
-              <div className="indi-val mono">{ind.value}</div>
-              <div className={`indi-delta ${ind.dir === "up" ? (ind.status === "good" ? "up" : "warnup") : ind.dir === "down" ? "down" : "flat"}`}>
-                {ind.delta > 0 ? "+" : ""}{ind.delta}{ind.id.includes("transit") || ind.delta === 0 ? "%" : ind.id === "romembrane" ? "" : "%"}
-              </div>
+              <Sparkline data={ind.spark} band={ind.status} fluid w={220} />
+              <div className="indi-val mono">{ind.valueText || ind.value}</div>
+              {ind.statusText ? (
+                <div className={`indi-delta ${ind.status === "high" ? "down" : ind.status === "moderate" ? "warnup" : "flat"}`} style={{ fontSize: 11 }}>{ind.statusText}</div>
+              ) : (
+                <span></span>
+              )}
+              {ind.fx ? <Fx payload={ind.fx} /> : <span></span>}
               <SourceTag src={ind.src} />
             </div>
           ))}

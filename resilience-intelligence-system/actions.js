@@ -73,7 +73,7 @@ window.ACT = (function () {
           id: "t2", name: "Tier 2 · Build the filter factory", kind: "mixed", recommended: true,
           deliverable: "A joint-venture filter factory and technical centre at KEZAD, copying the Saudi playbook — making complete filter cartridges for the UAE's own plants, plus export to neighbours.",
           cost: 0.70, vehicle: "Operation 300bn co-investment",
-          costBasis: "Anchored to the real US$86M (≈AED 0.32bn) Saudi factory — doubled to cover a technical centre, more capacity and UAE costs. Far below the AED 2.6bn this system previously assumed.",
+          costBasis: "Anchored to the real US$86M (≈AED 0.32bn) Saudi factory — doubled to cover a technical centre, more capacity and UAE costs.",
           days: 660, timeBasis: "~22 months — exactly what the Saudi factory took from announcement (May 2024) to production (early 2026), plus time to test the new filters at Taweelah.",
           livePts: 0.6, ceilPts: 1.4, local: 70,
           residual: "~70% made locally — but the specialty chemicals inside are still imported. The weak point moves one step up the chain, from 'finished filters' to 'chemicals'.",
