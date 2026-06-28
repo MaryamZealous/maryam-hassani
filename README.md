@@ -63,11 +63,14 @@ and a coloured dot in the top status bar.
 straight from the browser because they allow it):
 - **IMF PortWatch** — real daily chokepoint transit calls from satellite AIS on ~90,000
   ships, for Hormuz / Bab-el-Mandeb / Suez. Drives the **Maritime throughput** driver —
-  the biggest input to Live Stress. Shown on the chokepoint cards as transit calls/day vs
+  the biggest input to Live Resilience. Shown on the chokepoint cards as transit calls/day vs
   each strait's 12-month norm. Updates weekly (Tuesdays).
-- **Google News (+ GDELT fallback)** — live world-news monitor for trade-route closure /
-  conflict coverage. Powers the **Trade-route news monitor** panel and the news-pressure
-  driver. Shown in the platform as "Google News". Updates every 6 min.
+- **Google News (+ GDELT fallback)** — live world-news monitor for **supply & trade-route**
+  coverage: route closures (Hormuz / Red Sea / Suez) plus **adverse partner-supply** news on
+  the single- and few-source dependencies (Qatar gas, Taiwan chips, Kazakhstan fuel, China,
+  India), negative-sentiment gated. Powers the **Supply & trade-route news monitor** panel
+  and the **Trade-route news** + **Partner-supply news** Live Resilience drivers. Shown in the
+  platform as "Google News". Updates every 6 min.
 - **Open-Meteo** — live sea-state (wave height) + wind at Hormuz / Bab-el-Mandeb /
   Suez and Gulf temperature. Shown on the chokepoint cards as "Sea state".
 - **OFAC / OpenSanctions** — live US Treasury SDN entity count.

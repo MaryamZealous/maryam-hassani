@@ -480,7 +480,7 @@ function DependenciesView({ initial }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>
               <div className="kpi"><span className="kpi-v mono">{sel.dri}</span><span className="kpi-l">DRI / 100 <Fx payload={{
                 kicker: "Dependency Risk Index", title: "How DRI is built",
-                text: "DRI scores how fragile a single import is, from two parts. STRUCTURAL fragility blends the four supply dimensions — with Route up-weighted, because a contested-chokepoint shipment is a higher-severity risk than the other axes. BUFFER fragility adds the missing half: the buffer is your reaction time, so a thin buffer is itself a fragility (Dolphin's 30 days and LEU's 540 are not the same risk even with similar dimensions).",
+                text: "DRI scores how fragile a single import is, from two parts. STRUCTURAL fragility blends the four supply dimensions — Route carries the largest weight, because a contested-chokepoint shipment is a higher-severity risk than the other axes. BUFFER fragility adds the missing half: the buffer is your reaction time, so a thin buffer is itself a fragility (Dolphin's 30 days and LEU's 540 are not the same risk even with similar dimensions).",
                 formula: "DRI = 0.67 × (0.34·Route + 0.22·Concentration + 0.22·Substitution + 0.22·Counterpart, each /25) + 0.33 × buffer fragility,  buffer fragility = (1 − min(buffer / 180d, 1))",
                 inputs: [
                   ...dims.map(([k, l, def]) => ({ k: l + (k === "route" ? " (weight 0.34)" : " (weight 0.22)"), v: sel.dims[k] + " / 25 — " + def })),
@@ -609,7 +609,7 @@ function ControlView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Control layer</div>
-        <div className="view-sub">The levers the state can actually pull — sovereign capital, assets held abroad, agreements, treaty obligations and the workforce that runs critical infrastructure.</div>
+        <div className="view-sub">The levers the state can actually pull — sovereign capital, assets held abroad, agreements, treaty obligations, the workforce that runs critical infrastructure, and the national reserves held behind essential supply.</div>
       </div>
       <div className="grid" style={{ gridTemplateColumns: "repeat(4,1fr)", marginBottom: 16 }}>
         {[
@@ -686,19 +686,15 @@ function ControlView() {
           </div>
         )}
       </Panel>
+      <ReservesRow />
     </div>
   );
 }
 
-/* ---------- Operations --------------------------------------------------- */
-function OperationsView() {
+/* ---------- National reserves (shown on the Control layer) -------------- */
+function ReservesRow() {
   return (
-    <div className="view fade-in">
-      <div className="view-head">
-        <div className="view-title">Operationalize</div>
-        <div className="view-sub">Where the national picture meets the ground — the national strategic water reserve, the health supply snapshot, how the model has performed against real events, and what's left to build.</div>
-      </div>
-      <div className="grid cols-2" style={{ gridTemplateColumns: "1.2fr 1fr", marginBottom: 16, alignItems: "start" }}>
+    <div className="grid cols-2" style={{ gridTemplateColumns: "1.2fr 1fr", marginTop: 16, alignItems: "start" }}>
         <Panel title="National strategic water reserve" icon="ops" label="EMERGENCY ESSENTIAL-SUPPLY · DAYS">
           <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 14 }}>
             <span className="mono" style={{ fontSize: 52, fontWeight: 600, lineHeight: 0.9, letterSpacing: "-0.02em" }}>{RD.water.days}</span>
@@ -741,7 +737,13 @@ function OperationsView() {
           <div className="note-card assume" style={{ marginTop: 14 }}>{RD.health.threshold}</div>
         </Panel>
       </div>
-      <div className="grid cols-2" style={{ gridTemplateColumns: "1fr 1fr", alignItems: "start" }}>
+  );
+}
+
+/* ---------- Model maturity (shown on How this works) -------------------- */
+function MaturityRow() {
+  return (
+    <div className="grid cols-2" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 22, alignItems: "start" }}>
         <Panel title="Model validation" icon="check" label="PREDICTED vs. ACTUAL"
           right={<Fx payload={{
             kicker: "Validation", title: "How accuracy is judged",
@@ -773,7 +775,6 @@ function OperationsView() {
           </div>
         </Panel>
       </div>
-    </div>
   );
 }
 
@@ -781,7 +782,7 @@ function OperationsView() {
 function MethodologyView() {
   const qs = [
     { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving CEILING — your fundamentals. Live Resilience is that ceiling minus today's active load, and tracks toward it: live strength climbs back to what your fundamentals allow as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm. Structural Resilience itself breaks into three capacities — Absorb, Recover and Adapt — measured against your most-exposed sector." },
-    { n: "2", t: "What is the DRI — and how is it built?", d: "The Dependency Risk Index scores how fragile a single import is, from two parts. STRUCTURAL fragility (0.67 of the score) blends the four supply dimensions, with Route up-weighted — Route carries 0.34 against 0.22 each for the others, because dependence on a contested maritime chokepoint is a higher-severity, harder-to-mitigate risk. — Source concentration: how few suppliers provide it today. — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. BUFFER fragility (0.33 of the score) adds the half a dims-only index misses: the buffer is your reaction time, so a thin buffer is itself a fragility — full credit only past ~180 days of cover. That is why Dolphin gas (30-day buffer) and LEU fuel (540-day) land at very different DRIs even with comparable dimensions." },
+    { n: "2", t: "What is the DRI — and how is it built?", d: "The Dependency Risk Index scores how fragile a single import is, from two parts. STRUCTURAL fragility (0.67 of the score) blends the four supply dimensions, with Route carrying the largest weight — 0.34 against 0.22 each for the others, because dependence on a contested maritime chokepoint is a higher-severity, harder-to-mitigate risk. — Source concentration: how few suppliers provide it today. — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. BUFFER fragility (0.33 of the score) adds the half a dims-only index misses: the buffer is your reaction time, so a thin buffer is itself a fragility — full credit only past ~180 days of cover. That is why Dolphin gas (30-day buffer) and LEU fuel (540-day) land at very different DRIs even with comparable dimensions." },
     { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one. Structural Resilience anchors to the most-exposed sector — 60% most-exposed + 40% overall capacity — so one concentrated dependency stays visible behind healthy ones, while still reading the full picture." },
     { n: "4", t: "How is consequence weighting calculated?", d: "It is computed, not assigned. Each import's 0–1 national-consequence weight is a blend of four publicly-grounded factors — Essentiality (how vital the end-service is), Service reliance (how much of that service rides on this input), Immediacy (continuous-flow vs slow-burn consumable) and Breadth (sectors and population touched) — combined as 0.40·ess + 0.25·svc + 0.20·imm + 0.15·brd. Piped gas scores 1.00 (powers electricity and desalination, continuous, universal); gold doré ~0.23 (a refining margin, narrow). The weight then scales each dependency's pull on its sector score and on Absorb capacity, so it moves only when the underlying facts move. Open any import on the Dependencies view to see its four factors. Distinct from the DRI, which scores supplier fragility, not national importance." },
     { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, route & partner-supply news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying its tier, and the status bar shows whether each live feed is currently connected (● Live) or temporarily simulated (○ Sim)." },
@@ -793,7 +794,7 @@ function MethodologyView() {
   ];
   const STEPS = [
     { t: "Start with what the country must import", d: "We track " + RD.precursors.length + " supplies the UAE cannot function without — natural gas, desalination membranes, medicines, advanced chips, dollar-clearing access and more.", where: "Dependencies" },
-    { t: "Score how shaky each supply is", d: "Each import gets a fragility score built from five things: how few suppliers it has, how hard it would be to switch, how exposed its shipping route is (which now counts for the most), how reliable the seller is, and how thin its stockpile buffer is — because that buffer is your time to react.", where: "Dependencies → DRI" },
+    { t: "Score how shaky each supply is", d: "Each import gets a fragility score built from five things: how few suppliers it has, how hard it would be to switch, how exposed its shipping route is (the most heavily weighted of the five), how reliable the seller is, and how thin its stockpile buffer is — because that buffer is your time to react.", where: "Dependencies → DRI" },
     { t: "Weigh how much each one matters", d: "Each import also gets an importance weight — how badly the country would feel its loss, based on how essential it is and how many people and sectors rely on it.", where: "Dependencies → Consequence" },
     { t: "Roll the imports up into 7 sectors", d: "Imports group into sectors — energy, water, health, food, defence, logistics, finance. A sector's strength is its imports' fragility, weighted by how much each one matters.", where: "Overview → Sector resilience" },
     { t: "Set the fair-weather national strength", d: "The single weakest sector, combined with the country's ability to absorb shocks, recover and adapt, sets Structural Resilience — strength on a calm day.", where: "Overview → Structural Resilience" },
@@ -816,13 +817,7 @@ function MethodologyView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">How this works</div>
-        <div className="view-sub">The whole model, laid bare. Nothing here is a black box.</div>
-      </div>
-
-      <div className="intro-card" style={{ maxWidth: "none", marginBottom: 22 }}>
-        <div className="intro-kicker">Read this first</div>
-        <div className="intro-title" style={{ fontSize: 22 }}>An illustrative model — transparent by design</div>
-        <p className="intro-lead">This is a worked example of how a country's supply-chain resilience could be measured. It runs on live, publicly-available data plus curated open sources, combined through logic and assumptions that are all written down. Think of it as decision-support — not an official or classified government assessment — where every number can be traced back to where it came from.</p>
+        <div className="view-sub">The whole model, laid bare — an illustrative, transparent example, not an official or classified assessment. Nothing here is a black box.</div>
       </div>
 
       <div style={{ marginBottom: 22 }}>
@@ -859,6 +854,14 @@ function MethodologyView() {
             ))}
           </div>
         </Panel>
+      </div>
+
+      <div style={{ marginBottom: 22 }}>
+        <div className="view-head" style={{ marginBottom: 6 }}>
+          <div className="view-title" style={{ fontSize: 19 }}>How the model has performed — and what's left to build</div>
+          <div className="view-sub">The model's own track record against real events, and how mature each part of it is. This is commentary on the model itself, not on the UAE.</div>
+        </div>
+        <MaturityRow />
       </div>
 
       <div style={{ marginBottom: 22 }}>
@@ -970,7 +973,7 @@ function MethodologyView() {
               "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
               "DRI = 0.67 × route-weighted dimension fragility (Route weight 0.34 vs 0.22 each for Concentration / Substitution / Counterpart) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — a thin buffer is itself a fragility because the buffer is your reaction time",
               "Buffer days are curated estimates, not a live inventory feed — most are analyst order-of-magnitude judgements ('est.'); a few (nuclear fuel, strategic grain) reflect reported policy ('stated'). The tag and provenance show on each import in Dependencies.",
-              "Score uncertainty = quadrature of sensitivities to the editable assumptions (0.60 anchor, 90-day benchmark, sovereign buffer, consequence weights, DRI ±4 — which now spans the route weighting and 180-day buffer horizon); confidence tier follows the range width",
+              "Score uncertainty = quadrature of sensitivities to the editable assumptions (0.60 anchor, 90-day benchmark, sovereign buffer, consequence weights, DRI ±4 — spanning the route weighting and 180-day buffer horizon); confidence tier follows the range width",
               "Gas is a two-state node: contracted Dolphin floor (~$1.50/MMBtu, reported estimate) vs marginal LNG ≈ 12.5% of Brent — losing Dolphin is a price-basis flip, not a volume gap; Henry Hub is not used",
               "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure (speed & value-for-money inform the scope decision, not the ranking)",
               "Response effects are independent & additive: Live′ = min(Ceiling′, live + staged points)",
@@ -987,4 +990,4 @@ function MethodologyView() {
   );
 }
 
-Object.assign(window, { MapView, DependenciesView, ControlView, OperationsView, MethodologyView });
+Object.assign(window, { MapView, DependenciesView, ControlView, MethodologyView });

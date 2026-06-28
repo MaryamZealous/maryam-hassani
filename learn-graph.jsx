@@ -266,7 +266,7 @@ function LearnGraph() {
         const isMatch = filter && n.type === filter;
         const dimmed = (active && !isActive && !isNeighbor) || (filter && n.type !== filter);
         const cls = [
-          "lg-node", `t-${n.type}`, n.hub ? "hub" : "",
+          "lg-node", `t-${n.type}`, n.type === "idea" ? "hub" : "",
           isActive ? "active" : "", isNeighbor ? "neighbor" : "", dimmed ? "dim" : "",
           isMatch ? "match" : "", selected === n.id ? "selected" : ""
         ].join(" ");

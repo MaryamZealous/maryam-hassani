@@ -250,8 +250,6 @@ function OverviewView({ go }) {
 
       <div style={{ marginTop: 16 }}><LiveGap /></div>
 
-      <div style={{ margin: "16px 0" }}><DriverTrace /></div>
-
       <Panel title="Sector resilience" icon="gauge"
         right={<span className="helper" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
           Most-exposed sector sets the floor <Fx payload={{

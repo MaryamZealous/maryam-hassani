@@ -26,10 +26,20 @@ const QUERIES = {
   hormuz:  '"Strait of Hormuz"',
   redsea:  '"Bab-el-Mandeb" OR ("Red Sea" shipping) OR ("Houthi" shipping)',
   suez:    '"Suez Canal"',
+  // partner-supply lanes — NEGATIVE-biased queries so positive coverage of the
+  // same topic ("deal signed", "record output") is excluded at the source.
+  qatar:   '("Qatar gas" OR "Dolphin pipeline" OR "Qatar LNG" OR "Qatar Gulf") (halt OR cut OR curtail OR dispute OR tension OR ban OR sanction OR blockade OR conflict)',
+  taiwan:  '(Taiwan semiconductor OR TSMC OR "chip export" OR "Taiwan Strait") (halt OR ban OR restrict OR blockade OR tension OR "export control" OR conflict OR invasion)',
+  kazakhstan: '(Kazakhstan uranium OR Kazatomprom OR "nuclear fuel export") (halt OR cut OR ban OR disrupt OR suspend OR sanction OR unrest)',
+  china:   '(China "rare earth" OR gallium OR polysilicon OR "solar export" OR "export controls") (ban OR curb OR restrict OR halt OR suspend)',
+  india:   '(India pharmaceutical OR "API export" OR "drug export" OR "generic drug") (ban OR halt OR restrict OR shortage OR curb OR suspend)',
   general: '"shipping disruption" OR "port closure" OR "trade route" OR "supply chain disruption"',
 };
-// typical 2-day article volume per route — the "normal" baseline to beat
-const BASELINE = { hormuz: 30, redsea: 35, suez: 30, general: 60 };
+// typical 2-day adverse-article volume per lane — the "normal" baseline to beat
+const BASELINE = { hormuz: 30, redsea: 35, suez: 30, general: 60, qatar: 6, taiwan: 14, kazakhstan: 4, china: 22, india: 9 };
+// partner lanes are sentiment-gated; route lanes are already disruption-keyed
+const PARTNER_IDS = new Set(["qatar", "taiwan", "kazakhstan", "china", "india"]);
+const NEG_RE = /\b(halt|halts|halted|ban|bans|banned|curb|curbs|curtail|cut|cuts|suspend|suspends|disrupt|disrupts|disruption|shortage|sanction|sanctions|restrict|restricts|restriction|embargo|export control|force majeure|outage|strike|attack|seize|seized|tension|tensions|dispute|shutdown|stoppage|crisis|threat|threaten|escalat|blockad|shut|crackdown|standoff|conflict|war|invasion|unrest)\b/i;
 
 /* ---- date + entity helpers ---------------------------------------------- */
 function gdeltStamp(d) {            // client expects GDELT format YYYYMMDDThhmmssZ
@@ -84,11 +94,21 @@ async function gnews(id) {
 /* ---- GDELT (fallback) --------------------------------------------------- */
 const GDELT_COMBINED =
   '("Strait of Hormuz" OR "Bab-el-Mandeb" OR "Red Sea shipping" OR "Suez Canal" '
-  + 'OR "shipping disruption" OR "port closure" OR "trade route" OR "Houthi attack")';
+  + 'OR "shipping disruption" OR "port closure" OR "trade route" OR "Houthi attack" '
+  + 'OR "Qatar gas" OR "Dolphin pipeline" OR "Qatar LNG" '
+  + 'OR "Taiwan Strait" OR "semiconductor export" OR "chip export" OR "TSMC" '
+  + 'OR "uranium export" OR "Kazatomprom" OR "nuclear fuel" '
+  + 'OR "China export controls" OR "rare earth export" OR "gallium" OR "polysilicon" '
+  + 'OR "pharmaceutical export" OR "API export")';
 const ROUTE_RE = {
   hormuz: /hormuz/i,
   redsea: /bab.?el.?mandeb|bab.?al.?mandab|red sea|houthi/i,
   suez:   /suez/i,
+  qatar:  /qatar|dolphin pipeline/i,
+  taiwan: /taiwan|tsmc|semiconductor|chip export/i,
+  kazakhstan: /kazakhstan|kazatomprom|uranium|nuclear fuel/i,
+  china:  /china|rare earth|gallium|germanium|polysilicon|solar (module|export|panel)/i,
+  india:  /(india|indian).*(pharma|api|drug|generic)|pharmaceutical export|api export/i,
 };
 async function gdeltOnce() {
   const url = "https://api.gdeltproject.org/api/v2/doc/doc?query="
@@ -108,12 +128,18 @@ async function gdeltBuckets() {
     catch (e) { lastErr = e; if (e.status && e.status !== 429 && e.status !== 503) break; }
   }
   if (!arts) throw lastErr;
-  const hit = { hormuz: [], redsea: [], suez: [] };
+  const hit = { hormuz: [], redsea: [], suez: [], qatar: [], taiwan: [], kazakhstan: [], china: [], india: [] };
   for (const a of arts) {
     const hay = `${a.title || ""} ${a.url || ""} ${a.domain || ""}`;
-    for (const id in ROUTE_RE) if (ROUTE_RE[id].test(hay)) hit[id].push(a);
+    const neg = NEG_RE.test(hay);
+    for (const id in ROUTE_RE) {
+      if (!ROUTE_RE[id].test(hay)) continue;
+      if (PARTNER_IDS.has(id) && !neg) continue;   // partner lanes: adverse coverage only
+      hit[id].push(a);
+    }
   }
-  return { hormuz: hit.hormuz, redsea: hit.redsea, suez: hit.suez, general: arts };
+  return { hormuz: hit.hormuz, redsea: hit.redsea, suez: hit.suez, qatar: hit.qatar,
+    taiwan: hit.taiwan, kazakhstan: hit.kazakhstan, china: hit.china, india: hit.india, general: arts };
 }
 
 /* ---- scoring ------------------------------------------------------------ */
@@ -139,7 +165,11 @@ exports.handler = async function () {
     )));
     const areas = {}; let okCount = 0;
     for (const { id, arts } of lists) {
-      if (arts) { areas[id] = summarize(id, arts); okCount++; }
+      if (arts) {
+        // partner lanes: keep only adverse-headline articles (sentiment gate)
+        const use = PARTNER_IDS.has(id) ? arts.filter((a) => NEG_RE.test(a.title || "")) : arts;
+        areas[id] = summarize(id, use); okCount++;
+      }
       else areas[id] = { vol: null, score: 0, headlines: [], failed: true };
     }
     if (okCount >= 2) {
@@ -154,6 +184,11 @@ exports.handler = async function () {
         hormuz: summarize("hormuz", b.hormuz),
         redsea: summarize("redsea", b.redsea),
         suez:   summarize("suez", b.suez),
+        qatar:  summarize("qatar", b.qatar),
+        taiwan: summarize("taiwan", b.taiwan),
+        kazakhstan: summarize("kazakhstan", b.kazakhstan),
+        china:  summarize("china", b.china),
+        india:  summarize("india", b.india),
         general: summarize("general", b.general),
       };
       return { statusCode: 200, headers: HEAD_OK, body: JSON.stringify({ ok: true, src: "gdelt", areas, ts: Date.now() }) };
