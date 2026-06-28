@@ -13,7 +13,7 @@
 
    The lever is a SCOPE DECISION between real tiers. Effects tie back into
    the system's baseline-and-deviation core:
-     · livePts → recovers LIVE STRESS (improves today's score)
+     · livePts → recovers LIVE RESILIENCE (improves today's score)
      · ceilPts → raises the STRUCTURAL ceiling (improves the long-term score)
 
    Sourcing honesty: precedent.flag = "sourced" (researched, real figures)
@@ -343,7 +343,7 @@ window.ACT = (function () {
         summary: "Not a construction project — a set of financial arrangements agreed in advance: credit lines ready to draw on (so nothing has to be sold off in a panic), automatic triggers for when the fund switches on, and built-in rules for winding it down.",
         inputs: [
           { name: "Credit lines arranged in advance", status: "domestic", note: "so assets never have to be sold at panic prices" },
-          { name: "Automatic on-switch", status: "domestic", note: "tied to this system's Live Stress score and import prices" },
+          { name: "Automatic on-switch", status: "domestic", note: "tied to this system's Live Resilience score and import prices" },
           { name: "Wind-down rules", status: "domestic", note: "the discipline that stops it becoming a permanent subsidy" },
         ],
       },

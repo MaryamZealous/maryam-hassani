@@ -156,15 +156,16 @@ function ScoreCard({ d }) {
         <span style={{ marginLeft: "auto" }}>
           {d === RD.headline.live ? (
             <span className="src live" role="button" tabIndex={0} style={{ cursor: "pointer" }}
-              title="Live Stress blends six public feeds — PortWatch, Open-Meteo, Google News, Markets, OFAC, ACLED"
+              title="Live Resilience blends six public feeds — PortWatch, Open-Meteo, Google News, Markets, OFAC, ACLED"
               onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
-                kicker: "Live feeds · updating continuously", title: "What feeds the Live Stress score",
-                text: "Live Stress is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from six public feeds. Maritime throughput (PortWatch) is the largest mover, which is why it often leads — but it is never the only input.",
-                formula: "Active load  =  maritime throughput + sea state + trade-route news + market stress + sanctions drift + Guinea residual",
+                kicker: "Live feeds · updating continuously", title: "What feeds the Live Resilience score",
+                text: "Live Resilience is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from six public feeds. Maritime throughput (PortWatch) is the largest mover, which is why it often leads — but it is never the only input. The news monitor adds two early-warning lanes: trade-route closure coverage and adverse partner-supply coverage (a Qatar, Taiwan, Kazakhstan, China or India supply shock), so a partner disruption registers here before throughput data would confirm it.",
+                formula: "Active load  =  maritime throughput + sea state + trade-route news + partner-supply news + market stress + sanctions drift + Guinea residual",
                 inputs: [
                   { k: "Maritime throughput — largest driver", v: "chokepoint transit calls vs 12-month norm", src: "ais" },
                   { k: "Sea state", v: "wave height & wind on the approaches", src: "meteo" },
                   { k: "Trade-route news", v: "closure & conflict coverage", src: "gdelt" },
+                  { k: "Partner-supply news", v: "adverse supply-shock coverage on Qatar / Taiwan / Kazakhstan / China / India", src: "gdelt" },
                   { k: "Market stress", v: "Brent & natural-gas prices", src: "yfinance" },
                   { k: "Sanctions drift", v: "OFAC SDN updates", src: "ofac" },
                   { k: "Guinea residual (non-maritime)", v: "easing bauxite shock", src: "acled" },

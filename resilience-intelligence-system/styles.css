@@ -113,6 +113,9 @@ a{color:inherit}
 .view-head{margin-bottom:22px}
 .view-title{font-family:var(--font-display);font-size:25px;font-weight:600;letter-spacing:-.01em}
 .view-sub{color:var(--muted);font-size:13.5px;margin-top:5px;max-width:760px;line-height:1.55}
+.newhere-link{display:inline-flex;align-items:center;gap:5px;margin-top:11px;padding:5px 12px;border:1px solid var(--line);border-radius:20px;white-space:nowrap;
+  background:var(--panel-2);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s}
+.newhere-link:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
 
 /* ---------- panels ------------------------------------------------------- */
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
@@ -149,6 +152,7 @@ a{color:inherit}
 .score-frontier-flag{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--font-mono);font-size:9px;letter-spacing:.03em;color:var(--muted);font-weight:600}
 .score-ceiling{margin-top:13px;font-size:11px;line-height:1.5;color:var(--muted);padding:9px 11px;background:color-mix(in srgb,var(--ink) 4%,transparent);border-radius:7px;border:1px solid var(--line)}
 .score-ceiling b{color:var(--ink);font-weight:600}
+.bprov{color:var(--faint);font-style:italic}
 .score-caption{display:flex;align-items:center;gap:14px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 .score-caption-t{font-size:12.5px;line-height:1.5;color:var(--muted);flex:1}
 .score-caption .exp{font-size:12px;color:var(--accent);border-bottom-color:color-mix(in srgb,var(--accent) 45%,transparent);white-space:nowrap;flex:0 0 auto}

@@ -63,7 +63,6 @@ window.LIVE = (function () {
   // leading-indicator anchors. fmt turns the number into the displayed value.
   const IND = {
     brent:      { anchor: 93.0, vol: 0.32, pull: 0.05, dp: 2, pre: "$", lo: 70,  hi: 130, pct: true, ref: 89.5 },
-    gpsjam:     { anchor: 11,   vol: 0.55, pull: 0.10, dp: 0, pre: "",  lo: 0,   hi: 40,  pct: true, int: true, ref: 8 },
     sanctions:  { anchor: 2.4,  vol: 0.45, pull: 0.10, dp: 0, pre: "",  lo: 0,   hi: 6,   pct: false, int: true, ref: 2.4 },
   };
   const indState = {};
@@ -219,6 +218,25 @@ window.LIVE = (function () {
     }
     newsDrag = clamp(newsDrag, 0, 5);
 
+    // (c2) partner-supply news — REAL (GDELT): above-normal ADVERSE coverage of a
+    // SUPPLY PARTNER's disruption, prioritised by supply concentration — the
+    // single- and few-source dependencies lead (Qatar gas, Taiwan chips,
+    // Kazakhstan fuel), then China processing and India APIs. Negative-sentiment
+    // gated upstream, so positive coverage of the same topic adds no drag.
+    // Weighted by the consequence of the imports that ride on each partner.
+    const PARTNER_LANES = { qatar: ["gas"], taiwan: ["chips"], kazakhstan: ["leu"], china: ["solarpv", "libattery", "devices"], india: ["api"] };
+    let partnerDrag = 0; const partnerHot = [];
+    if (REAL.news) {
+      for (const lane in PARTNER_LANES) {
+        const n = REAL.news[lane];
+        if (!n || n.score == null) continue;
+        const maxCons = Math.max(0, ...PARTNER_LANES[lane].map((id) => { const p = RD.precursors.find((x) => x.id === id); return p ? p.consequence : 0; }));
+        partnerDrag += clamp(n.score, 0, 1) * maxCons * 3.2;
+        if (n.score > 0.05) partnerHot.push(lane + " " + Math.round(n.score * 100) + "%");
+      }
+    }
+    partnerDrag = clamp(partnerDrag, 0, 5);
+
     // (d) energy-market stress — REAL (markets): Brent / gas spikes above reference
     const margNow = (RD.gasNode && RD.gasNode.marginal) || 12;
     const marketDrag = clamp(Math.max(0, (indState.brent - 96)) * 0.12 + Math.max(0, (margNow - 14)) * 0.25, 0, 1.5);
@@ -234,7 +252,7 @@ window.LIVE = (function () {
     // at its curated value: there is no live feed for it, so it must not jitter.
     nonMaritime = NM_ANCHOR;
 
-    const totalDrag = throughputDrag + seaStateDrag + newsDrag + marketDrag + sanctionDrag + nonMaritime;
+    const totalDrag = throughputDrag + seaStateDrag + newsDrag + partnerDrag + marketDrag + sanctionDrag + nonMaritime;
     const ceiling = RD.headline.structural.value;
     const live = clamp(ceiling - totalDrag, 25, ceiling - 0.1);
     RD.headline.live.value = +live.toFixed(1);
@@ -249,6 +267,7 @@ window.LIVE = (function () {
       const tv = vols.reduce((a, b) => a + b, 0);
       reads.gdelt = tv + " articles/2d \u00b7 " + (newsDrag > 0.05 ? "above-normal coverage" : "coverage at/below normal");
     }
+    reads.partner = REAL.news ? (partnerHot.length ? "above-normal: " + partnerHot.join(" \u00b7 ") : "partner coverage at/below normal") : "feed connecting\u2026";
     if (REAL.meteo && REAL.meteo.sea) {
       let mx = 0;
       for (const id in REAL.meteo.sea) { const sv = REAL.meteo.sea[id]; if (sv && sv.wave != null) mx = Math.max(mx, sv.wave); }
@@ -266,6 +285,7 @@ window.LIVE = (function () {
     RD.headline.live.drivers = [
       { k: "Maritime throughput", v: throughputDrag, src: "ais", real: status.ais === "live", read: reads.ais },
       { k: "Trade-route news", v: newsDrag, src: "gdelt", real: status.gdelt === "live", read: reads.gdelt },
+      { k: "Partner-supply news", v: partnerDrag, src: "gdelt", real: status.gdelt === "live", read: reads.partner },
       { k: "Sea state", v: seaStateDrag, src: "meteo", real: status.meteo === "live", read: reads.meteo },
       { k: "Energy-market stress", v: marketDrag, src: "yfinance", real: status.yfinance === "live", read: reads.yfinance },
       { k: "Counterpart / sanctions", v: sanctionDrag, src: "ofac", real: status.ofac === "live", read: reads.ofac },
@@ -316,6 +336,25 @@ window.LIVE = (function () {
   const CONFLICT_BAND = (p) => p >= 0.66 ? "critical" : p >= 0.40 ? "high" : p > 0.15 ? "moderate" : "good";
   // free-text source strings ("Canada / Russia") → ACLED country names we track
   const COUNTRY_ALIASES = { "russia": "Russia", "sudan": "Sudan", "yemen": "Yemen", "iran": "Iran" };
+  // partner-supply news lanes (GDELT) keyed by a substring of the import's source
+  const NEWS_PARTNER_ALIASES = { "qatar": "qatar", "taiwan": "taiwan", "kazakhstan": "kazakhstan", "china": "china", "india": "india" };
+  // live news-pressure on a supply partner, for the Dependencies drawer. Returns
+  // tracked:false when the import's source isn't a news-watched partner, so the
+  // UI falls back to the curated counterpart score honestly.
+  function partnerNewsFor(source) {
+    const hay = String(source || "").toLowerCase();
+    const news = REAL.news;
+    const liveOk = REAL.status.gdelt === "live" && !!news;
+    for (const key in NEWS_PARTNER_ALIASES) {
+      if (hay.includes(key)) {
+        const lane = NEWS_PARTNER_ALIASES[key];
+        const d = news && news[lane];
+        if (d && d.score != null) return { tracked: true, live: liveOk, lane, score: d.score, vol: d.vol, band: CONFLICT_BAND(d.score), partner: key, headlines: d.headlines || [] };
+        return { tracked: true, live: false, lane, score: 0, vol: null, band: "good", partner: key, headlines: [] };
+      }
+    }
+    return { tracked: false };
+  }
   function conflictFor(source) {
     const acled = REAL.acled;
     const live = REAL.status.acled === "live" && acled && acled.byCountry;
@@ -337,6 +376,6 @@ window.LIVE = (function () {
 
   const interval = setInterval(step, 1500);
 
-  return { subscribe: (f) => (subs.add(f), () => subs.delete(f)), freshText, useLiveTick, conflictFor, step, real: REAL, _interval: interval };
+  return { subscribe: (f) => (subs.add(f), () => subs.delete(f)), freshText, useLiveTick, conflictFor, partnerNewsFor, step, real: REAL, _interval: interval };
 })();
 window.useLiveTick = window.LIVE.useLiveTick;

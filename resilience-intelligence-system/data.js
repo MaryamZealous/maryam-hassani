@@ -26,7 +26,7 @@ window.RD = (function () {
       tag: "Baseline · the ceiling",
       horizon: "30d",
       formula: "0.60 × most-exposed sector (exposure)  +  0.40 × capacity (Absorb · Recover · Adapt)",
-      cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "— no trade economy reaches it. The marked ≈72 frontier is a stated goalpost (an assumption, not a computed value): the realistic ceiling for an open, import-dependent economy. It anchors the axis only — no score is derived from it. This is also the ceiling Live Stress recovers toward." },
+      cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "— no trade economy reaches it. The marked ≈72 frontier is a stated goalpost (an assumption, not a computed value): the realistic ceiling for an open, import-dependent economy. It anchors the axis only — no score is derived from it. This is also the ceiling Live Resilience recovers toward." },
       explain: "Structural Resilience: how well the system copes on a calm day, before today's events. Following the vulnerability-vs-resilience logic used for small, open, import-dependent economies, it sets your CAPACITY — what you can Absorb, how fast you Recover, and your ability to Adapt — against your EXPOSURE, the most-exposed sector. It moves over months as buffers, sovereign depth and structural builds change, and is independent of today's events. It is also the ceiling the live score recovers toward. On the 0–100 axis, 100 = total self-sufficiency (no trade economy reaches it); ≈72 marks a realistic frontier.",
       // NOTE: value/prev are seeds only — computeSpine() overwrites value (and
       // recomputes prev to preserve the displayed 30-day delta) from the
@@ -41,8 +41,8 @@ window.RD = (function () {
     },
     live: {
       value: 47.0, prev: 44.5,
-      name: "Live Stress Resilience",
-      tag: "Daily · capped by baseline",
+      name: "Live Resilience",
+      tag: "Daily · below the ceiling",
       horizon: "24h",
       formula: "Structural ceiling  −  today's active load (live)",
       // cap + inputs[0] below are seeds; computeSpine() overwrites them with the
@@ -52,6 +52,8 @@ window.RD = (function () {
       inputs: [
         { k: "Structural ceiling", v: "the day's maximum", src: "curated" },
         { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez transit calls vs each strait's 12-month norm (IMF PortWatch) — embeds escalation", src: "ais" },
+        { k: "Trade-route news", v: "above-normal closure / conflict coverage on the sea routes", src: "gdelt" },
+        { k: "Partner-supply news", v: "adverse coverage of a single- or few-source partner (Qatar gas, Taiwan chips, Kazakhstan fuel, China, India) — negative-sentiment gated", src: "gdelt" },
         { k: "Non-maritime shocks", v: "residual Guinea/EGA bauxite load (settled May 2026, easing; not in vessel counts)", src: "acled" },
         { k: "Live = ceiling − active load", v: "recomputed every refresh from the live drivers", src: "curated" },
       ],
@@ -95,6 +97,9 @@ window.RD = (function () {
     { id: "erd", name: "Energy-recovery devices", sector: "water", source: "US (Energy Recovery Inc.)", buffer: 270, cfac: { ess: 0.90, svc: 0.70, imm: 0.30, brd: 0.80 }, dri: 49,
       dims: { concentration: 20, substitutability: 17, route: 4, counterpart: 8 }, hormuz: false, dolphin: false,
       note: "The isobaric pressure-exchangers that recover energy from reject brine and cut SWRO power use by up to ~60% — without them desalination still runs, but at a far higher energy cost. The market is dominated by one US supplier (Energy Recovery Inc.); Flowserve and Danfoss are partial alternatives. Concentration is high, but the units are durable installed capital — a supply cut bites slowly (new builds and major repairs), not overnight, which is why immediacy is low." },
+    { id: "waterchem", name: "Desalination dosing chemicals", sector: "water", source: "US / EU / regional", buffer: 30, cfac: { ess: 0.95, svc: 0.85, imm: 0.90, brd: 0.70 }, dri: 62,
+      dims: { concentration: 18, substitutability: 16, route: 11, counterpart: 7 }, hormuz: true, dolphin: false,
+      note: "The continuous chemical feed every desalination train depends on: antiscalants injected into RO feed-water to stop membrane scaling, chlorine / sodium hypochlorite for disinfection, coagulants (ferric chloride) and pH adjusters (sulphuric acid, caustic soda). Specialty antiscalants come from a handful of qualified suppliers (Nalco/Ecolab, BASF, Avista) and can't be swapped without re-validation. Short shelf lives cap how much can be stockpiled, so the buffer is genuinely thin — and without dosing, RO membranes foul and scale within days, not months. A high-consequence, thin-buffer water input the original list missed." },
     { id: "gas", name: "Piped gas (Dolphin)", sector: "energy", source: "Qatar", buffer: 30, cfac: { ess: 1.00, svc: 1.00, imm: 1.00, brd: 1.00 }, dri: 61,
       dims: { concentration: 23, substitutability: 18, route: 2, counterpart: 18 }, hormuz: false, dolphin: true,
       note: "25% of gas for power + water; contract runs to 2032. The genuine exposure is gas-side and counterpart-driven, NOT a maritime chokepoint: Dolphin is a fixed subsea pipeline from Qatar, so route/chokepoint exposure is low (it does not transit Hormuz). What carries the risk is single-counterpart concentration (one neighbour, one corridor) and the price BASIS — losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8× the floor). Highest consequence weight in the model. UAE crude exports bypass Hormuz via Fujairah, so the energy line carries no oil-import chokepoint penalty — its acute exposure is gas feedstock." },
@@ -113,6 +118,9 @@ window.RD = (function () {
     { id: "transformers", name: "Grid transformers", sector: "energy", source: "South Korea / EU", buffer: 240, cfac: { ess: 0.90, svc: 0.60, imm: 0.50, brd: 0.70 }, dri: 41,
       dims: { concentration: 15, substitutability: 13, route: 8, counterpart: 5 }, hormuz: false, dolphin: false,
       note: "Long-lead high-voltage transformers. Failure cascades to desalination." },
+    { id: "turbines", name: "Turbine hot-section & large pumps", sector: "energy", source: "US / EU / Japan (GE · Siemens · Mitsubishi)", buffer: 120, cfac: { ess: 0.95, svc: 0.85, imm: 0.55, brd: 0.80 }, dri: 50,
+      dims: { concentration: 22, substitutability: 22, route: 8, counterpart: 10 }, hormuz: false, dolphin: false,
+      note: "The rotating equipment the power-and-water fleet actually runs on: gas-turbine hot-section components (blades, vanes, combustors) and the large SWRO / cooling pumps. Three OEMs — GE, Siemens, Mitsubishi — hold almost the entire qualified field, parts are proprietary and can't be cross-fitted, and lead times run 12–24 months. N+1 redundancy and held spares cushion a single failure, so immediacy is moderate — but a fleet-wide hot-section campaign or an OEM / export-control cut-off takes generation AND desalination capacity offline, not merely up in cost. For a power-and-water utility this is a structural exposure, arguably deeper than several legacy items on the list." },
     { id: "solarpv", name: "Solar PV modules", sector: "energy", source: "China (polysilicon → module)", buffer: 180, cfac: { ess: 0.55, svc: 0.45, imm: 0.20, brd: 0.55 }, dri: 52,
       dims: { concentration: 22, substitutability: 14, route: 8, counterpart: 8 }, hormuz: true, dolphin: false,
       note: "The UAE's clean-energy pivot (Mohammed bin Rashid & Al Dhafra solar parks, Masdar, Net Zero 2050) runs on PV modules whose upstream — polysilicon, wafers, cells — concentrates ~80%+ in China. Straight from Material World's sand→silicon thread: a sun-rich desert state, yet the panels that harvest the sun are a China-processing dependency. Low immediacy — modules are durable installed capital, so a supply cut delays NEW capacity rather than darkening existing plants — making this a forward-looking buildout risk, not an acute one." },
@@ -134,9 +142,6 @@ window.RD = (function () {
     { id: "container", name: "Containerised imports (Hormuz)", sector: "logistics", source: "Asia via Hormuz", buffer: 45, cfac: { ess: 0.80, svc: 0.80, imm: 0.70, brd: 0.85 }, dri: 45,
       dims: { concentration: 11, substitutability: 13, route: 18, counterpart: 3 }, hormuz: true, dolphin: false,
       note: "The bulk of containerised consumer & industrial goods arrive at Jebel Ali, which sits INSIDE the Gulf — so they are Hormuz-locked. Fujairah (on the Gulf of Oman, outside the strait) is a partial bypass but a fraction of Jebel Ali's box capacity, which is why route exposure dominates this line." },
-    { id: "ammonia", name: "Ammonia / urea", sector: "food", source: "Domestic (net exporter)", buffer: 200, cfac: { ess: 0.45, svc: 0.40, imm: 0.30, brd: 0.30 }, dri: 27,
-      dims: { concentration: 9, substitutability: 7, route: 6, counterpart: 5 }, hormuz: false, dolphin: false,
-      note: "Not an import dependency — the reverse. The UAE converts domestic gas into ammonia/urea via Fertiglobe (ADNOC ~87%), the world's largest seaborne exporter of urea and ammonia combined, shipping to ~41 countries. Minimal arable land means little is used at home: national food security rests on imported staples, overseas farmland and stockpiles, not home-grown fertilised crops. Tracked here as a sovereign export strength and fertiliser-diplomacy lever, not a vulnerability — hence the floor-level risk." },
     { id: "golddore", name: "Gold doré", sector: "finance", source: "Africa (various)", buffer: 30, cfac: { ess: 0.20, svc: 0.30, imm: 0.25, brd: 0.15 }, dri: 22,
       dims: { concentration: 8, substitutability: 6, route: 5, counterpart: 3 }, hormuz: false, dolphin: false,
       note: "Refining feedstock for Dubai's gold trade. Low national-consequence weight — the bottom of the scale." },
@@ -174,37 +179,39 @@ window.RD = (function () {
   const convergence = { concurrent: 3, band: "high",
     note: "Two live maritime events (Hormuz, Red Sea) plus the easing Guinea/EGA bauxite dispute. The maritime events are counted once — through the measured throughput drop they cause — so the real load on the score is maritime throughput + the non-maritime Guinea residual, nothing more. Per-event magnitudes are shown for context only, never re-added." };
 
+  // ---- Buffer-day provenance ----------------------------------------------
+  // The buffer figures are CURATED estimates, not a live inventory feed. Tag
+  // each: "stated" = reflects reported policy / public figure; "est" = analyst
+  // order-of-magnitude judgement. Surfaced in the Critical imports list and the
+  // dependency drawer so a hardcoded day-count never implies false precision.
+  const BUFFER_PROV = {
+    leu:       { t: "stated", n: "ENEC holds multiple Barakah fuel reloads — long-lead nuclear fuel stockpile (reported)." },
+    wheat:     { t: "stated", n: "UAE strategic grain reserve — reported national-stockpile policy." },
+    waterchem: { t: "est", n: "Plant dosing-chemical stock is only weeks of continuous use — short shelf lives cap how much can be held." },
+    turbines:  { t: "est", n: "Critical-spares inventory plus N+1 fleet redundancy; high-value hot-section parts are stocked sparingly against 12–24-month lead times." },
+    chips:     { t: "est", n: "Estimate — access is export-licence-gated, not a physical stock; the buffer stands in for licensing latency." },
+    ro:        { t: "est", n: "Estimate set against the ~120-day reorder lead-time, not a measured warehouse count." },
+    erd:       { t: "est", n: "Estimate — durable installed capital; a supply cut bites over rebuild cycles, not days." },
+    gas:       { t: "est", n: "Nominal — Dolphin is piped, not stored; the figure stands in for switchover latency to LNG, not a tank level." },
+    api:       { t: "est", n: "Analyst estimate of hospital/distributor working stock." },
+    potash:    { t: "est", n: "Analyst estimate — diversified sourcing, seasonal." },
+    vaccines:  { t: "est", n: "Cold-chain reserve estimate from diversified Western suppliers." },
+    devices:   { t: "est", n: "Analyst estimate — thin working stock." },
+    transformers: { t: "est", n: "Estimate reflecting long-lead spares, not a measured count." },
+    solarpv:   { t: "est", n: "Buildout estimate — affects new capacity, not running plants." },
+    libattery: { t: "est", n: "Buildout estimate — installed-capital dynamics." },
+    copper:    { t: "est", n: "Analyst estimate — globally traded, multiple sources." },
+    gps:       { t: "est", n: "Analyst estimate of module working stock." },
+    avparts:   { t: "est", n: "Analyst estimate of aviation-spares pipeline." },
+    container: { t: "est", n: "Analyst estimate — flow-through goods, little standing buffer." },
+    golddore:  { t: "est", n: "Analyst estimate — refining feedstock, low national consequence." },
+    usdclearing: { t: "est", n: "Nominal — dollar-clearing is a live permission, not a stockpile; the day-count is a notional grace period." },
+    swift:     { t: "est", n: "Nominal — messaging access is a permission, not a stockpile." },
+  };
+  precursors.forEach((p) => { p.bufferProv = BUFFER_PROV[p.id] || { t: "est", n: "Analyst estimate." }; });
+
   // ---- Leading indicators --------------------------------------------------
   const indicators = [
-    { id: "dolphin", name: "Dolphin gas flow", value: "100", unit: "% of contracted volume", delta: 0, dir: "flat",
-      status: "good", src: "assumption", pinned: true, statusText: "", spark: [100, 100, 100, 100, 100, 100, 100, 100],
-      note: "Pinned at contractual nominal. Dolphin is a fixed subsea pipeline that does NOT transit Hormuz, so absent a specific disruption it delivers at contract — there is no basis to assume a standing shortfall. No public live flow meter exists; this only deflects below 100 when the live regional conflict / news proxy fires.",
-      fx: { kicker: "Leading indicator · assumption", title: "Dolphin gas flow — pinned at nominal",
-        text: "Dolphin is piped gas from Qatar that does not transit Hormuz, and there is no public live meter on its flow. Absent a specific disruption it delivers at the contracted volume, so its calm-state value is 100% of contract. It only deflects below 100 when the live regional conflict / news proxy indicates a disturbance in the Gulf–Qatar theatre — so any dip is traceable to a real event rather than an assumed shortfall.",
-        formula: "Flow %  =  100 (contractual nominal)  −  live regional-disturbance deflection",
-        inputs: [
-          { k: "Calm-state baseline", v: "100% of contracted volume", src: "assumption" },
-          { k: "Why not <100% by default", v: "piped supply, does not transit Hormuz — no standing degradation" },
-          { k: "Deflects only on", v: "live Gulf–Qatar news / conflict intensity", src: "gdelt" },
-          { k: "Live flow meter", v: "none public — Dolphin throughput isn't metered in real time" },
-        ],
-        assumption: "Held at contractual nominal because there is no observed shortfall and no live flow feed. Any dip is driven only by the live conflict/news proxy. The structural Dolphin risk — renewal / repricing at the ~2032 contract expiry — is captured by the gas replacement-basis node, not by a daily-flow signal." } },
-    { id: "romembrane", name: "RO membrane stock", value: "75", valueText: "75 days", unit: "emergency reserve · resupply status", delta: 0, dir: "flat",
-      status: "good", src: "assumption", pinned: true, statusText: "clear", spark: [75, 75, 75, 75, 75, 75, 75, 75],
-      note: "A stated ~75-day emergency reserve of desalination membranes — a fixed buffer, not a live-measured stock (there is no public inventory feed). The live element is resupply STATUS: membranes are sea-borne, so when the maritime-throughput proxy on their routes (Hormuz / Red Sea) shows disruption, resupply reads impaired. The day-by-day drawdown of the buffer is modelled in the cascade and scenario simulator, not animated here.",
-      fx: { kicker: "Leading indicator · assumption", title: "RO membrane stock — buffer + resupply status",
-        text: "Two honest parts in one signal. The ~75-day figure is a STATED emergency reserve of reverse-osmosis membranes — a fixed buffer, not an observed stock, because there is no public live inventory feed. The live part is resupply STATUS: membranes are sea-borne imports, so the indicator reads 'impaired' when the live maritime-throughput proxy on its routes (Hormuz / Red Sea) drops, and 'clear' when they're open. It deliberately does NOT animate a count down from 75 — real depletion is one buffer-day per blocked calendar day, which a live dashboard clock can't represent honestly. The day-by-day drawdown is modelled where it belongs: the cascade and scenario simulator.",
-        formula: "Reserve  =  ~75 days (stated)      ·      Resupply status  =  f( live maritime throughput on Hormuz / Red Sea )",
-        inputs: [
-          { k: "Stated reserve", v: "~75 days emergency buffer", src: "assumption" },
-          { k: "Resupply route", v: "sea-borne (mainly US) via Hormuz / Red Sea", src: "ais" },
-          { k: "Live read", v: "routes open → resupply clear · routes disrupted → impaired" },
-          { k: "Live inventory feed", v: "none public — on-hand stock isn't reported in real time" },
-          { k: "Day-by-day drawdown", v: "modelled in the cascade & scenario simulator, not here" },
-        ],
-        assumption: "The 75-day buffer is a stated reserve, not an observed stock. The only live element is resupply-route status, taken from the same maritime-throughput proxy behind the chokepoint signals — there is no fabricated countdown or erosion coefficient." } },
-    { id: "gpsjam", name: "GPS jamming events", value: "12", unit: "this week", delta: 50, dir: "up",
-      status: "high", src: "acled", spark: [4,5,6,5,8,9,11,12], note: "Proxy — scaled from live ACLED armed-conflict intensity across the Gulf / Yemen / Iran theatre, not a direct jamming-sensor count." },
     { id: "brent", name: "Brent crude", value: "$93.09", unit: "/ barrel", delta: 4, dir: "up",
       status: "moderate", src: "yfinance", spark: [84,86,85,88,90,91,92,93], note: "Live from market feed. Within normal range." },
     { id: "gasbasis", name: "Gas — replacement basis", value: "$12.0", unit: "/ MMBtu marginal", delta: 0, dir: "flat",
@@ -378,7 +385,7 @@ window.RD = (function () {
     beds: "14,000 hospital beds",
     threshold: "Critical shortage threshold: 21 days (ICU consumables)",
   };
-  // Predicted vs. actual are national-headline (Live Stress) point changes, on
+  // Predicted vs. actual are national-headline (Live Resilience) point changes, on
   // the same scale as each scenario's `overall` — so the table validates the
   // scenarios the model actually runs (Hormuz -22, chips -14, Red Sea -9).
   const validation = [
@@ -407,7 +414,7 @@ window.RD = (function () {
     yfinance: { label: "Markets", full: "Oil & gas prices (yfinance)", endpoint: "Yahoo Finance · BZ=F, NG=F", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "connecting…", kind: "live" },
     ofac:     { label: "OFAC", full: "US Treasury SDN sanctions list", endpoint: "treasury.gov SDN delta feed", url: "https://sanctionssearch.ofac.treas.gov/", cadence: "6 h", fresh: "connecting…", kind: "live" },
     meteo:    { label: "Open-Meteo", full: "Marine & weather (Open-Meteo, live)", endpoint: "marine-api.open-meteo.com · wave height · wind · temperature", url: "https://open-meteo.com/", cadence: "10 min", fresh: "connecting…", kind: "live" },
-    gdelt:    { label: "Google News", full: "Trade-route news monitor (Google News RSS, live · GDELT fallback)", endpoint: "news.google.com/rss · closure & conflict coverage · GDELT fallback", url: "https://news.google.com/", cadence: "6 min", fresh: "connecting…", kind: "live" },
+    gdelt:    { label: "Google News", full: "Supply & trade-route news monitor (Google News RSS, live · GDELT fallback)", endpoint: "news.google.com/rss · closure, conflict & partner-supply coverage · GDELT fallback", url: "https://news.google.com/", cadence: "6 min", fresh: "connecting…", kind: "live" },
     curated:  { label: "Curated", full: "Hand-curated public-source CSV", endpoint: "versioned CSV · public reporting", url: "", cadence: "manual", fresh: "reviewed", kind: "curated" },
     assumption:{ label: "Assumption", full: "Explicit modelling assumption", endpoint: "stated in assumptions ledger", url: "", cadence: "—", fresh: "stated", kind: "assumption" },
   };
@@ -427,7 +434,7 @@ window.RD = (function () {
   // The entire headline is a deterministic FUNCTION of the dependency data
   // above — no sector score, capacity figure or structural value is hand-set.
   // Change a precursor's DRI, consequence or buffer and every score downstream
-  // recomputes. Live Stress (live.js) then subtracts today's active load.
+  // recomputes. Live Resilience (live.js) then subtracts today's active load.
   const round1 = (x) => +x.toFixed(1);
   const round2 = (x) => +x.toFixed(2);
   let capacity = null;
@@ -445,6 +452,29 @@ window.RD = (function () {
     precursors.forEach((p) => {
       const c = p.cfac;
       p.consequence = round2(CW.ess * c.ess + CW.svc * c.svc + CW.imm * c.imm + CW.brd * c.brd);
+    });
+
+    // 0.5 · DEPENDENCY RISK INDEX — recomputed from the four dimensions, with
+    //     ROUTE up-weighted (a contested-chokepoint shipment is a higher-severity,
+    //     harder-to-mitigate risk than the other axes), PLUS a buffer-fragility
+    //     term. The buffer is your REACTION TIME: a 30-day buffer (Dolphin) and a
+    //     540-day one (LEU) are not the same risk even with identical dimensions,
+    //     so a dims-only score measures only half the problem. DRI carries both.
+    const DRI_W = { route: 0.34, concentration: 0.22, substitutability: 0.22, counterpart: 0.22 };
+    const BUF_HORIZON = 180;                       // days of cover past which the buffer is no longer the binding constraint
+    const DRI_STRUCT_W = 0.67, DRI_BUFFER_W = 0.33;
+    precursors.forEach((p) => {
+      const d = p.dims;
+      const structFrag =
+        ( DRI_W.route            * (d.route / 25)
+        + DRI_W.concentration    * (d.concentration / 25)
+        + DRI_W.substitutability * (d.substitutability / 25)
+        + DRI_W.counterpart      * (d.counterpart / 25) ) * 100;
+      const bufferFrag = (1 - Math.min(p.buffer / BUF_HORIZON, 1)) * 100;
+      p.driStruct = round1(structFrag);
+      p.driBuffer = round1(bufferFrag);
+      p.bufHorizon = BUF_HORIZON;
+      p.dri = Math.round(DRI_STRUCT_W * structFrag + DRI_BUFFER_W * bufferFrag);
     });
 
     // 1 · SECTOR RESILIENCE = 100 − consequence-weighted mean DRI of the
@@ -502,7 +532,7 @@ window.RD = (function () {
       { k: "Anchored result", v: "0.60×" + exposed.score.toFixed(1) + " + 0.40×" + blend + " = " + headline.structural.value.toFixed(1) },
     ];
 
-    // 4 · LIVE STRESS — recomputed every tick by live.js as ceiling − active
+    // 4 · LIVE RESILIENCE — recomputed every tick by live.js as ceiling − active
     //     load. Seed it just below the new ceiling so first paint isn't jarring.
     const ceil = headline.structural.value;
     const ldelta = headline.live.value - headline.live.prev;
@@ -561,7 +591,7 @@ window.RD = (function () {
     headline.structural.confidence = tier(sHalf);
     headline.structural.sensitivity = sStruct.map((x) => ({ k: x.k, d: round1(x.d) })).sort((a, b) => b.d - a.d);
 
-    // Live Stress: structural-ceiling uncertainty + a live-load measurement band
+    // Live Resilience: structural-ceiling uncertainty + a live-load measurement band
     const LIVE_LOAD_SD = 1.6;
     const lHalf = round1(Math.sqrt(sHalf * sHalf + LIVE_LOAD_SD * LIVE_LOAD_SD));
     headline.live.rangeHalf = lHalf;

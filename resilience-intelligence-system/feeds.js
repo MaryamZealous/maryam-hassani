@@ -73,7 +73,6 @@
     try {
       const j = await jget("/.netlify/functions/acled");
       if (!j || !j.ok) throw 0;
-      if (j.gpsjam != null) REAL.vals.gpsjam = j.gpsjam;
       if (j.events != null) RD.convergence._realEvents = j.events;
       // per-partner conflict counts back the trade-partner risk + scenario actors
       REAL.acled = { byCountry: j.byCountry || {}, gulf: j.gulf, events: j.events, since: j.since, ts: Date.now() };
@@ -162,14 +161,31 @@
   // one net over all trade-route coverage; articles are bucketed by route below
   const NEWS_COMBINED =
     '("Strait of Hormuz" OR "Bab-el-Mandeb" OR "Red Sea shipping" OR "Suez Canal" '
-    + 'OR "shipping disruption" OR "port closure" OR "trade route" OR "Houthi attack")';
+    + 'OR "shipping disruption" OR "port closure" OR "trade route" OR "Houthi attack" '
+    + 'OR "Qatar gas" OR "Dolphin pipeline" OR "Qatar LNG" OR "Qatar Gulf" '
+    + 'OR "Taiwan Strait" OR "semiconductor export" OR "chip export" OR "TSMC" '
+    + 'OR "uranium export" OR "Kazatomprom" OR "nuclear fuel" '
+    + 'OR "China export controls" OR "rare earth export" OR "gallium" OR "polysilicon" '
+    + 'OR "pharmaceutical export" OR "API export")';
+  // disruption / adverse-sentiment lexicon — partner lanes only count an article
+  // when the headline carries one of these, so positive coverage of the SAME
+  // topic ("deal signed", "record output", "expansion") does NOT add pressure.
+  // Honest scope: this is keyword-based negativity, not full NLP sentiment.
+  const NEWS_NEG_RE = /\b(halt|halts|halted|ban|bans|banned|curb|curbs|curtail|cut|cuts|suspend|suspends|disrupt|disrupts|disruption|shortage|sanction|sanctions|restrict|restricts|restriction|embargo|export control|force majeure|outage|strike|attack|seize|seized|tension|tensions|dispute|shutdown|stoppage|crisis|threat|threaten|escalat|blockad|shut|crackdown|standoff|conflict|war)\b/i;
+  // partner lanes are sentiment-gated; route lanes are already disruption-keyed
+  const NEWS_PARTNER_LANE = { qatar: 1, taiwan: 1, kazakhstan: 1, china: 1, india: 1 };
   const NEWS_ROUTE_RE = {
     hormuz: /hormuz/i,
     redsea: /bab.?el.?mandeb|bab.?al.?mandab|red sea|houthi/i,
     suez:   /suez/i,
+    qatar:  /qatar|dolphin pipeline/i,
+    taiwan: /taiwan|tsmc|semiconductor|chip export/i,
+    kazakhstan: /kazakhstan|kazatomprom|uranium|nuclear fuel/i,
+    china:  /china|rare earth|gallium|germanium|polysilicon|solar (module|export|panel)/i,
+    india:  /(india|indian).*(pharma|api|drug|generic)|pharmaceutical export|api export/i,
   };
-  // typical 2-day article volume per bucket — the "normal" baseline to beat
-  const NEWS_BASE = { hormuz: 22, redsea: 28, suez: 35, general: 90 };
+  // typical 2-day NEGATIVE-coverage volume per lane — the "normal" baseline to beat
+  const NEWS_BASE = { hormuz: 22, redsea: 28, suez: 35, general: 90, qatar: 6, taiwan: 14, kazakhstan: 4, china: 22, india: 9 };
 
   function summarizeNews(id, arts) {
     const vol = arts.length;
@@ -182,15 +198,25 @@
     return { vol, score, headlines };
   }
   function bucketNews(arts) {
-    const hit = { hormuz: [], redsea: [], suez: [] };
+    const hit = { hormuz: [], redsea: [], suez: [], qatar: [], taiwan: [], kazakhstan: [], china: [], india: [] };
     for (const a of arts) {
       const hay = `${a.title || ""} ${a.url || ""} ${a.domain || ""}`;
-      for (const id in NEWS_ROUTE_RE) if (NEWS_ROUTE_RE[id].test(hay)) hit[id].push(a);
+      const neg = NEWS_NEG_RE.test(hay);
+      for (const id in NEWS_ROUTE_RE) {
+        if (!NEWS_ROUTE_RE[id].test(hay)) continue;
+        if (NEWS_PARTNER_LANE[id] && !neg) continue;   // partner lanes: adverse coverage only
+        hit[id].push(a);
+      }
     }
     return {
       hormuz:  summarizeNews("hormuz", hit.hormuz),
       redsea:  summarizeNews("redsea", hit.redsea),
       suez:    summarizeNews("suez", hit.suez),
+      qatar:   summarizeNews("qatar", hit.qatar),
+      taiwan:  summarizeNews("taiwan", hit.taiwan),
+      kazakhstan: summarizeNews("kazakhstan", hit.kazakhstan),
+      china:   summarizeNews("china", hit.china),
+      india:   summarizeNews("india", hit.india),
       general: summarizeNews("general", arts),
     };
   }

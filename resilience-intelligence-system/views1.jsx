@@ -51,14 +51,14 @@ function LiveGap() {
   const gap = +(s - l).toFixed(1);
   const live = RD.headline.live;
   const hz = RD.chokepoints.find((c) => c.id === "hormuz");
-  const ro = RD.indicators.find((i) => i.id === "romembrane");
+  const sanc = RD.indicators.find((i) => i.id === "sanctions");
   const brent = RD.indicators.find((i) => i.id === "brent");
   const gasb = RD.indicators.find((i) => i.id === "gasbasis");
   const lsd = +(live.value - live.prev).toFixed(1);
   const items = [
-    { label: "Live Stress", v: (lsd > 0 ? "+" : "") + lsd, dir: lsd >= 0 ? "up" : "down", note: "vs yesterday's baseline", src: "ais" },
+    { label: "Live Resilience", v: (lsd > 0 ? "+" : "") + lsd, dir: lsd >= 0 ? "up" : "down", note: "vs yesterday's baseline", src: "ais" },
     { label: "Hormuz", v: "−" + hz.drop + "%", dir: "down", note: hz.vessels + " of " + hz.baseline + " transit calls/day", src: "ais" },
-    { label: "RO buffer", v: "75 d", dir: ro.status === "high" ? "down" : "flat", note: ro.statusText || "resupply clear", src: "assumption" },
+    { label: "OFAC", v: sanc.value, dir: "flat", note: "new SDN designations", src: "ofac" },
     { label: "Brent", v: (brent.delta > 0 ? "+" : "") + brent.delta + "%", dir: brent.delta >= 0 ? "up" : "down", note: brent.value + " / barrel", src: "yfinance" },
     { label: "Gas basis", v: gasb.value, dir: "flat", note: "marginal LNG vs $" + (RD.gasNode ? RD.gasNode.floor.toFixed(2) : "1.50") + " floor", src: "curated" },
   ];
@@ -234,8 +234,11 @@ function OverviewView({ go }) {
       <div className="view-head">
         <div className="view-title">The gap is the signal</div>
         <div className="view-sub">
-          Two readings of one system: <b>Structural Resilience</b> is the ceiling; <b>Live Stress</b> is that ceiling minus today's active load. The <b>gap</b> between them is the signal.
+          Two readings of one system: <b>Structural Resilience</b> is the ceiling; <b>Live Resilience</b> is that ceiling minus today's active load. The <b>gap</b> between them is the signal.
         </div>
+        <button className="newhere-link" onClick={() => go("methodology")}>
+          New here? How it works <Icon name="arrowRight" size={13} />
+        </button>
       </div>
 
       <div className="hero">
@@ -330,13 +333,28 @@ function ProvenanceLedger() {
     feeds: "Non-maritime shock severity",
     assume: "Severity is a curated, editable judgement from the observed event — not a measured quantity.",
   }));
-  const rows = [...choke, ...shk];
+  const DMETA = {
+    "Sea state": { ref: "drag begins above 1.2 m wave", feeds: "Sea-state drag", assume: "Open-Meteo wave height & wind on the chokepoint approaches; adds live drag only above the 1.2 m threshold." },
+    "Trade-route news": { ref: "coverage vs each route's normal volume", feeds: "Trade-route news drag", assume: "Above-normal closure / conflict coverage on Hormuz, Red Sea and Suez (Google News, GDELT fallback). A surge over baseline, not a single headline." },
+    "Partner-supply news": { ref: "adverse coverage vs each partner's normal", feeds: "Partner-supply drag", assume: "Adverse-only coverage of single/few-source partners (Qatar, Taiwan, Kazakhstan, China, India), weighted by each import's consequence and capped." },
+    "Energy-market stress": { ref: "Brent > $96 / marginal LNG > $14", feeds: "Energy-market drag", assume: "Brent crude and the Brent-linked marginal LNG replacement cost; adds drag only above the stress marks." },
+    "Counterpart / sanctions": { ref: "new SDN designations vs baseline", feeds: "Counterpart / sanctions drag", assume: "OFAC SDN delta — a rise in designations touching UAE counterparties adds counterpart drag." },
+  };
+  const extra = (live.drivers || []).filter((d) => DMETA[d.k]).map((d) => ({
+    signal: d.k, src: d.src,
+    observed: d.read || "—", series: null,
+    ref: DMETA[d.k].ref,
+    transform: `−${(d.v || 0).toFixed(1)} pts`,
+    feeds: DMETA[d.k].feeds,
+    assume: DMETA[d.k].assume,
+  }));
+  const rows = [...choke, ...extra, ...shk];
   const openRow = (r) => {
     const sm = RD.sources[r.src];
     window.__explain && window.__explain({
       kicker: "Observed raw & assumptions",
       title: r.signal,
-      text: `Feed: ${sm.full}. The value below is the raw figure the feed reported; the transform is applied before it reaches the Live Stress score.`,
+      text: `Feed: ${sm.full}. The value below is the raw figure the feed reported; the transform is applied before it reaches the Live Resilience score.`,
       inputs: [
         { k: "Observed (raw)", v: r.observed, src: r.src },
         r.series ? { k: "Recent series (old → new)", v: r.series.join("  →  ") } : null,
@@ -357,8 +375,8 @@ function ProvenanceLedger() {
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
         The integrity of the live score rests on traceability. <b>Click any row</b> to open its observed raw series and the
         exact assumptions applied before it reaches the score — the public source URL is listed inside each panel. This is
-        the audit trail behind <b>Live Stress {live.value.toFixed(1)}</b>. Only inputs that actually feed the calculation are
-        listed here — price and event-context signals live in the panels above.
+        the complete audit trail behind <b>Live Resilience {live.value.toFixed(1)}</b> — every live driver that moves the score, with its
+        raw value and the transform applied before it lands. Drivers contributing ~0 today are listed too: a quiet input is still part of the calculation.
       </p>
       <div className="prov-table-wrap">
         <table className="prov-table">
@@ -394,6 +412,11 @@ function TradeRouteNews() {
   const news = (LIVE.real && LIVE.real.news) || RD.convergence._news || null;
   const live = LIVE.real && LIVE.real.status && LIVE.real.status.gdelt === "live";
   const AREAS = [
+    { id: "qatar", label: "Qatar — piped gas" },
+    { id: "taiwan", label: "Taiwan — chips" },
+    { id: "kazakhstan", label: "Kazakhstan — nuclear fuel" },
+    { id: "china", label: "China — solar / battery / devices" },
+    { id: "india", label: "India — pharma APIs" },
     { id: "hormuz", label: "Strait of Hormuz" },
     { id: "redsea", label: "Bab-el-Mandeb / Red Sea" },
     { id: "suez", label: "Suez Canal" },
@@ -415,12 +438,14 @@ function TradeRouteNews() {
   const featured = ranked.slice().sort((a, b) => (b.d.score || 0) - (a.d.score || 0))[0];
 
   return (
-    <Panel title="Trade-route news monitor" icon="globe" label="GOOGLE NEWS · CLOSURE / CONFLICT COVERAGE" style={{ marginTop: 16 }}
+    <Panel title="Supply & trade-route news monitor" icon="globe" label="GOOGLE NEWS · CLOSURE, CONFLICT & PARTNER-SUPPLY" style={{ marginTop: 16 }}
       right={<span style={{ marginLeft: "auto" }}><SourceTag src="gdelt" /></span>}>
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
-        With no free real-time vessel feed, <b>news is the early detector for trade-route disruption</b>. We scan world
-        media every few minutes; a surge of closure or conflict coverage above each route's normal volume registers as
-        <b> news pressure</b> and adds live drag to the score before throughput data would ever confirm it.
+        With no free real-time vessel feed, <b>news is the early detector for supply disruption</b>. We scan world
+        media every few minutes across two fronts — <b>trade-route closures</b> (Hormuz, Red Sea, Suez) and <b>partner-supply
+        shocks</b>, led by the single- and few-source dependencies (Qatar gas, Taiwan chips, Kazakhstan fuel), then China and
+        India. Partner lanes count <b>only adverse coverage</b> — a "deal signed" doesn't add pressure, a halt or export ban does.
+        A surge above a lane's normal volume registers as <b>news pressure</b> and adds live drag before throughput or trade data would confirm it.
       </p>
       {!news ? (
         <div className="helper" style={{ padding: "18px 0" }}>
@@ -430,7 +455,7 @@ function TradeRouteNews() {
         <div className="grid cols-2" style={{ gridTemplateColumns: "0.85fr 1.15fr", gap: 16, alignItems: "start" }}>
           {/* pressure by route */}
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            <span className="label">News pressure by route</span>
+            <span className="label">News pressure by route & partner</span>
             {AREAS.map((a) => {
               const d = news[a.id]; if (!d) return null;
               const pct = Math.round((d.score || 0) * 100);
@@ -470,7 +495,7 @@ function ThreatsView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Live signals</div>
-        <div className="view-sub">Chokepoint activity, converging signals and leading indicators — the fast-moving inputs to the Live Stress score.</div>
+        <div className="view-sub">Chokepoint activity, converging signals and leading indicators — the fast-moving inputs to the Live Resilience score.</div>
       </div>
 
       <Panel title="Maritime chokepoints" icon="globe" label="TRANSIT CALLS/DAY vs. 12-MONTH NORM" style={{ marginBottom: 16 }}>
@@ -490,9 +515,6 @@ function ThreatsView() {
                 </div>
                 <div className="bar-track" style={{ margin: "12px 0 10px", height: 6 }}><div className="bar-fill" style={{ width: pct + "%" }}></div></div>
                 <div className="helper">{c.note}</div>
-                {c.real && c.asof && (
-                  <div className="helper" style={{ marginTop: 6, color: "var(--good)" }}>Real transit calls/day · 7-day avg vs 12-month norm · IMF PortWatch, as of {c.asof}</div>
-                )}
                 {c.sea && c.sea.wave != null && (
                   <div className="helper" style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -512,7 +534,7 @@ function ThreatsView() {
                     inputs: [
                       { k: c.real ? "Current (7-day avg)" : "Today", v: c.vessels + " transit calls/day", src: "ais" },
                       { k: c.real ? "12-month norm (90th pct)" : "Baseline", v: c.baseline + " transit calls/day", src: "ais" },
-                      c.real ? { k: "Source", v: "IMF PortWatch · satellite AIS · as of " + c.asof } : { k: "Contribution", v: "largest single driver of Live Stress" },
+                      c.real ? { k: "Source", v: "IMF PortWatch · satellite AIS · as of " + c.asof } : { k: "Contribution", v: "largest single driver of Live Resilience" },
                     ],
                     assumption: c.real
                       ? "Real IMF PortWatch transit calls (satellite AIS on ~90,000 ships), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm (90th percentile). A sustained collapse still reads as a real drop rather than quietly becoming the new normal."
@@ -553,7 +575,7 @@ function ThreatsView() {
                         title: s.name,
                         text: isMaritime
                           ? `Observed event signal · source ${RD.sources[s.src].full}. This is the CAUSE of the chokepoint throughput drop shown above — carriers reroute because of it — so the model counts it once, through that measured drop. The magnitude below is context, not a second deduction from the score.`
-                          : `Observed event signal · source ${RD.sources[s.src].full}. The severity below is a curated judgement applied as the one non-maritime residual term of the Live Stress active load.`,
+                          : `Observed event signal · source ${RD.sources[s.src].full}. The severity below is a curated judgement applied as the one non-maritime residual term of the Live Resilience active load.`,
                         inputs: [
                           { k: "Observed", v: `event · ${s.when}`, src: s.src },
                           { k: "Event note", v: s.note },
@@ -598,7 +620,7 @@ function ThreatsView() {
                 }} />
               </div>
               <div className="helper" style={{ marginTop: 7 }}>
-                The real cost to Live Stress, traceable to the driver panel on the Overview: maritime counted once (−{maritimeLoad.toFixed(1)}) plus the easing Guinea residual (−{residualLoad.toFixed(1)}). Individual event magnitudes are context, not a running total.
+                The real cost to Live Resilience, traceable to the driver panel on the Overview: maritime counted once (−{maritimeLoad.toFixed(1)}) plus the easing Guinea residual (−{residualLoad.toFixed(1)}). Individual event magnitudes are context, not a running total.
               </div>
             </div>
               );
@@ -744,7 +766,7 @@ function ScenariosView() {
           <Panel title="Impact on the national score" icon="gauge"
             right={<span className="label" style={{ marginLeft: "auto" }}>{scn.name.toUpperCase()}</span>}>
             <div style={{ display: "flex", alignItems: "center", gap: 22, marginBottom: 18 }}>
-              <div className="kpi"><span className="kpi-v mono">{baseLive.toFixed(1)}</span><span className="kpi-l">Baseline live stress</span></div>
+              <div className="kpi"><span className="kpi-v mono">{baseLive.toFixed(1)}</span><span className="kpi-l">Baseline live resilience</span></div>
               <Icon name="arrowRight" size={20} style={{ color: "var(--faint)" }} />
               <div className="kpi"><span className="kpi-v mono" style={{ color: scn.overall < 0 ? "var(--crit)" : "var(--ink)" }}>{after}</span><span className="kpi-l">Under this scenario</span></div>
               <div style={{ marginLeft: "auto", textAlign: "right" }}>

@@ -16,7 +16,7 @@ function TagLegend() {
       <div className="act-legend">
         <div className="act-legend-row">
           <span className="act-eff live">LIVE</span>
-          <span>Improves <b>today's score</b> — it recovers Live Stress now, but the underlying weakness remains.</span>
+          <span>Improves <b>today's score</b> — it recovers Live Resilience now, but the underlying weakness remains.</span>
         </div>
         <div className="act-legend-row">
           <span className="act-eff ceiling">CEILING</span>
@@ -69,7 +69,7 @@ function Posture({ staged, evalById }) {
     <div className="act-posture">
       <div className="act-posture-scores">
         <div className="act-pscore">
-          <span className="label">Live stress now</span>
+          <span className="label">Live resilience now</span>
           <span className="act-pnum mono">{liveBase.toFixed(1)}</span>
         </div>
         <Icon name="arrowRight" size={20} style={{ color: "var(--faint)", flex: "0 0 auto" }} />
@@ -157,7 +157,7 @@ function TierSelector({ p, tierIndex, onPick }) {
               <span className="act-tier-name">{t.name}</span>
               {t.recommended && <span className="act-tier-rec">recommended start</span>}
               <span className={`act-eff ${t.kind === "live" ? "live" : "ceiling"}`} style={{ marginLeft: "auto" }}
-                title={t.kind === "live" ? "Improves today's score (Live Stress)" : t.kind === "ceiling" ? "Improves the long-term score (Structural ceiling)" : "Improves both today's score and the long-term ceiling"}>
+                title={t.kind === "live" ? "Improves today's score (Live Resilience)" : t.kind === "ceiling" ? "Improves the long-term score (Structural ceiling)" : "Improves both today's score and the long-term ceiling"}>
                 {t.kind === "live" ? "LIVE" : t.kind === "ceiling" ? "CEILING" : "LIVE+CEILING"}
               </span>
             </div>
@@ -182,7 +182,7 @@ function TierReadout({ p, r }) {
   const isCeil = t.ceilPts >= t.livePts;
   const after = isCeil
     ? { base: ceilBase, val: +(ceilBase + r.ceil).toFixed(1), lbl: "Structural ceiling" }
-    : { base: liveBase, val: +Math.min(ceilBase, liveBase + r.live).toFixed(1), lbl: "Live stress" };
+    : { base: liveBase, val: +Math.min(ceilBase, liveBase + r.live).toFixed(1), lbl: "Live resilience" };
   return (
     <div className="act-cb">
       <div className="act-cb-grid">
