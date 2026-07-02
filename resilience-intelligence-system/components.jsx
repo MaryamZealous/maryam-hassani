@@ -124,13 +124,12 @@ function Panel({ title, label, right, children, icon, style }) {
 function headlineDrivers(d) {
   if (d === RD.headline.live) {
     const sh = RD.shocks;
-    const names = sh.map((s) => s.short || s.name).join(", ");
-    const hits = [...new Set(sh.map((s) => s.sector))].join(" & ");
+    const names = sh.map((s) => s.short || s.name).join(" & ");
     const gap = +(RD.headline.structural.value - d.value).toFixed(1);
     return {
-      kicker: "Live factors · updating hourly",
+      kicker: "Live factors",
       caption: `${gap} pts under the ${RD.headline.structural.value.toFixed(1)} ceiling — clears as today's load eases`,
-      text: `Hormuz & Red Sea pressure active, Guinea/EGA bauxite easing. Maritime disruption is counted once — through measured ship transits, which already reflect the escalation — and live sits ${gap} pts below the ceiling.`,
+      text: `${names} pressure on the sea routes is the active load today. It reaches the score through measured ship transits, which already reflect how carriers reroute, and leaves live ${gap} pts below the ceiling.`,
     };
   }
   const weakest = RD.sectors.reduce((a, b) => (b.score < a.score ? b : a));
@@ -160,15 +159,14 @@ function ScoreCard({ d }) {
               onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
                 kicker: "Live feeds · updating continuously", title: "What feeds the Live Resilience score",
                 text: "Live Resilience is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from six public feeds. Maritime throughput (PortWatch) is the largest mover, which is why it often leads — but it is never the only input. The news monitor adds two early-warning lanes: trade-route closure coverage and adverse partner-supply coverage (a Qatar, Taiwan, Kazakhstan, China or India supply shock), so a partner disruption registers here before throughput data would confirm it.",
-                formula: "Active load  =  maritime throughput + sea state + trade-route news + partner-supply news + market stress + sanctions drift + Guinea residual",
+                formula: "Active load  =  maritime throughput + sea state + trade-route news + partner-supply news + market stress + sanctions drift",
                 inputs: [
                   { k: "Maritime throughput — largest driver", v: "chokepoint transit calls vs 12-month norm", src: "ais" },
                   { k: "Sea state", v: "wave height & wind on the approaches", src: "meteo" },
                   { k: "Trade-route news", v: "closure & conflict coverage", src: "gdelt" },
                   { k: "Partner-supply news", v: "adverse supply-shock coverage on Qatar / Taiwan / Kazakhstan / China / India", src: "gdelt" },
-                  { k: "Market stress", v: "Brent & natural-gas prices", src: "yfinance" },
+                  { k: "Market stress", v: "Brent & the Brent-linked LNG replacement cost", src: "yfinance" },
                   { k: "Sanctions drift", v: "OFAC SDN updates", src: "ofac" },
-                  { k: "Guinea residual (non-maritime)", v: "easing bauxite shock", src: "acled" },
                 ],
                 assumption: "PortWatch is the dominant mover, but the score is a blend of all six live feeds against the structural ceiling — never PortWatch alone.",
               }); }}>
@@ -183,11 +181,6 @@ function ScoreCard({ d }) {
         <div className="score-meta">
           <span className="score-band"><span className="sq"></span>{b.label}</span>
           <Trend now={d.value} prev={d.prev} horizon={d.horizon || "24h"} />
-          {conf && (
-            <span className={`conf-chip conf-${conf.k}`} title={`Sensitivity range under plausible assumption bounds: ${lo.toFixed(1)}–${hi.toFixed(1)} (±${half.toFixed(1)}). The single value is the central estimate, not a precise reading.`}>
-              <span className="conf-dot"></span>{conf.label} · {lo.toFixed(1)}–{hi.toFixed(1)}
-            </span>
-          )}
         </div>
       </div>
       <div className="score-track" style={{ position: "relative" }}>
@@ -256,7 +249,7 @@ function SectorCard({ s, onOpen }) {
             text: s.note + " The score is computed, not hand-set: it takes the Dependency Risk Index of each tracked import, weights it by national consequence (so the imports that matter most count most), averages them, and subtracts from 100. The ★ import — the most fragile — is the one to watch.",
             formula: "Sector  =  100  −  ( Σ(DRI × consequence) / Σ consequence )",
             inputs: driInputs,
-            assumption: "A deterministic function of the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. DRI's own four dimensions are equally weighted (0–25 each). Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
+            assumption: "This score is calculated straight from the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. DRI's own four dimensions are equally weighted (0–25 each). Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
             range: s.rangeHalf != null ? { lo: slo, hi: shi, half: shalf, confidence: s.confidence } : undefined,
             sensitivity: s.sensitivity,
           }} />
@@ -331,7 +324,7 @@ function Drawer({ payload, onClose }) {
                 <span className="conf-range mono">{payload.range.lo.toFixed(1)} – {payload.range.hi.toFixed(1)}</span>
                 <span className="faint" style={{ fontSize: 11 }}>±{payload.range.half.toFixed(1)} pts</span>
               </div>
-              <p className="exp-text" style={{ marginTop: 9 }}>The headline is a central estimate, not a precise reading. This range is how far it moves when each editable assumption is pushed across a plausible band and the swings are combined in quadrature. A tighter range means higher confidence.</p>
+              <p className="exp-text" style={{ marginTop: 9 }}>The headline is a central estimate, not a precise reading. This range is how far it moves when each editable assumption is nudged to the high and low ends of what's reasonable. A tighter range means higher confidence.</p>
             </div>
           )}
           {(() => {

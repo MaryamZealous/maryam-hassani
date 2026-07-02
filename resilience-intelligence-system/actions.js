@@ -376,7 +376,7 @@ window.ACT = (function () {
           costBasis: "AED 30bn committed envelope. Same committed-not-spent logic; the pre-written rules are what cap the actual spending.",
           days: 120, timeBasis: "~4 months — designing the mechanism and getting legal pre-approval is the clock, not the money.",
           livePts: 2.0, ceilPts: 0, local: null,
-          residual: "Open-ended support inflates the very prices it pays — the wind-down rules ARE the protection; without them this becomes the problem it guards against.",
+          residual: "Open-ended support inflates the very prices it pays — the wind-down rules are the protection; without them this becomes the problem it guards against.",
         },
         {
           id: "t3", name: "Tier 3 · Make it permanent law", kind: "mixed",

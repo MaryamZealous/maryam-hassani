@@ -15,7 +15,7 @@ function gasBasisFx() {
   return {
     kicker: "Two-state gas node",
     title: "Gas — contracted floor vs marginal replacement",
-    text: "The UAE lives in two gas-price worlds at once. Contracted Dolphin gas is a fixed ~$" + g.floor.toFixed(2) + "/MMBtu floor. The molecule that REPLACES it if Dolphin is curtailed is sea-borne LNG, priced off oil at ~12.5% of Brent. Losing Dolphin is therefore a price-BASIS flip from contract to oil-linked — a reprice of roughly ≈" + g.multiple.toFixed(1) + "× — not a volume gap against a buffer.",
+    text: "The UAE lives in two gas-price worlds at once. Contracted Dolphin gas is a fixed ~$" + g.floor.toFixed(2) + "/MMBtu floor. The molecule that replaces it if Dolphin is curtailed is sea-borne LNG, priced off oil at ~12.5% of Brent. Losing Dolphin is therefore a price-BASIS flip from contract to oil-linked — a reprice of roughly ≈" + g.multiple.toFixed(1) + "× — not a volume gap against a buffer.",
     formula: "Marginal replacement  =  slope × Brent  +  shipping/regas  =  0.125 × $" + g.brent.toFixed(0) + "  +  $" + g.shipConst.toFixed(2) + "  =  $" + g.marginal.toFixed(2) + " / MMBtu",
     inputs: [
       { k: "Contracted floor (Dolphin)", v: "$" + g.floor.toFixed(2) + " / MMBtu — fixed long-term contract", src: "assumption" },
@@ -91,13 +91,12 @@ function DriverTrace() {
   const maxV = Math.max(0.1, ...drivers.map((d) => d.v));
   const liveN = drivers.filter((d) => d.real).length;
   if (!drivers.length) return null;
-  // three states: a connected live feed (LIVE), a simulated stand-in awaiting
-  // its feed (SIM — never dressed up as live), or the curated model input (MODEL).
-  const stateOf = (d) => d.modelled ? "model" : (d.real ? "live" : "sim");
+  // two states: a connected live feed (LIVE), or a simulated stand-in awaiting
+  // its feed (SIM — never dressed up as live).
+  const stateOf = (d) => d.real ? "live" : "sim";
   const META = {
     live:  { badge: "LIVE",  cls: "on",    sub: "live feed" },
     sim:   { badge: "SIM",   cls: "",      sub: "simulated until its feed connects" },
-    model: { badge: "MODEL", cls: "model", sub: "modelled severity" },
   };
   return (
     <Panel title="What's moving the score right now" icon="book"
@@ -126,7 +125,7 @@ function DriverTrace() {
         })}
       </div>
       <div className="helper" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent &amp; gas · OFAC/OpenSanctions. The Guinea/EGA bauxite residual is the one <b>MODEL</b> input — no live feed, so it is never shown as live.
+        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent &amp; gas · OFAC/OpenSanctions. Every driver is a connected live feed; a driver reading near zero is quiet, not missing.
       </div>
     </Panel>
   );
@@ -322,7 +321,8 @@ function ProvenanceLedger() {
     feeds: "Maritime throughput (largest single driver)",
     assume: "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm, never an absolute count. Chokepoint pressure feeds the acute-drag term only — it never moves the structural baseline.",
   }));
-  const shk = RD.shocks.filter((s) => s.id === "guinea").map((s) => ({
+  // Non-maritime shocks feed the ledger when active; none are live today.
+  const shk = RD.shocks.filter((s) => s.id !== "hormuz" && s.id !== "redsea").map((s) => ({
     signal: s.name, src: s.src,
     observed: `event · ${s.when}`,
     series: null, note: s.note, evidence: s.evidence,
@@ -597,8 +597,7 @@ function ThreatsView() {
               const drivers = RD.headline.live.drivers || [];
               const dv = (k) => { const d = drivers.find((x) => x.k === k); return d ? d.v : 0; };
               const maritimeLoad = +dv("Maritime throughput").toFixed(1);
-              const residualLoad = +dv("Residual shock (Guinea)").toFixed(1);
-              const convLoad = +(maritimeLoad + residualLoad).toFixed(1);
+              const convLoad = maritimeLoad;
               return (
             <div className={`band-${RD.convergence.band}`} style={{ marginTop: 4, padding: "13px 15px", borderRadius: "var(--radius)", background: "color-mix(in srgb,var(--bc) 12%,transparent)", border: "1px solid var(--bc)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -607,18 +606,17 @@ function ThreatsView() {
                 <span className="mono" style={{ marginLeft: "auto", fontSize: 18, fontWeight: 700, color: "var(--bc)" }}>−{convLoad.toFixed(1)}</span>
                 <Fx payload={{
                   kicker: "Convergence", title: "What these shocks actually cost the score",
-                  text: "The three concurrent events put −" + convLoad.toFixed(1) + " points of live load on the score — no larger 'combined severity' on top. The two maritime events are counted once, through the measured throughput drop they cause; only the non-maritime Guinea residual adds a separate term.",
-                  formula: "Live load  =  maritime throughput (counted once)  +  Guinea residual",
+                  text: "The two concurrent maritime events put −" + convLoad.toFixed(1) + " points of live load on the score — no larger 'combined severity' on top. Both reach the score through the measured throughput drop they cause, so the load is that single drop in vessel transits.",
+                  formula: "Live load  =  measured maritime throughput drop (Hormuz + Red Sea)",
                   inputs: [
                     { k: "Maritime throughput (Hormuz + Red Sea)", v: "−" + maritimeLoad.toFixed(1) + " pts", src: "ais" },
-                    { k: "Guinea residual (non-maritime)", v: "−" + residualLoad.toFixed(1) + " pts", src: "curated" },
                     { k: "Combined live load", v: "−" + convLoad.toFixed(1) + " pts" },
                   ],
                   assumption: "Overlapping maritime events do not add a second time — their escalation is already embedded in the vessel-throughput drop. Per-event event magnitudes are context, not additive inputs to the score.",
                 }} />
               </div>
               <div className="helper" style={{ marginTop: 7 }}>
-                The real cost to Live Resilience, traceable to the driver panel on the Overview: maritime counted once (−{maritimeLoad.toFixed(1)}) plus the easing Guinea residual (−{residualLoad.toFixed(1)}). Individual event magnitudes are context, not a running total.
+                The real cost to Live Resilience, traceable to the driver panel on the Overview: the measured maritime throughput drop (−{maritimeLoad.toFixed(1)}). Individual event severity figures are context, not a running total.
               </div>
             </div>
               );

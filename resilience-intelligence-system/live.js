@@ -71,9 +71,7 @@ window.LIVE = (function () {
     indState[i.id] = isNaN(raw) ? (IND[i.id] ? IND[i.id].anchor : 0) : raw;
   });
 
-  let nonMaritime = 1.9;          // residual Guinea/EGA drag, easing
   let sanctionBase = null;        // first-seen SDN count, for delta
-  const NM_ANCHOR = 1.85;
   let tick = 0;
 
   /* ---- one step -------------------------------------------------------- */
@@ -248,11 +246,7 @@ window.LIVE = (function () {
       sanctionDrag = clamp((RD.sources.ofac._total - sanctionBase) / 200, 0, 0.5);
     }
 
-    // (f) residual non-maritime shock — MODELLED (Guinea/EGA, easing). Held steady
-    // at its curated value: there is no live feed for it, so it must not jitter.
-    nonMaritime = NM_ANCHOR;
-
-    const totalDrag = throughputDrag + seaStateDrag + newsDrag + partnerDrag + marketDrag + sanctionDrag + nonMaritime;
+    const totalDrag = throughputDrag + seaStateDrag + newsDrag + partnerDrag + marketDrag + sanctionDrag;
     const ceiling = RD.headline.structural.value;
     const live = clamp(ceiling - totalDrag, 25, ceiling - 0.1);
     RD.headline.live.value = +live.toFixed(1);
@@ -280,7 +274,6 @@ window.LIVE = (function () {
       const added = RD.sources.ofac._total - sanctionBase;
       reads.ofac = (added >= 0 ? "+" : "") + added.toLocaleString() + " SDN entities since session baseline";
     }
-    reads.model = "curated severity \u00b7 easing as exports recover";
 
     RD.headline.live.drivers = [
       { k: "Maritime throughput", v: throughputDrag, src: "ais", real: status.ais === "live", read: reads.ais },
@@ -289,7 +282,6 @@ window.LIVE = (function () {
       { k: "Sea state", v: seaStateDrag, src: "meteo", real: status.meteo === "live", read: reads.meteo },
       { k: "Energy-market stress", v: marketDrag, src: "yfinance", real: status.yfinance === "live", read: reads.yfinance },
       { k: "Counterpart / sanctions", v: sanctionDrag, src: "ofac", real: status.ofac === "live", read: reads.ofac },
-      { k: "Residual shock (Guinea)", v: nonMaritime, src: "curated", real: false, modelled: true, read: reads.model },
     ];
 
     // 4) Structural fundamentals are a deterministic FUNCTION of the dependency

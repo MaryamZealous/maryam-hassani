@@ -27,7 +27,7 @@ window.RD = (function () {
       horizon: "30d",
       formula: "0.60 × most-exposed sector (exposure)  +  0.40 × capacity (Absorb · Recover · Adapt)",
       cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "— no trade economy reaches it. The marked ≈72 frontier is a stated goalpost (an assumption, not a computed value): the realistic ceiling for an open, import-dependent economy. It anchors the axis only — no score is derived from it. This is also the ceiling Live Resilience recovers toward." },
-      explain: "Structural Resilience: how well the system copes on a calm day, before today's events. Following the vulnerability-vs-resilience logic used for small, open, import-dependent economies, it sets your CAPACITY — what you can Absorb, how fast you Recover, and your ability to Adapt — against your EXPOSURE, the most-exposed sector. It moves over months as buffers, sovereign depth and structural builds change, and is independent of today's events. It is also the ceiling the live score recovers toward. On the 0–100 axis, 100 = total self-sufficiency (no trade economy reaches it); ≈72 marks a realistic frontier.",
+      explain: "Structural Resilience: how well the system copes on a calm day, before today's events. Following the vulnerability-vs-resilience logic used for small, open, import-dependent economies, it sets the country's capacity — what it can absorb, how fast it recovers, and its ability to adapt — against its exposure, the most-exposed sector. It moves over months as buffers, sovereign depth and structural builds change, and is independent of today's events. It is also the ceiling the live score recovers toward. On the 0–100 axis, 100 = total self-sufficiency (no trade economy reaches it); ≈72 marks a realistic frontier.",
       // NOTE: value/prev are seeds only — computeSpine() overwrites value (and
       // recomputes prev to preserve the displayed 30-day delta) from the
       // dependency data, and replaces `inputs` with the computed decomposition.
@@ -48,16 +48,16 @@ window.RD = (function () {
       // cap + inputs[0] below are seeds; computeSpine() overwrites them with the
       // computed ceiling so the displayed ceiling always equals Structural.
       cap: { at: 55, label: "ceiling = baseline", lead: "Tracking toward your baseline", body: "— live sits below the structural ceiling by the size of today's active load. As that load clears, it climbs back to full strength." },
-      explain: "How resilient the system is to the conditions happening RIGHT NOW — expressed as a DEVIATION below the structural ceiling, not a free-floating number. On a calm day it would sit AT the ceiling; today's live load lowers it. Maritime disruption is counted ONCE, through measured vessel throughput — which already embeds escalation, since carriers reroute in response to it. The gap between this and the ceiling is the real headline signal: a wide gap shows where to focus today; a narrow gap means operating close to your fundamentals.",
+      explain: "How resilient the system is to today's conditions — the structural ceiling minus the active load from what's happening now, not a free-floating number. On a calm day it sits at the ceiling; live pressure lowers it. The gap between this and the ceiling is the headline signal: a wide gap shows where to focus today, a narrow gap means the country is operating close to its fundamentals.",
       inputs: [
         { k: "Structural ceiling", v: "the day's maximum", src: "curated" },
-        { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez transit calls vs each strait's 12-month norm (IMF PortWatch) — embeds escalation", src: "ais" },
+        { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez transit calls vs each strait's 12-month norm (IMF PortWatch)", src: "ais" },
         { k: "Trade-route news", v: "above-normal closure / conflict coverage on the sea routes", src: "gdelt" },
         { k: "Partner-supply news", v: "adverse coverage of a single- or few-source partner (Qatar gas, Taiwan chips, Kazakhstan fuel, China, India) — negative-sentiment gated", src: "gdelt" },
-        { k: "Non-maritime shocks", v: "residual Guinea/EGA bauxite load (settled May 2026, easing; not in vessel counts)", src: "acled" },
+        { k: "Energy-market stress", v: "Brent and the Brent-linked LNG replacement cost above their stress marks", src: "yfinance" },
         { k: "Live = ceiling − active load", v: "recomputed every refresh from the live drivers", src: "curated" },
       ],
-      assumption: "Maritime disruption is counted ONCE — via measured vessel throughput, which already embeds escalation (carriers reroute because of it). The maritime events in the convergence panel are the CAUSES of that throughput drop, shown for context, not added a second time. Only non-maritime shocks (e.g. Guinea) add a separate severity term. Escalation's one distinct residual effect — threat to the Fujairah bypass itself — is treated structurally, not as additive live drag.",
+      assumption: "Live Resilience = structural ceiling − today's active load. Maritime disruption enters through measured vessel throughput, which already reflects how carriers reroute as tension rises — so the Hormuz and Red Sea events shown elsewhere are the causes of that measured drop, presented for context, and are not added to the score a second time.",
     },
   };
 
@@ -68,7 +68,7 @@ window.RD = (function () {
   // change the arrow shows, preserved across recompute) and the plain note.
   const sectors = [
     { id: "energy", name: "Energy", trend: -1.7,
-      note: "Power and desalination draw on one shared gas envelope, so they move together under load. The acute exposure is GAS-SIDE: piped Dolphin gas from Qatar is the highest-consequence input in the model — and because Dolphin is a fixed subsea pipeline (not a maritime chokepoint), and UAE crude EXPORTS bypass Hormuz via the Fujairah pipeline, Energy carries no oil-import chokepoint penalty. Its risk is single-counterpart concentration and a contract→oil-linked price-basis flip, not a Strait-of-Hormuz crude story. Grid transformers and LEU fuel round out the legacy imports. The clean-energy buildout adds a newer class of dependency — solar PV, battery storage and copper — that swaps some gas-reliance for China-concentrated processing risk." },
+      note: "Power and desalination draw on one shared gas envelope, so they move together under load. The acute exposure is gas-side: piped Dolphin gas from Qatar is the highest-consequence input in the model — and because Dolphin is a fixed subsea pipeline (not a maritime chokepoint), and UAE crude exports bypass Hormuz via the Fujairah pipeline, Energy carries no oil-import chokepoint penalty. Its risk is single-counterpart concentration and a contract→oil-linked price-basis flip, not a Strait-of-Hormuz crude story. Grid transformers and LEU fuel round out the legacy imports. The clean-energy buildout adds a newer class of dependency — solar PV, battery storage and copper — that swaps some gas-reliance for China-concentrated processing risk." },
     { id: "water", name: "Water", trend: 0.5,
       note: "Desalination rests on two specialised imports: RO membranes (a competitive-but-concentrated field) and energy-recovery devices (one dominant US supplier). The binding constraint is reorder lead-time against buffers, not overnight single-source failure." },
     { id: "defence", name: "Defence", trend: 0,
@@ -90,7 +90,7 @@ window.RD = (function () {
       note: "Long-lead nuclear fuel for Barakah. No near-term alternative, but enormous buffer." },
     { id: "chips", name: "Leading-edge chips", sector: "defence", source: "Taiwan", buffer: 90, cfac: { ess: 0.80, svc: 0.80, imm: 0.60, brd: 0.50 }, dri: 66,
       dims: { concentration: 23, substitutability: 22, route: 6, counterpart: 15 }, hormuz: false, dolphin: false,
-      note: "Fabrication concentrates in Taiwan, but the access risk is US export-control licensing, not a supply halt — a channel that EASED in Nov 2025 when the US approved G42 to import advanced Nvidia silicon. Feeds EDGE Group guided-systems lines." },
+      note: "Fabrication concentrates in Taiwan, but the access risk is US export-control licensing, not a supply halt — a channel that eased in Nov 2025 when the US approved G42 to import advanced Nvidia silicon. Feeds EDGE Group guided-systems lines." },
     { id: "ro", name: "RO membranes", sector: "water", source: "Japan / US / Korea", buffer: 75, cfac: { ess: 1.00, svc: 0.90, imm: 0.60, brd: 0.85 }, dri: 55,
       dims: { concentration: 16, substitutability: 16, route: 13, counterpart: 10 }, hormuz: false, dolphin: false,
       note: "Competitive but concentrated field — DuPont (US), Toray & Nitto (Japan), LG (Korea) hold ~58% between the top three. Gulf desalination already runs largely on Toray membranes, and regional production is localising (Veolia–Alkhorayef, Saudi, 2026). The binding risk is the ~120-day reorder lead-time vs a 75-day buffer — not single-source failure." },
@@ -102,7 +102,7 @@ window.RD = (function () {
       note: "The continuous chemical feed every desalination train depends on: antiscalants injected into RO feed-water to stop membrane scaling, chlorine / sodium hypochlorite for disinfection, coagulants (ferric chloride) and pH adjusters (sulphuric acid, caustic soda). Specialty antiscalants come from a handful of qualified suppliers (Nalco/Ecolab, BASF, Avista) and can't be swapped without re-validation. Short shelf lives cap how much can be stockpiled, so the buffer is genuinely thin — and without dosing, RO membranes foul and scale within days, not months. A high-consequence, thin-buffer water input the original list missed." },
     { id: "gas", name: "Piped gas (Dolphin)", sector: "energy", source: "Qatar", buffer: 30, cfac: { ess: 1.00, svc: 1.00, imm: 1.00, brd: 1.00 }, dri: 61,
       dims: { concentration: 23, substitutability: 18, route: 2, counterpart: 18 }, hormuz: false, dolphin: true,
-      note: "25% of gas for power + water; contract runs to 2032. The genuine exposure is gas-side and counterpart-driven, NOT a maritime chokepoint: Dolphin is a fixed subsea pipeline from Qatar, so route/chokepoint exposure is low (it does not transit Hormuz). What carries the risk is single-counterpart concentration (one neighbour, one corridor) and the price BASIS — losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8× the floor). Highest consequence weight in the model. UAE crude exports bypass Hormuz via Fujairah, so the energy line carries no oil-import chokepoint penalty — its acute exposure is gas feedstock." },
+      note: "25% of gas for power + water; contract runs to 2032. The genuine exposure is gas-side and counterpart-driven, not a maritime chokepoint: Dolphin is a fixed subsea pipeline from Qatar, so route/chokepoint exposure is low (it does not transit Hormuz). What carries the risk is single-counterpart concentration (one neighbour, one corridor) and the price BASIS — losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8× the floor). Highest consequence weight in the model. UAE crude exports bypass Hormuz via Fujairah, so the energy line carries no oil-import chokepoint penalty — its acute exposure is gas feedstock." },
     { id: "api", name: "Active pharma ingredients", sector: "health", source: "India", buffer: 60, cfac: { ess: 0.90, svc: 0.75, imm: 0.70, brd: 0.60 }, dri: 55,
       dims: { concentration: 21, substitutability: 16, route: 10, counterpart: 8 }, hormuz: true, dolphin: false,
       note: "65% sourced from India. Hospital pharmacology depends on uninterrupted flow." },
@@ -141,7 +141,7 @@ window.RD = (function () {
       note: "Keeps air-bridge capacity alive when sea routes degrade." },
     { id: "container", name: "Containerised imports (Hormuz)", sector: "logistics", source: "Asia via Hormuz", buffer: 45, cfac: { ess: 0.80, svc: 0.80, imm: 0.70, brd: 0.85 }, dri: 45,
       dims: { concentration: 11, substitutability: 13, route: 18, counterpart: 3 }, hormuz: true, dolphin: false,
-      note: "The bulk of containerised consumer & industrial goods arrive at Jebel Ali, which sits INSIDE the Gulf — so they are Hormuz-locked. Fujairah (on the Gulf of Oman, outside the strait) is a partial bypass but a fraction of Jebel Ali's box capacity, which is why route exposure dominates this line." },
+      note: "The bulk of containerised consumer & industrial goods arrive at Jebel Ali, which sits inside the Gulf — so they are Hormuz-locked. Fujairah (on the Gulf of Oman, outside the strait) is a partial bypass but a fraction of Jebel Ali's box capacity, which is why route exposure dominates this line." },
     { id: "golddore", name: "Gold doré", sector: "finance", source: "Africa (various)", buffer: 30, cfac: { ess: 0.20, svc: 0.30, imm: 0.25, brd: 0.15 }, dri: 22,
       dims: { concentration: 8, substitutability: 6, route: 5, counterpart: 3 }, hormuz: false, dolphin: false,
       note: "Refining feedstock for Dubai's gold trade. Low national-consequence weight — the bottom of the scale." },
@@ -165,19 +165,15 @@ window.RD = (function () {
 
   // ---- Active shocks -------------------------------------------------------
   const shocks = [
-    { id: "guinea", name: "Guinea bauxite supply (EGA)", short: "Guinea", sector: "energy", impact: -4, band: "moderate",
-      src: "acled", when: "easing · settled 6 May 2026", track: "Auto-tracked via ACLED + news feed — severity re-rated as the settlement implements; will re-escalate automatically if CBG–EGA shipments stall again.",
-      note: "Guinea's 2024 revocation of EGA's GAC concession halted bauxite feedstock to its Al Taweelah refinery in Abu Dhabi. Largely resolved: EGA secured alternative supply from Australia, Ghana and Brazil (>70% of volume) and signed a May 2026 settlement renewing CBG–EGA contracts. Residual drag only.",
-      evidence: [{ label: "The National", url: "https://www.thenationalnews.com/business/2026/05/06/ega-settles-disputes-with-guinea-over-bauxite-mine-project/" }, { label: "Aluminium Journal", url: "https://www.aluminium-journal.com/ega-guinea-agreement-bauxite-mining" }] },
     { id: "hormuz", name: "Hormuz tension", short: "Hormuz", sector: "logistics", impact: -20, band: "high",
-      src: "acled", when: "ongoing", note: "Gulf naval tension is the most-cited driver behind the strait's depressed transits. Because it is the CAUSE of the throughput collapse shown on the chokepoint card, its effect is counted ONCE there — via measured IMF PortWatch vessel data — not added again here. Shown for context; the Fujairah pipeline and air cargo blunt the crude-export hit.",
+      src: "acled", when: "ongoing", note: "Gulf naval tension is the most-cited driver behind the strait's depressed transits. Because it is the cause of the throughput drop shown on the chokepoint card, its effect reaches the score through that measured IMF PortWatch vessel data — the severity figure here is context, not a second deduction. The Fujairah pipeline and air cargo blunt the crude-export hit.",
       evidence: [{ label: "IMF PortWatch", url: "https://portwatch.imf.org/datasets/42132aa4e2fc4d41bdaf9a445f688931_0/about" }, { label: "EIA chokepoints", url: "https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints" }, { label: "Live vessel traffic", url: "https://www.marinetraffic.com/en/ais/home/centerx:56.5/centery:26.5/zoom:8" }] },
     { id: "redsea", name: "Red Sea Houthi activity", short: "Red Sea", sector: "logistics", impact: -8, band: "moderate",
-      src: "acled", when: "ongoing", note: "The Houthi drone/missile threat that pushed carriers off the route — the CAUSE of the Red Sea transit drop, counted once via measured throughput, not re-added. Shown for context.",
+      src: "acled", when: "ongoing", note: "The Houthi drone and missile threat that pushed carriers off the route — the cause of the Red Sea transit drop. Its effect reaches the score through the measured throughput data; the severity figure here is shown for context.",
       evidence: [{ label: "IMF PortWatch", url: "https://portwatch.imf.org/datasets/42132aa4e2fc4d41bdaf9a445f688931_0/about" }, { label: "ReliefWeb: Yemen", url: "https://reliefweb.int/country/yem" }] },
   ];
-  const convergence = { concurrent: 3, band: "high",
-    note: "Two live maritime events (Hormuz, Red Sea) plus the easing Guinea/EGA bauxite dispute. The maritime events are counted once — through the measured throughput drop they cause — so the real load on the score is maritime throughput + the non-maritime Guinea residual, nothing more. Per-event magnitudes are shown for context only, never re-added." };
+  const convergence = { concurrent: 2, band: "high",
+    note: "Two concurrent maritime events — Hormuz and the Red Sea. Both reach the score through the measured throughput drop they cause, so the load is the drop in vessel transits, nothing added on top. Per-event severity figures are shown for context only." };
 
   // ---- Buffer-day provenance ----------------------------------------------
   // The buffer figures are CURATED estimates, not a live inventory feed. Tag
@@ -216,7 +212,7 @@ window.RD = (function () {
       status: "moderate", src: "yfinance", spark: [84,86,85,88,90,91,92,93], note: "Live from market feed. Within normal range." },
     { id: "gasbasis", name: "Gas — replacement basis", value: "$12.0", unit: "/ MMBtu marginal", delta: 0, dir: "flat",
       status: "moderate", src: "curated", twoState: true, spark: [11.3,11.6,11.4,11.8,12.1,11.9,12.0,12.0],
-      note: "Two price worlds at once. Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor; the molecule that would REPLACE it if Dolphin failed is sea-borne LNG, priced at ~12.5% of Brent (~$12 today, ≈8× the floor). The exposure is a price-BASIS flip from contract to oil-linked, not a volume gap against a buffer. Henry Hub (US ~$3) is the wrong benchmark for the UAE and is not used here." },
+      note: "Two price worlds at once. Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor; the molecule that would replace it if Dolphin failed is sea-borne LNG, priced at ~12.5% of Brent (~$12 today, ≈8× the floor). The exposure is a price-BASIS flip from contract to oil-linked, not a volume gap against a buffer. Henry Hub (US ~$3) is the wrong benchmark for the UAE and is not used here." },
     { id: "sanctions", name: "OFAC SDN updates", value: "2", unit: "new designations · partner-dependency risk", delta: 0, dir: "flat",
       status: "moderate", src: "ofac", spark: [1,0,2,1,2,1,0,3],
       note: "Counts entities and individuals added this week to the US Treasury OFAC Specially Designated Nationals (SDN) list that touch UAE-relevant counterparties — banks, trading houses, shipping and front companies operating in or through the Emirates. New designations can freeze dollar-clearing access and force counterparties to be dropped, so this feeds the counterpart-risk adjustment on the finance and logistics dependencies.",
@@ -543,12 +539,12 @@ window.RD = (function () {
     headline.live.cap.body = "— live sits below the structural ceiling (" + ceil.toFixed(1) + ") by the size of today's active load. As that load clears, it climbs back to full strength.";
     headline.live.inputs[0] = { k: "Structural ceiling", v: ceil.toFixed(1) + " — the day's maximum", src: "curated" };
 
-    // 6 · UNCERTAINTY — sensitivity of the deterministic scores to their
-    //     editable assumptions. We re-evaluate the whole spine with each key
-    //     assumption pushed to the ends of a plausible range, then combine the
-    //     swings in quadrature (independent-assumption propagation) into a ±band
-    //     and a confidence tier. This makes the model's inherent uncertainty
-    //     explicit instead of implying false precision in a single value.
+    // 6 · UNCERTAINTY — how sensitive each score is to its editable
+    //     assumptions. We re-evaluate the whole spine with each key assumption
+    //     nudged to the high and low ends of a plausible range, take how far the
+    //     score moves, and turn the largest swings into a ±range and a
+    //     confidence label. Makes the model's uncertainty explicit instead of
+    //     implying false precision in a single value.
     const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     function evalModel(o) {
       const e = o.essW, rest = 1 - e;
