@@ -16,38 +16,18 @@ function TagLegend() {
       <div className="act-legend">
         <div className="act-legend-row">
           <span className="act-eff live">LIVE</span>
-          <span>Improves <b>today's score</b> — it recovers Live Resilience now, but the underlying weakness remains.</span>
+          <span>Recovers <b>today's score</b> now — but the underlying weakness remains.</span>
         </div>
         <div className="act-legend-row">
           <span className="act-eff ceiling">CEILING</span>
-          <span>Improves the <b>long-term score</b> — it raises the Structural ceiling, the best score the country can reach.</span>
+          <span>Raises the <b>long-term ceiling</b> — the best score the country can reach.</span>
         </div>
         <div className="act-legend-row">
           <span className="act-eff ceiling">LIVE+CEILING</span>
           <span>Does both — some relief now, plus a permanently higher ceiling.</span>
         </div>
-        <div className="act-legend-row">
-          <span className="act-eff">T1 / T2 / T3</span>
-          <span>The <b>scope tiers</b> — three sizes of the same plan, from quick stopgap to full build. Each is a complete, real plan on its own.</span>
-        </div>
       </div>
     </Panel>
-  );
-}
-
-/* ---- What-is-a-pre-mortem explainer ------------------------------------ */
-function PremortemNote() {
-  return (
-    <div className="act-pm-note">
-      <div className="act-pm-note-mark"><Icon name="reset" size={16} /></div>
-      <div>
-        <b>What is a pre-mortem?</b> A regular post-mortem asks, after a failure, “why did this die?” A pre-mortem
-        flips the timeline: it <i>assumes the response has already failed catastrophically</i> and works backwards to
-        explain how. Stating failure as a given surfaces the weak points optimism normally hides. Here, no response is
-        shown without one — every brief names the ways it breaks, how likely each is, the leading indicator
-        that would warn you, and the mitigation that keeps it alive.
-      </div>
-    </div>
   );
 }
 
@@ -74,7 +54,7 @@ function Posture({ staged, evalById }) {
         </div>
         <Icon name="arrowRight" size={20} style={{ color: "var(--faint)", flex: "0 0 auto" }} />
         <div className={`act-pscore band-${liveB.key}`}>
-          <span className="label">With {n} response{n === 1 ? "" : "s"} staged</span>
+          <span className="label">With {n} staged</span>
           <span className="act-pnum mono" style={{ color: n ? "var(--bc)" : "var(--ink)" }}>{liveNew.toFixed(1)}</span>
           <span className="act-pdelta mono">{addLive > 0 ? "+" + (liveNew - liveBase).toFixed(1) + " live" : "—"}{addCeil > 0 ? " · +" + addCeil.toFixed(1) + " ceiling" : ""}</span>
         </div>
@@ -281,7 +261,7 @@ function Premortem({ p }) {
     <div className="act-pm">
       <div className="act-pm-lead">
         <Icon name="alert" size={15} style={{ color: "var(--high)" }} />
-        <span>Assume this response has <b>already failed</b>. Here is how — and what keeps it alive.</span>
+        <span>A pre-mortem flips a post-mortem: <b>assume this response has already failed</b>, then work back through how — stating failure as given surfaces the weak points optimism hides.</span>
       </div>
       {p.premortem.map((f, i) => {
         const b = LK_BAND[f.likelihood] || "moderate";
@@ -318,7 +298,7 @@ function PlayDetail({ p, r, onPickTier, isStaged, onStage }) {
         <Precedent p={p} />
       </Panel>
 
-      <Panel title="The decision — how far to go" icon="fx" label="EACH TIER IS A COMPLETE, REAL PLAN ON ITS OWN">
+      <Panel title="The decision — how far to go" icon="fx" label="EACH TIER IS A COMPLETE PLAN">
         <TierSelector p={p} tierIndex={r.tierIndex} onPick={onPickTier} />
         <div className="divider"></div>
         <TierReadout p={p} r={r} />
@@ -372,8 +352,8 @@ function ActView() {
         <div className="view-title">Response &amp; pre-mortem</div>
         <div className="view-sub">
           Where the loop closes. Each response is a concrete plan — what gets built, where, with which technology and
-          partners — anchored to a real project that has already been done, with its actual cost and timeline. You make
-          one decision per response: <b>how far to go</b>. And every plan honestly states how it could fail.
+          partners — anchored to a real project already done, with its actual cost and timeline. You make one decision:
+          <b> how far to go</b>. And every plan states how it could fail.
         </div>
       </div>
 
@@ -381,7 +361,7 @@ function ActView() {
 
       <div className="grid cols-2" style={{ gridTemplateColumns: "minmax(360px, 0.95fr) 1.45fr", alignItems: "start", marginTop: 16 }}>
         <div className="stack act-left">
-        <Panel title="National response queue" icon="ops" label={ACT.PLAYS.length + " RESPONSES · RANKED BY PRIORITY"}
+        <Panel title="National response queue" icon="ops" label={ACT.PLAYS.length + " RESPONSES"}
           right={<span className="helper" style={{ marginLeft: "auto" }}>Ranked by weakness, payoff &amp; time-pressure</span>}>
           <div className="act-queue">
             {ranked.map(({ p, r }, i) => (
@@ -390,12 +370,8 @@ function ActView() {
                 onSelect={setSelId} onStage={onStage} />
             ))}
           </div>
-          <div className="helper" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-            Ranked by <b>priority</b> — a flat blend of how <b>weak</b> the sector is (its <b>DRI</b>, shown on every row), how much the recommended fix would <b>pay off</b>, and any <b>time-pressure</b> the weakness can&#8217;t show on its own. Weakness leads, so the queue follows where the model is weakest. Priority is a property of the <b>problem</b>, so the order stays fixed while you work. <b>Speed</b> and <b>value for money</b> aren&#8217;t here — they&#8217;re the lens for the <b>scope decision</b> on the right.
-          </div>
         </Panel>
         <TagLegend />
-        <PremortemNote />
         </div>
 
         <PlayDetail p={sel} r={selR} onPickTier={(i) => set(selId, { tier: i })}
