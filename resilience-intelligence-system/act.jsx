@@ -35,12 +35,14 @@ function TagLegend() {
 function Posture({ staged, evalById }) {
   const liveBase = RD.headline.live.value;
   const ceilBase = RD.headline.structural.value;
-  let addLive = 0, addCeil = 0, cost = 0, firstDays = Infinity, fullDays = 0;
+  let addLive = 0, addCeil = 0, cost = 0, firstDays = Infinity, fullDays = 0, firstId = null;
   staged.forEach((id) => {
     const r = evalById(id);
     addLive += r.live; addCeil += r.ceil; cost += r.cost;
-    firstDays = Math.min(firstDays, r.days); fullDays = Math.max(fullDays, r.days);
+    if (r.days < firstDays) { firstDays = r.days; firstId = id; }
+    fullDays = Math.max(fullDays, r.days);
   });
+  const firstPlay = firstId ? ACT.PLAYS.find((p) => p.id === firstId) : null;
   const ceilNew = +(ceilBase + addCeil).toFixed(1);
   const liveNew = +Math.min(ceilNew, liveBase + addLive).toFixed(1);
   const liveB = RD.band(liveNew), n = staged.size;
@@ -61,7 +63,7 @@ function Posture({ staged, evalById }) {
       </div>
       <div className="act-posture-meta">
         <div className="act-pmeta"><span className="label">Capital committed</span><span className="mono">{n ? ACT.fmtAED(cost) : "—"}</span></div>
-        <div className="act-pmeta"><span className="label">First effect</span><span className="mono">{n ? ACT.fmtDays(firstDays) : "—"}</span></div>
+        <div className="act-pmeta"><span className="label">First effect</span><span className="mono">{n ? ACT.fmtDays(firstDays) : "—"}</span>{firstPlay && <span className="helper" style={{ fontSize: 10, lineHeight: 1.3 }} title={firstPlay.title}>{firstPlay.title.length > 34 ? firstPlay.title.slice(0, 32) + "…" : firstPlay.title}</span>}</div>
         <div className="act-pmeta"><span className="label">Full effect</span><span className="mono">{n ? ACT.fmtDays(fullDays) : "—"}</span></div>
         <div className="act-pmeta"><span className="label">Gap to ceiling</span><span className="mono">{gap.toFixed(1)} pts</span>
           <Fx payload={{
@@ -145,7 +147,7 @@ function TierSelector({ p, tierIndex, onPick }) {
             <div className="act-tier-stats">
               <span className="mono">{ACT.fmtAED(t.cost)}</span>
               <span className="mono">{ACT.fmtDays(t.days)}</span>
-              <span className="mono act-stat-pts">+{pts.toFixed(1)} pts</span>
+              <span className="mono act-stat-pts">{t.livePts > 0 && t.ceilPts > 0 ? `+${t.livePts} now · +${t.ceilPts} ceiling` : t.livePts > 0 ? `+${t.livePts} now` : `+${t.ceilPts} ceiling`}</span>
               {t.local != null && <span className="mono">{t.local}% localized</span>}
             </div>
           </button>
@@ -196,6 +198,24 @@ function TierReadout({ p, r }) {
         <span className="act-resid-k">What this doesn't fix</span>
         <span className="act-resid-v">{t.residual}</span>
       </div>
+      {t.milestones && (
+        <div style={{ marginTop: 14 }}>
+          <span className="label" style={{ display: "block", marginBottom: 8 }}>The path — {t.name.replace(/Tier \d · /, "")}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {t.milestones.map(([at, txt], i) => (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "52px auto 1fr", gap: 10, alignItems: "baseline" }}>
+                <span className="mono" style={{ fontSize: 11.5, fontWeight: 600, color: "var(--accent)", textAlign: "right" }}>{at}</span>
+                <span style={{ display: "flex", flexDirection: "column", alignItems: "center", alignSelf: "stretch" }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", flex: "0 0 auto", marginTop: 4 }}></span>
+                  {i < t.milestones.length - 1 && <span style={{ flex: 1, width: 1.5, background: "var(--line-2)", minHeight: 12 }}></span>}
+                </span>
+                <span style={{ fontSize: 12.5, lineHeight: 1.45, paddingBottom: i < t.milestones.length - 1 ? 10 : 0 }}>{txt}</span>
+              </div>
+            ))}
+          </div>
+          <div className="helper" style={{ marginTop: 8 }}>Milestones follow the precedent's real clock where one exists; treat them as planning order-of-magnitude, not a schedule.</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -204,6 +224,15 @@ function TierReadout({ p, r }) {
 function Brief({ p }) {
   return (
     <div className="act-brief">
+      {p.sponsor && (
+        <div className="act-brief-sec">
+          <span className="act-brief-k"><Icon name="shield" size={13} /> Sponsor — who commissions it</span>
+          <div className="act-brief-v">
+            <b>{p.sponsor.name}</b>
+            <span>{p.sponsor.why}</span>
+          </div>
+        </div>
+      )}
       <div className="act-brief-sec">
         <span className="act-brief-k"><Icon name="map" size={13} /> Where</span>
         <div className="act-brief-v">
@@ -257,25 +286,27 @@ function Precedent({ p }) {
 
 /* ---- Pre-mortem -------------------------------------------------------- */
 function Premortem({ p }) {
+  const LK_ORDER = { High: 0, Medium: 1, Low: 2 };
+  const modes = p.premortem.slice().sort((a, b) => (LK_ORDER[a.likelihood] ?? 1) - (LK_ORDER[b.likelihood] ?? 1));
   return (
     <div className="act-pm">
       <div className="act-pm-lead">
         <Icon name="alert" size={15} style={{ color: "var(--high)" }} />
-        <span>A pre-mortem flips a post-mortem: <b>assume this response has already failed</b>, then work back through how — stating failure as given surfaces the weak points optimism hides.</span>
+        <span>A pre-mortem flips a post-mortem: <b>assume this response has already failed</b>, then work back through how — stating failure as given surfaces the weak points optimism hides. Each failure mode (F1, F2…) is ranked by likelihood, with the indicator that would warn first and its mitigation.</span>
       </div>
-      {p.premortem.map((f, i) => {
+      {modes.map((f, i) => {
         const b = LK_BAND[f.likelihood] || "moderate";
         return (
           <div className="act-fail" key={i}>
             <div className="act-fail-head">
-              <span className="act-fail-n mono">F{i + 1}</span>
+              <span className="act-fail-n mono" title={"Failure mode " + (i + 1) + " — ranked by likelihood"}>F{i + 1}</span>
               <span className="act-fail-mode">{f.mode}</span>
               <span className={`tag-band band-${b}`} style={{ marginLeft: "auto" }}><span></span>{f.likelihood}</span>
             </div>
             <div className="act-fail-grid">
               <div className="act-fail-cell">
-                <span className="act-fail-k">Leading indicator{f.tracked && <span className="act-tracked" title="Already tracked by the system">tracked</span>}</span>
-                <span className="act-fail-v">{f.indicator}</span>
+                <span className="act-fail-k">Leading indicator{f.tracked && <span className="act-tracked" title={f.trackedWhere ? "Tracked in: " + f.trackedWhere : "Already tracked by the system"}>tracked</span>}</span>
+                <span className="act-fail-v">{f.indicator}{f.trackedWhere && <span className="helper" style={{ display: "block", marginTop: 3, fontSize: 10.5 }}>Tracked in: {f.trackedWhere}</span>}</span>
               </div>
               <div className="act-fail-cell">
                 <span className="act-fail-k">Mitigation</span>
@@ -293,7 +324,13 @@ function Premortem({ p }) {
 function PlayDetail({ p, r, onPickTier, isStaged, onStage }) {
   return (
     <div className="stack">
-      <Panel title={p.title} icon="shield">
+      <Panel title={p.title} icon="shield"
+        right={(() => { const s = RD.sectors.find((x) => x.id === p.sector); const b = RD.band(s.score); return (
+          <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <span className={`tag-band band-${b.key}`} title={s.name + " sector resilience — the weakness this play addresses"}><span></span>{s.name} {s.score.toFixed(1)}</span>
+            <button className="exp" onClick={() => window.__go && window.__go("dependencies", { sector: p.sector })} title={"Open the " + s.name + " sector's tracked imports"}>Sector imports →</button>
+          </span>
+        ); })()}>
         <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.65, margin: "0 0 14px" }}>{p.thesis}</p>
         <Precedent p={p} />
       </Panel>

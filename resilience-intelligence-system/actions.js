@@ -31,6 +31,7 @@ window.ACT = (function () {
       title: "Water filters — hold a reserve, then make them here",
       sector: "water", window: 0.80,
       addresses: "Filter stock lasts 75 days — but a new order takes ~120 days to arrive",
+      sponsor: { name: "EWEC + Ministry of Energy & Infrastructure", why: "EWEC procures the water and holds Taweelah's contracts — the natural commissioning owner, with the federal ministry setting the resilience mandate." },
       thesis: "Nearly all drinking water comes from desalination plants, and the filter cartridges they run on (called 'RO membranes') are 100% imported. The choice is not 'build a filter factory, yes or no' — it is how far up the supply chain to climb: hold a bigger stockpile (buys time), make the filters here (Saudi Arabia just did exactly this next door), or also make their raw chemicals here (true independence).",
       site: {
         where: "KEZAD (Khalifa Economic Zone), adjacent to Taweelah",
@@ -68,6 +69,7 @@ window.ACT = (function () {
           days: 150, timeBasis: "~30 days to sign contracts, then ~120 days waiting in the suppliers' order queue. Paying more does not skip the queue — a contract signed in advance does.",
           livePts: 1.8, ceilPts: 0, local: 0,
           residual: "This buys time, not independence — the stock must keep rotating or it expires (~12-month shelf life), and every filter is still imported.",
+          milestones: [["D0", "Standing supply contract signed with the qualified makers"], ["D30", "First order placed · climate-controlled store fitted out at KEZAD"], ["D150", "90-day national stock in place · rotation through Taweelah maintenance begins"]],
         },
         {
           id: "t2", name: "Tier 2 · Build the filter factory", kind: "mixed", recommended: true,
@@ -77,6 +79,7 @@ window.ACT = (function () {
           days: 660, timeBasis: "~22 months — exactly what the Saudi factory took from announcement (May 2024) to production (early 2026), plus time to test the new filters at Taweelah.",
           livePts: 0.6, ceilPts: 1.4, local: 70,
           residual: "~70% made locally — but the specialty chemicals inside are still imported. The weak point moves one step up the chain, from 'finished filters' to 'chemicals'.",
+          milestones: [["M0", "JV signed with a filter maker · KEZAD site allocated"], ["M6", "Construction + industrial licensing underway"], ["M14", "Production line installed · trial elements made"], ["M22", "Elements qualified at Taweelah · commercial output"]],
         },
         {
           id: "t3", name: "Tier 3 · Make the chemicals too", kind: "ceiling",
@@ -86,6 +89,7 @@ window.ACT = (function () {
           days: 1460, timeBasis: "~4 years — chemical plants need heavy licensing, safety approval and product testing. Best sequenced after Tier 2 proves the demand.",
           livePts: 0, ceilPts: 2.6, local: 95,
           residual: "Near-full independence; what remains imported are common solvents and equipment spares. The honest end-state — but the slow one.",
+          milestones: [["Y0", "Feasibility + chemical licensing at TA'ZIZ, Ruwais"], ["Y2", "Plant construction"], ["Y3.5", "Product qualification with the Tier-2 factory"], ["Y4", "Local chemicals feeding local filter production"]],
         },
       ],
       premortem: [
@@ -94,6 +98,7 @@ window.ACT = (function () {
           mitigation: "Keep the stock moving: use the oldest stored filters during routine plant maintenance and replace them with new ones — so the reserve is always fresh, never a write-off." },
         { mode: "Everyone re-orders at once and the suppliers are swamped", likelihood: "High",
           indicator: "Quoted delivery times from the three big makers stretching past 120 days", tracked: true,
+          trackedWhere: "Dependencies → RO membranes (the ~120-day reorder lead-time vs the 75-day buffer)",
           mitigation: "Sign a standing supply contract now that guarantees the UAE a place at the front of the queue — not a purchase order placed after the rush has already started." },
         { mode: "The factory looks local, but the risk is not", likelihood: "Medium",
           indicator: "Where the new factory buys its specialty chemicals from", tracked: false,
@@ -107,6 +112,7 @@ window.ACT = (function () {
       title: "Give imports a back door — the Fujairah bypass",
       sector: "logistics", window: 0.80,
       addresses: "~60% of imports land at Jebel Ali — a port inside the Strait of Hormuz",
+      sponsor: { name: "AD Ports Group + Ministry of Energy & Infrastructure", why: "AD Ports operates Fujairah Terminals and Khalifa Port; the federal ministry owns transport policy and Etihad Rail's mandate." },
       thesis: "The 2026 closure of the strait proved the point twice. Oil exports kept flowing, because oil has a pipeline to Fujairah on the open ocean — but imports have no such back door: container ships still funnel through the strait to Jebel Ali. The choice is how much of the import flow gets the same insurance the oil already enjoys.",
       site: {
         where: "Port of Fujairah + Fujairah Terminals, Gulf of Oman coast",
@@ -143,6 +149,7 @@ window.ACT = (function () {
           days: 90, timeBasis: "~3 months of signing contracts. Nothing is built — that is the point: the port, the railway and the airport all exist today.",
           livePts: 1.6, ceilPts: 0, local: null,
           residual: "Limited capacity: Fujairah handles a fraction of what Jebel Ali does, so this protects the critical goods only — not all trade.",
+          milestones: [["D0", "Berth, rail-slot and air-lane term sheets opened"], ["D45", "Trigger protocol agreed — what activates the bypass, and who decides"], ["D90", "Standing contracts live · first activation drill run"]],
         },
         {
           id: "t2", name: "Tier 2 · Expand the east-coast port", kind: "mixed",
@@ -152,6 +159,7 @@ window.ACT = (function () {
           days: 1100, timeBasis: "~3 years — sea walls, cranes and rail connections take time. The oil pipeline itself took ~4 years to build.",
           livePts: 0.4, ceilPts: 1.6, local: null,
           residual: "Even expanded, the east coast supplements Jebel Ali rather than replacing it — and the ships and planes themselves remain foreign-operated.",
+          milestones: [["M0", "Terminal expansion contracted (AD Ports)"], ["M12", "Quay and yard works · rail depot underway"], ["M30", "Cranes commissioned"], ["M36", "Expanded terminal + inland depot operational"]],
         },
         {
           id: "t3", name: "Tier 3 · Make it permanent policy", kind: "ceiling",
@@ -161,6 +169,7 @@ window.ACT = (function () {
           days: 1800, timeBasis: "~5 years to full effect, phased in after Tier 2.",
           livePts: 0, ceilPts: 2.4, local: null,
           residual: "Routing this way costs more every year, even in calm times — that extra cost IS the insurance premium, and should be budgeted as one.",
+          milestones: [["Y1", "East-coast routing share legislated · warehousing plan set"], ["Y3", "Tier-2 capacity complete"], ["Y5", "Fixed strategic-import share running through the east coast in normal times"]],
         },
       ],
       premortem: [
@@ -169,6 +178,7 @@ window.ACT = (function () {
           mitigation: "Until the expansion is built, send only liquids, bulk goods and rail-friendly cargo east; keep urgent container goods on the air lane rather than assuming the port can absorb Jebel Ali's traffic." },
         { mode: "The back door can be attacked too", likelihood: "Medium",
           indicator: "Drone or missile incidents near Fujairah's port and pipeline corridor", tracked: true,
+          trackedWhere: "Live signals → trade-route news monitor & ACLED conflict feed",
           mitigation: "2026 showed it: debris from an intercepted drone set fire to one of Fujairah's own oil tanks. Spread out and harden the storage — the east coast avoids the strait, but not attack, so air defence must cover it too." },
         { mode: "The standing costs quietly burn through the budget", likelihood: "High",
           indicator: "Total reservation and air-freight spending vs budget", tracked: false,
@@ -182,6 +192,7 @@ window.ACT = (function () {
       title: "Break the water–gas link with round-the-clock solar",
       sector: "energy", window: 0.55,
       addresses: "Power stations and desalination plants both run on the same imported gas",
+      sponsor: { name: "EWEC (procurer) + Masdar (developer)", why: "The exact pairing already delivering the precedent gigaproject next door — no new relationship to build." },
       thesis: "Electricity and drinking water draw on the same gas supply — so if gas is disrupted, both fail together. That is the deepest hidden link in this model. The UAE is already building the cure at world scale: a giant solar farm with batteries big enough to deliver power day and night. The choice is whether water gets a guaranteed share of it — and whether to build a second one that is water's own.",
       site: {
         where: "Abu Dhabi desert (Al Bihouth area) — alongside the Masdar solar gigaproject",
@@ -219,6 +230,7 @@ window.ACT = (function () {
           days: 540, timeBasis: "Tied to the solar project switching on in 2027 (~18 months away). No faster path exists — the construction takes what it takes.",
           livePts: 0, ceilPts: 0.8, local: null,
           residual: "This shares out the first project, it does not add to it: every megawatt promised to water is one the grid — and the AI data centres — also wanted. Tier 2 is the real answer.",
+          milestones: [["M0", "Water-priority clause negotiated with EWEC"], ["M6", "Priority written into the grid operator's scheduling rules"], ["M18", "Gigaproject switches on · water's ~300MW share flows"]],
         },
         {
           id: "t2", name: "Tier 2 · Build water its own solar", kind: "ceiling",
@@ -228,6 +240,7 @@ window.ACT = (function () {
           days: 900, timeBasis: "~30 months — the same announcement-to-operation clock the current project is running, helped by crews already on site.",
           livePts: 0, ceilPts: 1.8, local: null,
           residual: "The hardware — panels, batteries, transformers — is still all imported: energy independence rises while equipment dependence stays. The transformer queue is the schedule risk.",
+          milestones: [["M0", "Half-scale project tendered on the Masdar model"], ["M8", "Financing closed · panels and batteries ordered"], ["M24", "Construction complete"], ["M30", "~500MW round-the-clock reserved for desalination"]],
         },
         {
           id: "t3", name: "Tier 3 · Full independence from gas", kind: "ceiling",
@@ -237,6 +250,7 @@ window.ACT = (function () {
           days: 1460, timeBasis: "~4 years in phases: power flows at ~30 months, the plant upgrades finish after.",
           livePts: 0.2, ceilPts: 2.8, local: null,
           residual: "This is the end-state the whole idea points at: water no longer fails when gas does. But panels and batteries still come mostly from China unless paired with a local-manufacturing play.",
+          milestones: [["M0", "Transformers ordered on day one (~240-day queue)"], ["M30", "Dedicated solar-plus-storage online"], ["Y4", "Key desalination plants able to run independent of gas and the main grid"]],
         },
       ],
       premortem: [
@@ -245,6 +259,7 @@ window.ACT = (function () {
           mitigation: "Size the batteries to desalination's real round-the-clock needs (the current project's ratio is the reference). If the batteries are too small, gas still fills the night gap — and the link is never actually broken." },
         { mode: "The one component everyone on earth is queueing for", likelihood: "Medium",
           indicator: "Delivery times for high-voltage transformers (~240 days today, from Korea/EU)", tracked: true,
+          trackedWhere: "Dependencies → grid transformers (lead-time & 240-day buffer)",
           mitigation: "Order the transformers the day the project is approved (Tier 3 does exactly this) — building solar fast runs straight into the global wait for the equipment that connects it to the grid." },
         { mode: "AI data centres outbid water for the power", likelihood: "High",
           indicator: "How the grid operator splits the new power: data centres vs desalination", tracked: false,
@@ -258,6 +273,7 @@ window.ACT = (function () {
       title: "Medicine ingredients — bigger reserve, then make them here",
       sector: "health", window: 0.50,
       addresses: "~65% of medicine ingredients come from India (est.) · hospitals hold ~60 days of stock",
+      sponsor: { name: "Emirates Drug Establishment + Ministry of Health & Prevention", why: "The federal drug regulator sets the critical-medicines list and certifies the production lines; the ministry owns the reserve mandate." },
       thesis: "Hospitals run on imported medicine ingredients — the active chemicals inside each drug — an estimated ~65% of them from India, shipped through the strait. The UAE has already proven it can make them: a plant in Ras Al Khaimah has produced insulin's active ingredient for over a decade. The choice is how far to extend that proof: hold more stock, or start making the most critical medicines here.",
       site: {
         where: "Julphar campus, Ras Al Khaimah (expansion) + KEZAD packaging lines",
@@ -295,6 +311,7 @@ window.ACT = (function () {
           days: 180, timeBasis: "~6 months: qualifying certified suppliers and completing the first stock rotation. Quality certification, not money, is what takes the time.",
           livePts: 1.6, ceilPts: 0, local: 0,
           residual: "Buys time, not independence — the 65% India concentration is untouched, and refrigerated medicines still need reliable power and water to stay usable.",
+          milestones: [["M0", "Supplier-managed reserve contracted"], ["M3", "Qualified stock arriving · hospital-network storage ready"], ["M6", "120-day rotating reserve in place"]],
         },
         {
           id: "t2", name: "Tier 2 · Make critical medicines here", kind: "mixed",
@@ -304,6 +321,7 @@ window.ACT = (function () {
           days: 900, timeBasis: "~30 months, including regulatory approval and stability testing — in pharmaceuticals, the paperwork clock runs longer than the construction clock.",
           livePts: 0.3, ceilPts: 1.4, local: 60,
           residual: "The raw chemicals these lines start from are still imported — as with water filters, the weak point moves a step up the chain. Choose which medicines to make by where their raw materials come from, not just how much is used.",
+          milestones: [["M0", "Julphar expansion agreed · medicine list chosen by ICU need + supply risk"], ["M12", "Flexible production lines installed"], ["M24", "GMP certification + stability testing"], ["M30", "First locally-made critical ingredients"]],
         },
         {
           id: "t3", name: "Tier 3 · Full pharma campus", kind: "ceiling",
@@ -313,6 +331,7 @@ window.ACT = (function () {
           days: 1800, timeBasis: "~5 years with international-standard approvals; sequenced after Tier 2's production lines.",
           livePts: 0, ceilPts: 2.2, local: 80,
           residual: "Some raw materials stay global; the campus turns the UAE from a price-taker into a regional supplier for the medicines it covers.",
+          milestones: [["Y1", "Campus master plan · international JVs signed"], ["Y3", "Ingredient + sterile packaging lines running"], ["Y5", "Refrigerated biologics capability complete"]],
         },
       ],
       premortem: [
@@ -334,6 +353,7 @@ window.ACT = (function () {
       title: "A standing emergency fund for imports",
       sector: "finance", window: 0.35,
       addresses: "Crisis price spikes · the cost surge of emergency importing",
+      sponsor: { name: "CBUAE + Ministry of Finance", why: "The 2020 precedent ran through exactly this pairing — central-bank machinery under a federal mandate." },
       thesis: "The UAE's financial depth is its fastest tool — and the state has already shown it can stand up a major financial backstop in days, not months. A pre-built emergency fund that covers crisis import costs and absorbs price spikes keeps prices stable for households through a shock, at a fraction of the damage it prevents.",
       site: {
         where: "Central Bank of the UAE + Ministry of Finance (a facility, not a building)",
@@ -368,6 +388,7 @@ window.ACT = (function () {
           days: 21, timeBasis: "~3 weeks to document and arrange the lines — the 2020 precedent ran in days using the same machinery. The one response where moving money fast genuinely is the speed of effect.",
           livePts: 1.5, ceilPts: 0, local: null,
           residual: "A cushion, not a cure — it keeps prices stable while the physical projects fix supply. The cost is the returns the standby capital is not earning elsewhere.",
+          milestones: [["D0", "Mandate issued (Ministry of Finance + CBUAE)"], ["D10", "Credit lines documented"], ["D21", "Fund dormant but armed · triggers tied to the live score and import prices"]],
         },
         {
           id: "t2", name: "Tier 2 · Add price-smoothing rules", kind: "live",
@@ -377,6 +398,7 @@ window.ACT = (function () {
           days: 120, timeBasis: "~4 months — designing the mechanism and getting legal pre-approval is the clock, not the money.",
           livePts: 2.0, ceilPts: 0, local: null,
           residual: "Open-ended support inflates the very prices it pays — the wind-down rules are the protection; without them this becomes the problem it guards against.",
+          milestones: [["M0", "Price-smoothing rules drafted — trigger, per-unit cap, taper"], ["M2", "Legal pre-approval"], ["M4", "Rules in force · fund armed"]],
         },
         {
           id: "t3", name: "Tier 3 · Make it permanent law", kind: "mixed",
@@ -386,6 +408,7 @@ window.ACT = (function () {
           days: 365, timeBasis: "~12 months to pass through the federal fiscal framework.",
           livePts: 2.0, ceilPts: 0.5, local: null,
           residual: "The permanent risk is complacency: a standing backstop tempts companies to stop insuring themselves — unless using it costs something.",
+          milestones: [["M0", "Draft law prepared"], ["M8", "Passage through the federal fiscal framework"], ["M12", "Permanent facility live, with a usage charge"]],
         },
       ],
       premortem: [
@@ -407,6 +430,7 @@ window.ACT = (function () {
       title: "Computer chips — stock up while the door is open",
       sector: "defence", window: 0.92,
       addresses: "Advanced chips depend on a US export licence — which policy could revoke",
+      sponsor: { name: "Mubadala + AIATC (AI & Advanced Technology Council)", why: "Mubadala owns GlobalFoundries and the realistic build path; AIATC owns the licence relationship the stockpile depends on." },
       thesis: "The hard limit on advanced chips is not money — it is US export licences: a door that is open today under the UAE–US AI agreement, and which a policy change in Washington could shut faster than any factory can be built. So the honest plan runs two clocks at once: buy chips now while the door is open (months), and build what is realistically buildable here (years) — knowing the most advanced chips will never be made locally.",
       site: {
         where: "Stockpile: G42/Khazna secure facilities, Abu Dhabi · Build: KEZAD chip campus",
@@ -444,6 +468,7 @@ window.ACT = (function () {
           days: 180, timeBasis: "~6 months — the wait is the maker's delivery queue, not the money. The licence risk says: start now.",
           livePts: 0.9, ceilPts: 0, local: 0,
           residual: "Chips lose value fast as new generations arrive, and the licence dependency itself is untouched — this rents time against a policy reversal, nothing more.",
+          milestones: [["D0", "Allocation secured under today's licences"], ["M3", "First deliveries into secure storage"], ["M6", "Reserve complete · refresh cycle set"]],
         },
         {
           id: "t2", name: "Tier 2 · Build chip finishing", kind: "ceiling",
@@ -453,6 +478,7 @@ window.ACT = (function () {
           days: 1100, timeBasis: "~3 years — ultra-clean facilities, long equipment waits, then certification. Start recruiting the specialists the day it is approved.",
           livePts: 0, ceilPts: 1.6, local: 40,
           residual: "The silicon wafers still come from abroad — this converts 'import finished chips' into 'import wafers, finish them here'. Real progress, but partial.",
+          milestones: [["M0", "KEZAD campus + GlobalFoundries know-how agreement · specialist recruiting starts"], ["M12", "Cleanroom build · equipment ordered"], ["M30", "Lines commissioned"], ["M36", "Defence-grade certification (EDGE)"]],
         },
         {
           id: "t3", name: "Tier 3 · Older-generation chip factory", kind: "ceiling",
@@ -462,11 +488,13 @@ window.ACT = (function () {
           days: 1825, timeBasis: "~5 years to build and certify; best sequenced after Tier 2 has built the talent pipeline.",
           livePts: 0, ceilPts: 2.6, local: 65,
           residual: "The most advanced chips stay imported permanently — by design. The factory covers the chips actually used at volume; the cutting edge remains dependent on allies.",
+          milestones: [["Y1", "Partner equity closed · site works"], ["Y3", "Fab shell + tooling installed"], ["Y5", "Older-generation wafers in production"]],
         },
       ],
       premortem: [
         { mode: "Washington changes its mind", likelihood: "Medium",
           indicator: "US export-control rule changes or blacklist actions", tracked: true,
+          trackedWhere: "Live signals → trade-policy news lanes & OFAC sanctions feed",
           mitigation: "Execute the stockpile immediately while the door is open, and qualify chips from allied factories too — today's approval is a policy, not a promise, and can reverse with one election." },
         { mode: "Chasing a factory that cannot be built", likelihood: "High",
           indicator: "The gap between what the UAE could realistically make and what it needs", tracked: false,

@@ -86,7 +86,7 @@ function CascadeDiagram() {
         { k: "Activates at", v: n.day === 0 ? "Day 0 (immediate)" : "Day " + n.day },
         { k: "Severity at peak", v: RD.band(n.band === "critical" ? 30 : n.band === "high" ? 50 : 67).label },
       ],
-      assumption: "Propagation timing is driven by published buffer days. Real-world lags vary; treat day markers as illustrative order-of-magnitude, not precise forecasts.",
+      assumption: "Propagation timing is driven by each import's stated buffer days (curated estimates). Real-world lags vary; treat day markers as illustrative order-of-magnitude, not precise forecasts.",
     });
   };
 

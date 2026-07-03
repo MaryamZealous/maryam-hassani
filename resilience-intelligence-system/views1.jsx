@@ -125,7 +125,7 @@ function DriverTrace() {
         })}
       </div>
       <div className="helper" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent · OFAC/OpenSanctions. {liveN} of {drivers.length} drivers are on a connected live feed right now — the rest are badged SIM until theirs connects. A live driver reading near zero is quiet, not missing.
+        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent · OFAC/OpenSanctions. {liveN} of {drivers.length} drivers are on a connected live feed right now{liveN < drivers.length ? " — the rest are badged SIM until theirs connects" : ""}. A live driver reading near zero is quiet, not missing.
       </div>
     </Panel>
   );
@@ -670,7 +670,7 @@ function CascadeView() {
 
       <div className="grid cols-3" style={{ marginTop: 16 }}>
         {[
-          { n: "1", t: "Buffers, not bangs", d: "Nothing fails instantly. Each import has a published buffer in days; the shock simply starts the clock." },
+          { n: "1", t: "Buffers, not bangs", d: "Nothing fails instantly. Each import carries a stated buffer in days; the shock simply starts the clock." },
           { n: "2", t: "Consequence-weighted", d: "RO membranes (0.87) and the gas balancing input (1.00) propagate hard; gold doré (0.23) barely moves the system." },
           { n: "3", t: "Non-compensatory end", d: "Once Water turns critical, the national score is capped — strong Finance and Food cannot buy it back." },
         ].map((c) => (

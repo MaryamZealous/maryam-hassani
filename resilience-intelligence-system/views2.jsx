@@ -488,7 +488,7 @@ function DependenciesView({ initial }) {
                   { k: "Buffer fragility", v: sel.driBuffer + " / 100 — from a " + sel.buffer + "-day buffer vs a 180-day reaction horizon" },
                   { k: "DRI", v: "0.67 × " + sel.driStruct + "  +  0.33 × " + sel.driBuffer + "  =  " + sel.dri + " / 100" },
                 ],
-                assumption: "All six inputs sit on the same 0–100 fragility scale; the weights just set how much each counts — 0.34/0.22 across the four dimensions, then 0.67/0.33 between the structural and buffer halves. Route carries the largest dimension weight because chokepoint exposure is a higher-severity, harder-to-mitigate risk. The buffer term treats reaction time as a first-class fragility: zero only past ~180 days of cover, the point where stock is no longer the binding constraint. Both the 0.34 route weight and the 180-day horizon are tunable model assumptions.",
+                assumption: "All five inputs sit on the same 0–100 fragility scale; the weights just set how much each counts — 0.34/0.22 across the four dimensions, then 0.67/0.33 between the structural and buffer halves. Route carries the largest dimension weight because chokepoint exposure is a higher-severity, harder-to-mitigate risk. The buffer term treats reaction time as a first-class fragility: zero only past ~180 days of cover, the point where stock is no longer the binding constraint. Both the 0.34 route weight and the 180-day horizon are tunable model assumptions.",
               }} /></span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.buffer}</span><span className="kpi-l">Buffer days{sel.bufferProv ? " · " + (sel.bufferProv.t === "stated" ? "stated" : "est.") : ""}</span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.consequence.toFixed(2)}</span><span className="kpi-l" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>Consequence weight <Fx payload={{
@@ -780,12 +780,13 @@ function MaturityRow() {
         <Panel title="Measured episodes" icon="check" label={logLive ? "SHARED LOG · LIVE" : "SHARED LOG · CONNECTING"}
           right={<Fx payload={{
             kicker: "Validation · measured, not asserted", title: "How the track record is built",
-            text: "The system continuously reports its score and per-driver drag breakdown to a shared server-side log. The SERVER — not any visitor — detects episodes: one opens when the live score falls 3+ points below its slow-moving baseline (only when at least 3 feeds are live; simulated readings are refused), and closes when the score recovers to within 1 point. Each closed episode records the measured peak drop, time to peak, time to recover, the dominant driver, and whether the news signal led the throughput signal — the early-warning lead time. Every visitor sees the same log.",
+            text: "The system watches its own score around the clock and keeps a permanent record of every real disruption. When the live score falls 3 or more points below its recent normal, an episode opens; when the score recovers, it closes. Each closed episode records what was measured — how far the score fell, how long the fall took, how long recovery took, which driver caused it, and whether the news signal moved before the shipping signal (the early-warning lead time). Episodes only count when at least 3 data feeds are live, so simulated readings can never enter the record. The log is stored centrally and is identical for every visitor.",
             formula: "open: live < baseline − 3 (≥3 live feeds) · close: live ≥ baseline − 1 · peak drop = baseline − min(live)",
             inputs: [
               { k: "Episodes recorded", v: String(eps.length) },
-              { k: "Storage", v: "server-side shared log (one truth for all visitors)" },
-              { k: "Anti-tamper", v: "server-side detection; sim-heavy observations refused; rate-limited" },
+              { k: "Monitoring cadence", v: "every 6 hours around the clock; every 10 minutes while the dashboard is open" },
+              { k: "Storage", v: "one central log, shared by all visitors" },
+              { k: "Integrity", v: "episode rules run centrally — no visitor can alter or invent history" },
             ],
             assumption: "The 3-point open / 1-point close thresholds and the ≥3-live-feeds rule are stated model assumptions. The log starts empty and only fills as real disruptions occur — no seeded history.",
           }} />}>
@@ -979,7 +980,7 @@ function MethodologyView() {
                 ["Resilience vs. adaptive capacity", "→ our Structural ceiling vs. Live deviation (per the IFR split)"],
                 ["Import dependence weighted by partner diversity", "→ our DRI (source concentration + substitution difficulty) (per the Resilient Economies Index)"],
                 ["Non-compensatory aggregation", "→ weakest-pillar anchoring, so one critical sector stays visible"],
-                ["Buffers-and-flows propagation", "→ the cascade engine: each import has a published buffer in days"],
+                ["Buffers-and-flows propagation", "→ the cascade engine: each import carries a stated buffer in days"],
               ].map(([a, b]) => (
                 <div key={a} style={{ fontSize: 12.5, lineHeight: 1.5 }}>
                   <b style={{ fontWeight: 600 }}>{a}</b> <span className="muted">{b}</span>
@@ -1042,13 +1043,13 @@ function MethodologyView() {
               "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
               "Scenario overall = 0.60 × worst-hit sector delta + 0.40 × mean sector delta — computed from each scenario's sector deltas, never hand-set; Combined Maximum's deltas are a hand-authored worst-case vector",
               "News-lane 'normal volume' baselines are hand-set per lane (route lanes are disruption-keyed; partner lanes adverse-only); pressure = (2-day volume / baseline − 1) / 2, capped — Google News returns at most ~100 items per lane, so extreme surges saturate",
-              "Headline & sector trends are measured against stored score snapshots in this browser (24h / 30d); with no old-enough history the UI shows 'no history yet', never a seeded delta",
+              "Headline & sector trends are measured against stored score snapshots in this browser (24h / 30d); with no old-enough history the trend shows a dash, never a seeded delta",
               "OFAC weekly 'new designations' is an illustrative stand-in (no public delta feed); only the live total-entity-count drift enters the score",
-              "DRI = 0.67 × route-weighted dimension fragility (Route weight 0.34 vs 0.22 each for Concentration / Substitution / Counterpart) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — all six inputs on the same 0–100 scale — a thin buffer is itself a fragility because the buffer is your reaction time",
+              "DRI = 0.67 × route-weighted dimension fragility (Route weight 0.34 vs 0.22 each for Concentration / Substitution / Counterpart) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — all five inputs on the same 0–100 scale — a thin buffer is itself a fragility because the buffer is your reaction time",
               "Buffer days are curated estimates, not a live inventory feed — most are analyst order-of-magnitude judgements ('est.'); a few (nuclear fuel, strategic grain) reflect reported policy ('stated'). The tag and provenance show on each import in Dependencies.",
               "Score uncertainty = how far each editable assumption (0.60 anchor, 90-day benchmark, sovereign buffer, consequence weights, DRI ±4 — spanning the route weighting and 180-day buffer horizon) moves the score when nudged to its high and low ends; the wider the swing, the lower the confidence label",
               "Gas is a two-state node: contracted Dolphin floor (~$1.50/MMBtu, reported estimate) vs marginal LNG ≈ 12.5% of Brent — losing Dolphin is a price-basis flip, not a volume gap; Henry Hub is not used",
-              "Episode log: a disruption episode opens when the live score falls 3+ pts below its slow baseline with ≥3 feeds live, closes on recovery to within 1 pt — detected SERVER-side on a shared log, so no visitor can invent history and sim-heavy readings never write it",
+              "Episode log: a disruption episode opens when the live score falls 3+ pts below its recent baseline with ≥3 feeds live, and closes on recovery to within 1 pt — the rules run centrally on one shared log (monitored every 6 h around the clock, every 10 min while a dashboard is open), so the record is identical for all visitors and simulated readings never enter it",
               "Calibration: a measured episode can be applied as a live-drag multiplier (measured ÷ anchor, clamped 0.5–1.5×) — per-browser, revertable, always disclosed in the validation panel; scenario sector deltas stay curated",
               "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure (speed & value-for-money inform the scope decision, not the ranking)",
               "Response effects are independent & additive: Live′ = min(Ceiling′, live + staged points)",
