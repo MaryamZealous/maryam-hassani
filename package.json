@@ -1,0 +1,8 @@
+{
+  "name": "maryam-hassani-site",
+  "private": true,
+  "description": "Static site + Netlify functions. @netlify/blobs powers the shared episode log for the Resilience Intelligence System.",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

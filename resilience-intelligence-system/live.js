@@ -206,10 +206,16 @@ window.LIVE = (function () {
     }
 
     const totalDrag = throughputDrag + seaStateDrag + newsDrag + partnerDrag + marketDrag + sanctionDrag;
+    // calibration multiplier — 1.0 unless a measured episode has been applied via
+    // the validation panel (stored per-browser; the applied basis is shown there)
+    const calScale = (RD.calib && RD.calib.dragScale) ? RD.calib.dragScale : 1;
+    const scaledDrag = totalDrag * calScale;
+    // expose the per-driver breakdown for the shared episode log (feeds.js posts it)
+    RD._drags = { throughput: +throughputDrag.toFixed(2), routeNews: +newsDrag.toFixed(2), partnerNews: +partnerDrag.toFixed(2), sea: +seaStateDrag.toFixed(2), market: +marketDrag.toFixed(2), sanctions: +sanctionDrag.toFixed(2), total: +scaledDrag.toFixed(2) };
     const ceiling = RD.headline.structural.value;
     // floored at 25 (a stated assumption — drag alone can't collapse a 0–100
     // index into systemic-failure territory; scenarios can, and floor at 0).
-    const live = clamp(ceiling - totalDrag, 25, ceiling);
+    const live = clamp(ceiling - scaledDrag, 25, ceiling);
     RD.headline.live.value = +live.toFixed(1);
     // measured 24h trend — vs the stored snapshot history (see initTrends).
     if (RD.trends) RD.trends.live = (RD._trendBase24 && RD._trendBase24.live != null) ? +(live - RD._trendBase24.live).toFixed(1) : null;
@@ -367,8 +373,20 @@ window.LIVE = (function () {
     }, 60 * 1000);
   })();
 
+  /* ---- calibration state --------------------------------------------------
+     A measured episode can be APPLIED from the validation panel: it stores a
+     global drag-scale multiplier (clamped 0.5–1.5) so live drag matches what
+     real events measured. Per-browser, revertable, and surfaced in the panel
+     and the assumptions ledger — never silent. */
+  try { RD.calib = JSON.parse(localStorage.getItem("ris_calib_v1") || "null"); } catch (e) { RD.calib = null; }
+  function setCalibration(c) {
+    RD.calib = c;
+    try { c ? localStorage.setItem("ris_calib_v1", JSON.stringify(c)) : localStorage.removeItem("ris_calib_v1"); } catch (e) {}
+    step();
+  }
+
   const interval = setInterval(step, 1500);
 
-  return { subscribe: (f) => (subs.add(f), () => subs.delete(f)), freshText, useLiveTick, conflictFor, partnerNewsFor, step, real: REAL, _interval: interval };
+  return { subscribe: (f) => (subs.add(f), () => subs.delete(f)), freshText, useLiveTick, conflictFor, partnerNewsFor, setCalibration, step, real: REAL, _interval: interval };
 })();
 window.useLiveTick = window.LIVE.useLiveTick;

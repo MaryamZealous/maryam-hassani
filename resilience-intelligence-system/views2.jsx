@@ -746,25 +746,89 @@ function ReservesRow() {
 }
 
 /* ---------- Model maturity (shown on How this works) -------------------- */
+const DRIVER_LABEL = { throughput: "Maritime throughput", routeNews: "Trade-route news", partnerNews: "Partner-supply news", sea: "Sea state", market: "Market stress", sanctions: "Sanctions drift" };
 function MaturityRow() {
+  LIVE.useLiveTick();
+  const eps = (LIVE.real && LIVE.real.episodes) || [];
+  const open = LIVE.real && LIVE.real.episodeOpen;
+  const logLive = !!(LIVE.real && LIVE.real.episodesLive);
+  const fmtD = (t) => new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  // calibration anchors — each scenario's computed severity vs the best-matching
+  // measured episode from the shared log
+  const matchFor = (id) => {
+    const m = eps.filter((e) =>
+      id === "hormuz" ? e.hormuzDrop >= 30 :
+      id === "redsea" ? e.redseaDrop >= 30 && e.hormuzDrop < 30 :
+      id === "chips" ? e.topDriver === "partnerNews" : false);
+    if (!m.length) return null;
+    return m.reduce((a, b) => (b.peakDrop > a.peakDrop ? b : a), m[0]);
+  };
+  const grade = (diff) => diff <= 3 ? ["HIGH", "good"] : diff <= 7 ? ["MODERATE", "moderate"] : ["LOW", "high"];
+  const anchors = ["hormuz", "redsea", "chips"].map((id) => {
+    const s = RD.scenarios.find((x) => x.id === id);
+    const ep = matchFor(id);
+    return { id, name: s.name, predicted: s.overall, ep };
+  });
+  const calib = RD.calib;
+  const applyFrom = (a) => {
+    const r = Math.max(0.5, Math.min(1.5, a.ep.peakDrop / Math.abs(a.predicted)));
+    LIVE.setCalibration({ dragScale: +r.toFixed(2), basis: a.name + " · measured −" + a.ep.peakDrop + " vs anchor " + a.predicted + " · " + fmtD(a.ep.start), appliedAt: Date.now() });
+  };
   return (
     <div className="grid cols-2" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 22, alignItems: "start" }}>
-        <Panel title="Model validation" icon="check" label="PREDICTED vs. ACTUAL"
+        <div className="stack">
+        <Panel title="Measured episodes" icon="check" label={logLive ? "SHARED LOG · LIVE" : "SHARED LOG · CONNECTING"}
           right={<Fx payload={{
-            kicker: "Validation", title: "How accuracy is judged",
-            text: "Predicted is each scenario's computed overall (0.60 × worst-hit sector + 0.40 × mean sector delta). Actual is the estimated peak drop in Live Resilience during the event window — illustrative until enough retained score history exists to measure it properly. Closeness sets a coarse accuracy grade.",
-            formula: "Accuracy  =  grade(| predicted − actual |)",
-            inputs: RD.validation.map((v) => ({ k: v.event, v: v.actual === null ? "predicted " + v.predicted + ", awaiting outcome" : "pred " + v.predicted + " · actual " + v.actual })),
-            assumption: "Grades (HIGH / MODERATE / UNTESTED) are coarse on purpose, and the 'actual' figures are illustrative estimates pending retained history — treat this table as a method demonstration, not a calibration record.",
+            kicker: "Validation · measured, not asserted", title: "How the track record is built",
+            text: "The system continuously reports its score and per-driver drag breakdown to a shared server-side log. The SERVER — not any visitor — detects episodes: one opens when the live score falls 3+ points below its slow-moving baseline (only when at least 3 feeds are live; simulated readings are refused), and closes when the score recovers to within 1 point. Each closed episode records the measured peak drop, time to peak, time to recover, the dominant driver, and whether the news signal led the throughput signal — the early-warning lead time. Every visitor sees the same log.",
+            formula: "open: live < baseline − 3 (≥3 live feeds) · close: live ≥ baseline − 1 · peak drop = baseline − min(live)",
+            inputs: [
+              { k: "Episodes recorded", v: String(eps.length) },
+              { k: "Storage", v: "server-side shared log (one truth for all visitors)" },
+              { k: "Anti-tamper", v: "server-side detection; sim-heavy observations refused; rate-limited" },
+            ],
+            assumption: "The 3-point open / 1-point close thresholds and the ≥3-live-feeds rule are stated model assumptions. The log starts empty and only fills as real disruptions occur — no seeded history.",
           }} />}>
-          <table className="tbl"><thead><tr><th>Event</th><th>Predicted</th><th>Actual</th><th>Accuracy</th></tr></thead>
-            <tbody>{RD.validation.map((v) => {
-              const b = v.accuracy === "HIGH" ? "good" : v.accuracy === "MODERATE" ? "moderate" : "high";
-              return <tr key={v.event}><td style={{ fontWeight: 600 }}>{v.event}</td><td className="mono">{v.predicted}</td>
-                <td className="mono">{v.actual === null ? "—" : v.actual}</td>
-                <td><span className={`tag-band band-${b}`}><span></span>{v.accuracy}</span></td></tr>;
-            })}</tbody></table>
+          {eps.length === 0 && !open ? (
+            <div className="empty" style={{ padding: "18px 0" }}>No episodes recorded yet — the shared log fills as real disruptions occur. {logLive ? "The detector is live." : "Connecting to the log…"}</div>
+          ) : (
+            <table className="tbl"><thead><tr><th>Episode</th><th>Peak drop</th><th>Recovery</th><th>News lead</th></tr></thead>
+              <tbody>
+                {open && <tr><td style={{ fontWeight: 600 }}>{fmtD(open.start)} — ongoing · {DRIVER_LABEL[open.topDriver] || open.topDriver}</td><td className="mono" style={{ color: "var(--high)" }}>−{open.dropSoFar} so far</td><td className="mono">—</td><td className="mono">—</td></tr>}
+                {eps.slice(-6).reverse().map((e, i) => (
+                  <tr key={i}><td style={{ fontWeight: 600 }}>{fmtD(e.start)} · {DRIVER_LABEL[e.topDriver] || e.topDriver}</td>
+                    <td className="mono">−{e.peakDrop} pts · {e.daysToPeak}d</td>
+                    <td className="mono">{e.daysToRecover}d</td>
+                    <td className="mono">{e.newsLeadMin == null ? "—" : e.newsLeadMin > 0 ? "+" + (e.newsLeadMin >= 60 ? Math.round(e.newsLeadMin / 60) + "h" : e.newsLeadMin + "m") : "no lead"}</td></tr>
+                ))}
+              </tbody></table>
+          )}
         </Panel>
+        <Panel title="Calibration anchors" icon="gauge" label="SCENARIO SEVERITY vs MEASURED"
+          right={<Fx payload={{
+            kicker: "Calibration", title: "How measured episodes recalibrate the model",
+            text: "Each scenario's severity is a stress-test assumption, not a prediction — so it is graded here as a calibration anchor: when a real episode of the same kind occurs (matched by chokepoint context or dominant driver), its measured peak drop is compared to the anchor. Close agreement raises confidence in the drag weights; a large gap produces a concrete correction — Apply scales the live drag layer by measured ÷ anchor (clamped 0.5–1.5×), per-browser and revertable, and the active multiplier is disclosed here and in the assumptions ledger.",
+            formula: "grade(|anchor − measured|): ≤3 HIGH · ≤7 MODERATE · else LOW · apply: drag × (measured ÷ |anchor|)",
+            inputs: anchors.map((a) => ({ k: a.name, v: a.ep ? "anchor " + a.predicted + " · measured −" + a.ep.peakDrop : "anchor " + a.predicted + " · awaiting a measured episode" })),
+            assumption: "Scenario sector deltas stay curated — calibration tunes the LIVE drag layer only. The grade thresholds (3 / 7 pts) are stated assumptions.",
+          }} />}>
+          <table className="tbl"><thead><tr><th>Scenario anchor</th><th>Anchor</th><th>Measured</th><th>Fit</th></tr></thead>
+            <tbody>{anchors.map((a) => {
+              const g = a.ep ? grade(Math.abs(Math.abs(a.predicted) - a.ep.peakDrop)) : null;
+              return <tr key={a.id}><td style={{ fontWeight: 600 }}>{a.name}</td><td className="mono">{a.predicted}</td>
+                <td className="mono">{a.ep ? "−" + a.ep.peakDrop : "—"}</td>
+                <td>{g
+                  ? <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><span className={`tag-band band-${g[1]}`}><span></span>{g[0]}</span>
+                      <button className="drawer-link" style={{ fontSize: 11, background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => applyFrom(a)}>apply</button></span>
+                  : <span className="tag-band band-moderate"><span></span>AWAITING</span>}</td></tr>;
+            })}</tbody></table>
+          <div className="helper" style={{ marginTop: 10, lineHeight: 1.5 }}>
+            {calib
+              ? <>Calibration <b>×{calib.dragScale}</b> applied to the live drag layer — basis: {calib.basis}. <button className="drawer-link" style={{ fontSize: 11.5, background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => LIVE.setCalibration(null)}>revert to ×1.0</button></>
+              : "No calibration applied — the live drag layer runs at its stated weights (×1.0). Apply becomes available once a matching episode is measured."}
+          </div>
+        </Panel>
+        </div>
         <Panel title="Build roadmap" icon="ops" label="SYSTEM MATURITY">
           <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
             {RD.roadmap.map((r) => {
@@ -787,7 +851,7 @@ function MaturityRow() {
 function MethodologyView() {
   const qs = [
     { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving ceiling — your fundamentals. Live Resilience is that ceiling minus today's active load, and tracks toward it: live strength climbs back to what your fundamentals allow as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm. Structural Resilience itself breaks into three capacities — Absorb, Recover and Adapt — measured against your most-exposed sector." },
-    { n: "2", t: "What is the DRI — and how is it built?", d: "The Dependency Risk Index scores how fragile a single import is, from two parts — six inputs, all on the same 0–100 fragility scale, so the weights are the only thing that differs. Structural fragility (0.67 of the score) blends the four supply dimensions, with Route carrying the largest weight — 0.34 against 0.22 each for the others, because dependence on a contested maritime chokepoint is a higher-severity, harder-to-mitigate risk. — Source concentration: how few suppliers provide it today. — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. Buffer fragility (0.33 of the score) adds the half a dims-only index misses: the buffer is your reaction time, so a thin buffer is itself a fragility — full credit only past ~180 days of cover. That is why Dolphin gas (30-day buffer) and LEU fuel (540-day) land at very different DRIs even with comparable dimensions." },
+    { n: "2", t: "What is the DRI — and how is it built?", d: "The Dependency Risk Index scores how fragile a single import is from five inputs — the four supply dimensions plus the buffer — all on the same 0–100 fragility scale, so the weights are the only thing that differs. Structural fragility (0.67 of the score) blends the four supply dimensions, with Route carrying the largest weight — 0.34 against 0.22 each for the others, because dependence on a contested maritime chokepoint is a higher-severity, harder-to-mitigate risk. — Source concentration: how few suppliers provide it today. — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. Buffer fragility (0.33 of the score) adds the half a dims-only index misses: the buffer is your reaction time, so a thin buffer is itself a fragility — full credit only past ~180 days of cover. That is why Dolphin gas (30-day buffer) and LEU fuel (540-day) land at very different DRIs even with comparable dimensions." },
     { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one. Structural Resilience anchors to the most-exposed sector — 60% most-exposed + 40% overall capacity — so one concentrated dependency stays visible behind healthy ones, while still reading the full picture." },
     { n: "4", t: "How is consequence weighting calculated?", d: "It is computed, not assigned. Each import's 0–1 national-consequence weight is a blend of four publicly-grounded factors — Essentiality (how vital the end-service is), Service reliance (how much of that service rides on this input), Immediacy (continuous-flow vs slow-burn consumable) and Breadth (sectors and population touched) — combined as 0.40·ess + 0.25·svc + 0.20·imm + 0.15·brd. Piped gas scores 1.00 (powers electricity and desalination, continuous, universal); gold doré ~0.23 (a refining margin, narrow). The weight then scales each dependency's pull on its sector score and on Absorb capacity, so it moves only when the underlying facts move. Open any import on the Dependencies view to see its four factors. Distinct from the DRI, which scores supplier fragility, not national importance." },
     { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, route & partner-supply news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying its tier, and the status bar shows whether each live feed is currently connected (● Live) or temporarily simulated (○ Sim)." },
@@ -864,7 +928,7 @@ function MethodologyView() {
       <div style={{ marginBottom: 22 }}>
         <div className="view-head" style={{ marginBottom: 6 }}>
           <div className="view-title" style={{ fontSize: 19 }}>How the model has performed — and what's left to build</div>
-          <div className="view-sub">The model's own track record against real events, and how mature each part of it is. This is commentary on the model itself, not on the UAE.</div>
+          <div className="view-sub">A measured track record: disruption episodes are detected and recorded by a shared server-side log, then compared against the scenario severities as calibration anchors. This is commentary on the model itself, not on the UAE.</div>
         </div>
         <MaturityRow />
       </div>
@@ -984,6 +1048,8 @@ function MethodologyView() {
               "Buffer days are curated estimates, not a live inventory feed — most are analyst order-of-magnitude judgements ('est.'); a few (nuclear fuel, strategic grain) reflect reported policy ('stated'). The tag and provenance show on each import in Dependencies.",
               "Score uncertainty = how far each editable assumption (0.60 anchor, 90-day benchmark, sovereign buffer, consequence weights, DRI ±4 — spanning the route weighting and 180-day buffer horizon) moves the score when nudged to its high and low ends; the wider the swing, the lower the confidence label",
               "Gas is a two-state node: contracted Dolphin floor (~$1.50/MMBtu, reported estimate) vs marginal LNG ≈ 12.5% of Brent — losing Dolphin is a price-basis flip, not a volume gap; Henry Hub is not used",
+              "Episode log: a disruption episode opens when the live score falls 3+ pts below its slow baseline with ≥3 feeds live, closes on recovery to within 1 pt — detected SERVER-side on a shared log, so no visitor can invent history and sim-heavy readings never write it",
+              "Calibration: a measured episode can be applied as a live-drag multiplier (measured ÷ anchor, clamped 0.5–1.5×) — per-browser, revertable, always disclosed in the validation panel; scenario sector deltas stay curated",
               "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure (speed & value-for-money inform the scope decision, not the ranking)",
               "Response effects are independent & additive: Live′ = min(Ceiling′, live + staged points)",
             ].map((a, i, arr) => (

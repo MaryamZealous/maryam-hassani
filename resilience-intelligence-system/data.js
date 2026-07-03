@@ -405,24 +405,23 @@ window.RD = (function () {
     beds: "14,000 hospital beds",
     threshold: "Critical shortage threshold: 21 days (ICU consumables)",
   };
-  // Predicted = each scenario's COMPUTED overall (0.60 × worst-hit sector +
-  // 0.40 × mean sector delta), so the table can only reference scenarios the
-  // model actually runs. Actuals are illustrative pending retained history.
+  // Legacy illustrative validation table — superseded by the shared server-side
+  // episode log (see MaturityRow). Kept exported for backwards compatibility.
   const scnOverall = (id) => { const s = scenarios.find((x) => x.id === id); return s ? s.overall : null; };
   const validation = [
-    { event: "Hormuz escalation", predicted: scnOverall("hormuz"), actual: -20, accuracy: "MODERATE" },
+    { event: "Hormuz escalation", predicted: scnOverall("hormuz"), actual: null, accuracy: "UNTESTED" },
     { event: "Chip embargo", predicted: scnOverall("chips"), actual: null, accuracy: "UNTESTED" },
-    { event: "Red Sea Houthi", predicted: scnOverall("redsea"), actual: -5, accuracy: "MODERATE" },
+    { event: "Red Sea Houthi", predicted: scnOverall("redsea"), actual: null, accuracy: "UNTESTED" },
   ];
   const roadmap = [
     { part: "Dependencies mapped", pct: 80 },
     { part: "SWF buffer model", pct: 100 },
     { part: "Cascade engine", pct: 95 },
-    { part: "Live data feeds", pct: 100 },
-    { part: "Control layer", pct: 100 },
+    { part: "Live data feeds", pct: 90 },
+    { part: "Control layer", pct: 90 },
     { part: "Multi-scenario", pct: 100 },
     { part: "Response & pre-mortem", pct: 90 },
-    { part: "Automation", pct: 85 },
+    { part: "Feed polling & recompute", pct: 85 },
     { part: "Calibration & tuning", pct: 55 },
   ];
 

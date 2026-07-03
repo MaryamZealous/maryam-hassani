@@ -184,6 +184,34 @@
 
   function cycle() { pullMeteo(); pullMarkets(); pullAcled(); pullOfac(); pullNews(); pullPorts(); }
   cycle();                          // immediate
+
+  /* ---- shared episode log (validation & calibration loop) ---------------
+     GET: the shared, server-side log of measured disruption episodes — one
+     truth for every visitor. POST: this client's current observation (score +
+     per-driver drag breakdown + live-feed count); the SERVER decides whether
+     an episode opens/closes, so no client can invent history, and sim-heavy
+     sessions (<3 live feeds) are refused by the server. */
+  async function pullEpisodes() {
+    try {
+      const j = await jget("/.netlify/functions/episodes");
+      if (j && j.ok) { REAL.episodes = j.episodes || []; REAL.episodeOpen = j.open || null; REAL.episodesLive = true; }
+    } catch (e) { REAL.episodesLive = false; }
+  }
+  async function postObservation() {
+    try {
+      if (!RD._drags) return;
+      const liveFeeds = Object.values(REAL.status).filter((m) => m === "live").length;
+      const ck = {}; RD.chokepoints.forEach((c) => { ck[c.id] = c.drop; });
+      await fetch("/.netlify/functions/episodes", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ obs: { t: Date.now(), live: RD.headline.live.value, drags: RD._drags, chokes: { hormuz: ck.hormuz || 0, redsea: ck.redsea || 0 }, liveFeeds } }),
+      });
+    } catch (e) { /* the log is additive — a failed post is just a skipped observation */ }
+  }
+  setTimeout(() => { pullEpisodes(); postObservation(); }, 90 * 1000);  // after feeds settle
+  setInterval(pullEpisodes, 5 * 60 * 1000);
+  setInterval(postObservation, 10 * 60 * 1000);
+
   setInterval(pullMeteo, 10 * 60 * 1000);   // weather: every 10 min
   setInterval(pullMarkets, 60 * 1000);      // markets: every 60 s
   setInterval(pullAcled, 5 * 60 * 1000);    // conflict: every 5 min
