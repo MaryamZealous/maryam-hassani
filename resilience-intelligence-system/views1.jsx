@@ -320,7 +320,7 @@ function ProvenanceLedger() {
     series: c.spark || null,
     ref: `${c.baseline}/day · 12-month norm`,
     transform: `1 − ${c.vessels}/${c.baseline} → −${c.drop}%`,
-    feeds: "Maritime throughput (largest single driver)",
+    feeds: "Maritime throughput (typically the largest driver)",
     assume: "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm, never an absolute count. Chokepoint pressure feeds the acute-drag term only — it never moves the structural baseline.",
   }));
   // Non-maritime shocks feed the ledger when active; none are live today.
@@ -534,7 +534,7 @@ function ThreatsView() {
                     inputs: [
                       { k: c.real ? "Current (7-day avg)" : "Today", v: c.vessels + " transit calls/day", src: "ais" },
                       { k: c.real ? "12-month norm (90th pct)" : "Baseline", v: c.baseline + " transit calls/day", src: "ais" },
-                      c.real ? { k: "Source", v: "IMF PortWatch · satellite AIS · as of " + c.asof } : { k: "Contribution", v: "largest single driver of Live Resilience" },
+                      c.real ? { k: "Source", v: "IMF PortWatch · satellite AIS · as of " + c.asof } : { k: "Contribution", v: "typically the largest driver of Live Resilience" },
                     ],
                     assumption: c.real
                       ? "Real IMF PortWatch transit calls (satellite AIS on ~90,000 ships), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm (90th percentile). A sustained collapse still reads as a real drop rather than quietly becoming the new normal."

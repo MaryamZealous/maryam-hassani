@@ -618,7 +618,7 @@ window.RD = (function () {
     headline.live.confidence = tier(lHalf);
     headline.live.sensitivity = [
       { k: "Structural ceiling", d: sHalf },
-      { k: "Live-load measurement (6 feeds)", d: round1(LIVE_LOAD_SD) },
+      { k: "Live-load measurement (six drag terms)", d: round1(LIVE_LOAD_SD) },
     ].sort((a, b) => b.d - a.d);
 
     // Per-sector bands — sectors move only with essentiality weight & DRI

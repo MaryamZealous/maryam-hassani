@@ -529,12 +529,16 @@ window.ACT = (function () {
 
        • Weakness  — how fragile the sector is: its consequence-weighted DRI,
                      the same number behind the sector score on the Overview.
-       • Payoff    — points the recommended fix would recover, scaled to the
-                     biggest such across all plays.
+       • Payoff    — points the recommended fix would recover.
        • Time-pressure — the one hand-set factor: a closing-clock the fragility
                      number can't see (e.g. an export licence open today).
 
-     Weakness leads, so the queue tracks where the model is actually weakest.
+     Each factor is min-max RESCALED to its observed range across the queue
+     before weighting — otherwise a factor with a naturally narrow spread
+     (sector fragilities cluster ~0.43–0.54) is silently outvoted by one with
+     a wide spread (payoffs span 0.4–1.0), and the stated weights lie. With
+     rescaling, 0.5/0.3/0.2 mean what they say and weakness genuinely leads.
+     Scores are therefore RELATIVE standings within this queue, not absolutes.
      All three are tier-independent, so exploring or staging a scope never
      reorders the queue. Speed and value-for-money are deliberately NOT here —
      they're the lens for the *scope decision* on the right. Weights editable. */
@@ -551,12 +555,24 @@ window.ACT = (function () {
   }
   const W_WEAK = 0.5, W_PAYOFF = 0.3, W_TIME = 0.2;
   function priorities(evals) {
-    return evals.map((e) => {
-      const weakness = sectorFragility(e.p.sector);
-      const payoff = Math.min(1, _recPts(e.p) / REF_PTS); // recommended-scope pts → tier-independent
-      const time = e.p.window != null ? e.p.window : 0.5;
-      const score = 100 * (W_WEAK * weakness + W_PAYOFF * payoff + W_TIME * time);
-      return { id: e.p.id, score: +score.toFixed(0), weakness, payoff, time, wdri: +(weakness * 100).toFixed(1) };
+    const raw = evals.map((e) => ({
+      id: e.id || e.p.id,
+      weakness: sectorFragility(e.p.sector),
+      payoff: Math.min(1, _recPts(e.p) / REF_PTS),
+      time: e.p.window != null ? e.p.window : 0.5,
+    }));
+    const scaler = (key) => {
+      const vs = raw.map((r) => r[key]);
+      const lo = Math.min(...vs), hi = Math.max(...vs);
+      return (v) => (hi - lo < 1e-9 ? 0.5 : (v - lo) / (hi - lo));
+    };
+    const nW = scaler("weakness"), nP = scaler("payoff"), nT = scaler("time");
+    return raw.map((r) => {
+      const rel = { weakness: nW(r.weakness), payoff: nP(r.payoff), time: nT(r.time) };
+      const score = 100 * (W_WEAK * rel.weakness + W_PAYOFF * rel.payoff + W_TIME * rel.time);
+      return { id: r.id, score: +score.toFixed(0), weakness: r.weakness, payoff: r.payoff, time: r.time,
+        wdri: +(r.weakness * 100).toFixed(1),
+        rel: { weakness: Math.round(rel.weakness * 100), payoff: Math.round(rel.payoff * 100), time: Math.round(rel.time * 100) } };
     });
   }
 

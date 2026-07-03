@@ -97,15 +97,15 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
             <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--bc)" }} title="Priority score">P{prio.score}</span>
             <Fx payload={{
               kicker: "Priority · computed", title: "Why this rank",
-              text: "Priority ranks the PROBLEM, not the plan you're eyeing. It's a flat blend of three things: how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own.",
-              formula: "Priority  =  0.5 × Weakness  +  0.3 × Payoff  +  0.2 × Time-pressure",
+              text: "Priority ranks the PROBLEM, not the plan you're eyeing. It's a flat blend of three things: how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own. Each factor is first rescaled to its range across the six responses — so a factor whose values naturally cluster (sector fragilities sit close together) counts with its full stated weight instead of being silently outvoted by one that spreads widely (payoffs). Priority is therefore a relative standing within this queue, not an absolute grade.",
+              formula: "Priority  =  0.5 × Weakness  +  0.3 × Payoff  +  0.2 × Time-pressure   (each rescaled to its range across the queue)",
               inputs: [
-                { k: "Weakness (sector DRI)", v: prio.wdri + " / 100" },
-                { k: "Payoff — points the recommended fix recovers", v: (prio.payoff * 100).toFixed(0) + " / 100" },
-                { k: "Time-pressure", v: (p.window * 100).toFixed(0) + " / 100" + (p.window >= 0.75 ? " — closing clock" : p.window <= 0.4 ? " — no clock" : "") },
-                { k: "→ Priority", v: prio.score + " / 100" },
+                { k: "Weakness (sector DRI)", v: prio.wdri + " / 100 → " + prio.rel.weakness + " relative" },
+                { k: "Payoff — points the recommended fix recovers", v: (prio.payoff * 100).toFixed(0) + " / 100 → " + prio.rel.payoff + " relative" },
+                { k: "Time-pressure", v: (p.window * 100).toFixed(0) + " / 100 → " + prio.rel.time + " relative" + (p.window >= 0.75 ? " — closing clock" : p.window <= 0.4 ? " — no clock" : "") },
+                { k: "→ Priority", v: prio.score + " / 100 (relative to the other responses)" },
               ],
-              assumption: "Weakness leads (half the weight), so the queue follows where the model is actually weakest. Time-pressure is the only hand-set factor — it's why a sector can sit above or below its raw DRI order (chips' export-licence clock lifts Defence; Finance's depth and absent clock keep it low).",
+              assumption: "Weakness leads (half the weight), and the rescaling is what makes that true in practice — without it, the wide spread of payoffs would dominate the narrow spread of sector fragilities regardless of the weights. Time-pressure is the only hand-set factor (chips' export-licence clock lifts Defence; Finance's depth and absent clock keep it low). A response scoring low here is lower-priority than its peers, not unimportant.",
             }} />
           </span>
         </div>
@@ -325,10 +325,10 @@ function PlayDetail({ p, r, onPickTier, isStaged, onStage }) {
   return (
     <div className="stack">
       <Panel title={p.title} icon="shield"
-        right={(() => { const s = RD.sectors.find((x) => x.id === p.sector); const b = RD.band(s.score); return (
-          <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <span className={`tag-band band-${b.key}`} title={s.name + " sector resilience — the weakness this play addresses"}><span></span>{s.name} {s.score.toFixed(1)}</span>
-            <button className="exp" onClick={() => window.__go && window.__go("dependencies", { sector: p.sector })} title={"Open the " + s.name + " sector's tracked imports"}>Sector imports →</button>
+        right={(() => { const s = RD.sectors.find((x) => x.id === p.sector); const b = RD.band(s.score); const n = RD.precursors.filter((x) => x.sector === p.sector).length; return (
+          <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center", flexWrap: "nowrap", whiteSpace: "nowrap", flex: "0 0 auto" }}>
+            <span className={`tag-band band-${b.key}`} title={s.name + " sector resilience: " + s.score.toFixed(1) + " / 100 — the weakness this play addresses (from the Overview sector grid)"}><span></span>{s.name} {s.score.toFixed(1)}<span style={{ fontWeight: 400, opacity: 0.7 }}>/100</span></span>
+            <button className="exp" onClick={() => window.__go && window.__go("dependencies", { sector: p.sector })} title={"Open the " + n + " tracked " + s.name + " imports behind this score"}>{n} sector imports →</button>
           </span>
         ); })()}>
         <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.65, margin: "0 0 14px" }}>{p.thesis}</p>
