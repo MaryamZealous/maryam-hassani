@@ -1,6 +1,8 @@
-/* Netlify Function — REAL Brent crude + natural-gas prices.
+/* Netlify Function — REAL Brent crude price.
    No API key required. Yahoo's chart endpoint is called server-side, so the
    browser CORS / key restrictions that block a direct call don't apply.
+   Henry Hub (NG=F) is deliberately NOT fetched — it is the wrong price basis
+   for the UAE; the dashboard derives its gas figure from Brent instead.
    Deployed automatically at:  /.netlify/functions/markets
 */
 const CORS = {
@@ -23,14 +25,13 @@ async function quote(symbol) {
 
 exports.handler = async function () {
   try {
-    const [brent, natgas] = await Promise.all([quote("BZ=F"), quote("NG=F")]);
+    const brent = await quote("BZ=F");
     return {
       statusCode: 200,
       headers: CORS,
       body: JSON.stringify({
         ok: true,
         brent: brent.price, brentPrev: brent.prev,
-        natgas: natgas.price, natgasPrev: natgas.prev,
         ts: Date.now(),
       }),
     };

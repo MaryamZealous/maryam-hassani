@@ -55,8 +55,8 @@ window.ACT = (function () {
         title: "LG Chem × Alkhorayef — the filter factory Saudi Arabia just built (Dammam)",
         facts: [
           "US$86M joint venture announced May 2024; producing from early 2026 — about 20 months from announcement to output",
-          "Sited in Dammam's industrial city; ~70% of the work done locally; 175+ jobs",
-          "The region buys ≈ 700,000 filter elements a year — easily enough demand for a second Gulf factory",
+          "Sited in Dammam's industrial city; ~70% of the work done locally and 175+ jobs (reported figures)",
+          "The region buys ≈ 700,000 filter elements a year (industry estimate) — easily enough demand for a second Gulf factory",
         ],
       },
       tiers: [
@@ -169,7 +169,7 @@ window.ACT = (function () {
           mitigation: "Until the expansion is built, send only liquids, bulk goods and rail-friendly cargo east; keep urgent container goods on the air lane rather than assuming the port can absorb Jebel Ali's traffic." },
         { mode: "The back door can be attacked too", likelihood: "Medium",
           indicator: "Drone or missile incidents near Fujairah's port and pipeline corridor", tracked: true,
-          mitigation: "2026 showed it: debris from an intercepted missile hit Fujairah's own oil tanks. Spread out and harden the storage — the east coast avoids the strait, but not attack, so air defence must cover it too." },
+          mitigation: "2026 showed it: debris from an intercepted drone set fire to one of Fujairah's own oil tanks. Spread out and harden the storage — the east coast avoids the strait, but not attack, so air defence must cover it too." },
         { mode: "The standing costs quietly burn through the budget", likelihood: "High",
           indicator: "Total reservation and air-freight spending vs budget", tracked: false,
           mitigation: "Keep the expensive air lane for genuinely urgent goods only (medicines, chips); everything else waits for shipping to recover. Air freight always costs many times more per tonne — it is a permanent premium, not a one-off." },
@@ -257,8 +257,8 @@ window.ACT = (function () {
       id: "api-localization",
       title: "Medicine ingredients — bigger reserve, then make them here",
       sector: "health", window: 0.50,
-      addresses: "65% of medicine ingredients come from India · hospitals hold ~60 days of stock",
-      thesis: "Hospitals run on imported medicine ingredients — the active chemicals inside each drug — 65% of them from India, shipped through the strait. The UAE has already proven it can make them: a plant in Ras Al Khaimah has produced insulin's active ingredient for over a decade. The choice is how far to extend that proof: hold more stock, or start making the most critical medicines here.",
+      addresses: "~65% of medicine ingredients come from India (est.) · hospitals hold ~60 days of stock",
+      thesis: "Hospitals run on imported medicine ingredients — the active chemicals inside each drug — an estimated ~65% of them from India, shipped through the strait. The UAE has already proven it can make them: a plant in Ras Al Khaimah has produced insulin's active ingredient for over a decade. The choice is how far to extend that proof: hold more stock, or start making the most critical medicines here.",
       site: {
         where: "Julphar campus, Ras Al Khaimah (expansion) + KEZAD packaging lines",
         why: "Ras Al Khaimah is home to Julphar, the region's largest generic-medicines maker — 13 UAE facilities and the Middle East's only insulin-ingredient plant. Expanding an existing certified site is faster and cheaper than starting fresh. RAK's own Saqr Port also sits outside the strait for incoming raw materials.",

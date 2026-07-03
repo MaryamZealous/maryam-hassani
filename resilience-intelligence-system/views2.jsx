@@ -34,17 +34,17 @@ const CHOKE = { hormuz: [56.4, 26.6], redsea: [43.3, 12.6], suez: [32.5, 30.2] }
 const GEO_SRC = {
   "United States of America": { label: "United States", who: "RO · ERD · turbines · water chems · GNSS · USD", pre: ["ro","erd","turbines","waterchem","gps","usdclearing"], cons: 0.88, lng: -98, lat: 39, tip: "Leading source of reverse-osmosis membranes and energy-recovery devices within a concentrated US/Japan/Korea supplier set — the spine of UAE desalination — plus GE gas-turbine hot-section parts, specialty desalination chemicals (antiscalants), precision-timing modules and correspondent-bank USD clearing." },
   "Taiwan": { label: "Taiwan", who: "Leading-edge chips", pre: ["chips"], cons: 0.72, lng: 121, lat: 23.6, tip: "Fabrication of advanced silicon for EDGE guided-systems concentrates here, but the binding risk is US export-control licensing, not a Taiwan supply halt — a channel that eased in late 2025." },
-  "India": { label: "India", who: "APIs · devices · labour", pre: ["api"], cons: 0.78, lng: 79, lat: 22.5, dy: 17, tip: "65% of active pharma ingredients and the largest share of critical-infrastructure workers." },
-  "Kazakhstan": { label: "Kazakhstan", who: "LEU nuclear fuel", pre: ["leu"], cons: 0.72, lng: 67, lat: 48, tip: "Long-lead enriched-uranium fuel for Barakah — a 540-day buffer with no near alternative." },
+  "India": { label: "India", who: "APIs · devices · labour", pre: ["api"], cons: 0.78, lng: 79, lat: 22.5, dy: 17, tip: "~65% of active pharma ingredients (est.) and the largest share of critical-infrastructure workers." },
+  "Kazakhstan": { label: "Kazakhstan", who: "Uranium — LEU fuel chain", pre: ["leu"], cons: 0.72, lng: 67, lat: 48, tip: "Uranium feedstock for Barakah's fuel chain — conversion, enrichment and fabrication (KEPCO NF, Korea) happen downstream. A 540-day buffer with no near-term alternative chain." },
   "Qatar": { label: "Qatar", who: "Piped gas (Dolphin)", pre: ["gas"], cons: 1.00, lng: 51.2, lat: 25.3, dx: -10, dy: -10, anchor: "end", tip: "25% of gas for power and water via the Dolphin pipeline — piped, not Hormuz-routed. Contract runs to 2032. The exposure is counterpart + price-basis: losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8×)." },
   "Canada": { label: "Canada", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.55, lng: -109, lat: 57, tip: "Fertiliser and grain feedstock — diversified, lower-risk food inputs." },
   "Russia": { label: "Russia", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.60, lng: 62, lat: 61, tip: "Alternate potash and wheat supply; counterpart risk elevated by sanctions exposure." },
-  "China": { label: "China", who: "Solar PV · batteries · devices", pre: ["solarpv","libattery","devices"], cons: 0.70, lng: 103, lat: 35, tip: "Concentrates the clean-energy transition inputs — ~80%+ of solar polysilicon/modules and the bulk of lithium-ion cell supply — plus 40% of medical devices on a thin 45-day buffer. The Material World pattern: China as the processing chokepoint, with rising counterpart risk." },
+  "China": { label: "China", who: "Solar PV · batteries · devices", pre: ["solarpv","libattery","devices"], cons: 0.70, lng: 103, lat: 35, tip: "Concentrates the clean-energy transition inputs — ~80%+ of solar polysilicon/modules and the bulk of lithium-ion cell supply — plus 40% of medical devices (est.) on a thin 45-day buffer. The Material World pattern: China as the processing chokepoint, with rising counterpart risk." },
   "Australia": { label: "Australia", who: "Wheat", pre: ["wheat"], cons: 0.60, lng: 134, lat: -25, tip: "Diversified grain supply that deepens national food reserves." },
   "Chile": { label: "Chile", who: "Copper (cathode / rod)", pre: ["copper"], cons: 0.60, lng: -71, lat: -33, tip: "The UAE mines no copper; refined cathode & rod — from Chile, Zambia and the global market — feed Ducab's cabling and the grid build-out. Material World's bottleneck metal of electrification: diversified today, structurally tight over the decade ahead." },
   "Japan": { label: "Japan", who: "Turbines (Mitsubishi) · RO membranes", pre: ["turbines","ro"], cons: 0.82, lng: 138, lat: 37.5, tip: "Mitsubishi gas-turbine hot-section parts plus Toray / Nitto reverse-osmosis membranes — Japan sits inside both the turbine-OEM and the desalination-membrane supplier sets, two single-digit-supplier fields for the power-and-water fleet." },
   "Germany": { label: "Germany", who: "Turbines (Siemens) · water chemicals", pre: ["turbines","waterchem"], cons: 0.82, lng: 10.4, lat: 51.2, tip: "Siemens gas-turbine hot-section components and BASF-class specialty water-treatment chemicals (antiscalants) — part of the single-digit qualified-OEM field the generation and desalination fleet runs on." },
-  "United Arab Emirates": { label: "UAE", hub: true, lng: 54.4, lat: 24.5, who: "Jebel Ali · Barakah · Taweelah", tip: "The hub. 60% of imports land at Jebel Ali, then re-export across the region — dependency runs both ways." },
+  "United Arab Emirates": { label: "UAE", hub: true, lng: 54.4, lat: 24.5, who: "Jebel Ali · Barakah · Taweelah", tip: "The hub. ~60% of imports land at Jebel Ali (est.), then re-export across the region — dependency runs both ways." },
 };
 const PRE_BY_ID = Object.fromEntries((window.RD ? RD.precursors : []).map((p) => [p.id, p]));
 const consOf = (s) => (s.pre && s.pre.length) ? Math.max(...s.pre.map((id) => (PRE_BY_ID[id] ? PRE_BY_ID[id].consequence : 0))) : (s.cons || 0);
@@ -75,7 +75,7 @@ function routeD(from, to, via, lift) {
 const Z_MIN = 1, Z_MAX = 64, ASSET_ZOOM = 3;
 const ASSET_FILL = { port: "var(--accent)", energy: "var(--high)", water: "var(--good)" };
 const ASSET_IO = {
-  jebelali: "Imports ≈60% of national goods · regional re-export hub",
+  jebelali: "Imports ≈60% of national goods (est.) · regional re-export hub",
   fujairah: "Crude-export terminal · bypasses the Strait of Hormuz",
   taweelah: "World's largest RO plant · membrane-dependent",
   barakah: "5.6 GW nuclear baseload · LEU-fuelled",
@@ -407,7 +407,7 @@ function MapView() {
         </Panel>
         <Panel title="Reading the map" icon="info">
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[["Why a hub, not a list", "60% of imports land at Jebel Ali and re-export across the region — so dependency runs both ways, inbound and outbound."],
+            {[["Why a hub, not a list", "~60% of imports (est.) land at Jebel Ali and re-export across the region — so dependency runs both ways, inbound and outbound."],
               ["Flows inherit chokepoint risk", "Any line routed through Hormuz, Bab-el-Mandeb or Suez carries that chokepoint's live pressure into the sectors it feeds."],
               ["Distance ≠ safety", "Taiwan is far but single-sourced; Qatar is next door but pipeline-locked. Proximity tells you nothing about fragility."]].map(([h, d], i) => (
               <div key={i}>
@@ -481,14 +481,14 @@ function DependenciesView({ initial }) {
               <div className="kpi"><span className="kpi-v mono">{sel.dri}</span><span className="kpi-l">DRI / 100 <Fx payload={{
                 kicker: "Dependency Risk Index", title: "How DRI is built",
                 text: "DRI scores how fragile a single import is, from two parts. STRUCTURAL fragility blends the four supply dimensions — Route carries the largest weight, because a contested-chokepoint shipment is a higher-severity risk than the other axes. BUFFER fragility adds the missing half: the buffer is your reaction time, so a thin buffer is itself a fragility (Dolphin's 30 days and LEU's 540 are not the same risk even with similar dimensions).",
-                formula: "DRI = 0.67 × (0.34·Route + 0.22·Concentration + 0.22·Substitution + 0.22·Counterpart, each /25) + 0.33 × buffer fragility,  buffer fragility = (1 − min(buffer / 180d, 1))",
+                formula: "DRI = 0.67 × structural fragility + 0.33 × buffer fragility — every input on the same 0–100 scale.  Structural = 0.34·Route + 0.22·Concentration + 0.22·Substitution + 0.22·Counterpart.  Buffer = (1 − min(buffer / 180d, 1)) × 100",
                 inputs: [
-                  ...dims.map(([k, l, def]) => ({ k: l + (k === "route" ? " (weight 0.34)" : " (weight 0.22)"), v: sel.dims[k] + " / 25 — " + def })),
+                  ...dims.map(([k, l, def]) => ({ k: l + (k === "route" ? " (weight 0.34)" : " (weight 0.22)"), v: sel.dims[k] + " / 100 — " + def })),
                   { k: "Structural fragility", v: sel.driStruct + " / 100 — route-weighted blend of the four dimensions" },
                   { k: "Buffer fragility", v: sel.driBuffer + " / 100 — from a " + sel.buffer + "-day buffer vs a 180-day reaction horizon" },
                   { k: "DRI", v: "0.67 × " + sel.driStruct + "  +  0.33 × " + sel.driBuffer + "  =  " + sel.dri + " / 100" },
                 ],
-                assumption: "Route carries the largest dimension weight (0.34 vs 0.22) because chokepoint exposure is a higher-severity, harder-to-mitigate risk. The buffer term treats reaction time as a first-class fragility: full credit (zero buffer-fragility) only past ~180 days of cover, the point where stock is no longer the binding constraint. Both the 0.34 route weight and the 180-day horizon are tunable model assumptions.",
+                assumption: "All six inputs sit on the same 0–100 fragility scale; the weights just set how much each counts — 0.34/0.22 across the four dimensions, then 0.67/0.33 between the structural and buffer halves. Route carries the largest dimension weight because chokepoint exposure is a higher-severity, harder-to-mitigate risk. The buffer term treats reaction time as a first-class fragility: zero only past ~180 days of cover, the point where stock is no longer the binding constraint. Both the 0.34 route weight and the 180-day horizon are tunable model assumptions.",
               }} /></span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.buffer}</span><span className="kpi-l">Buffer days{sel.bufferProv ? " · " + (sel.bufferProv.t === "stated" ? "stated" : "est.") : ""}</span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.consequence.toFixed(2)}</span><span className="kpi-l" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>Consequence weight <Fx payload={{
@@ -509,15 +509,15 @@ function DependenciesView({ initial }) {
             <h4 style={{ fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--faint)", marginBottom: 12 }}>DRI breakdown — structural dimensions + buffer <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--faint)", fontWeight: 400 }}>(higher = more fragile)</span></h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               {dims.map(([k, l, def]) => {
-                const v = sel.dims[k]; const b = RD.band(100 - v * 4).key;
+                const v = sel.dims[k]; const b = RD.band(100 - v).key;
                 return (
                   <div key={k} className={`band-${b}`} style={{ display: "grid", gridTemplateColumns: "1fr 46px", alignItems: "baseline", gap: 12 }}>
                     <div>
                       <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 6 }}>{l}{k === "route" ? <span className="helper" style={{ fontWeight: 400 }}> · weight 0.34 (highest)</span> : null}</div>
-                      <div className="bar-track" style={{ height: 7 }}><div className="bar-fill" style={{ width: (v / 25) * 100 + "%" }}></div></div>
+                      <div className="bar-track" style={{ height: 7 }}><div className="bar-fill" style={{ width: v + "%" }}></div></div>
                       <div className="helper" style={{ marginTop: 5, lineHeight: 1.45 }}>{def}</div>
                     </div>
-                    <span className="mono" style={{ fontSize: 12, textAlign: "right" }}>{v}/25</span>
+                    <span className="mono" style={{ fontSize: 12, textAlign: "right" }}>{v}/100</span>
                   </div>
                 );
               })}
@@ -564,7 +564,7 @@ function DependenciesView({ initial }) {
                   <span style={{ fontSize: 12.5, lineHeight: 1.5 }}>
                     <b>Live partner-supply signal</b> — {pn.live ? (pct > 5
                       ? "supply-disruption coverage on " + pn.partner.replace(/^./, (m) => m.toUpperCase()) + " is running " + pct + "% above normal, lifting counterpart risk above the curated baseline now."
-                      : "coverage on " + pn.partner.replace(/^./, (m) => m.toUpperCase()) + " is at/below normal — a quiet feed is itself a signal.")
+                      : "coverage on " + pn.partner.replace(/^./, (m) => m.toUpperCase()) + " is at/below normal — no adverse pressure above the curated baseline right now.")
                       : "watched via the news monitor; the feed is connecting, so this falls back to the curated counterpart score."}
                   </span>
                   <span style={{ marginLeft: "auto" }}><SourceTag src="gdelt" /></span>
@@ -668,12 +668,15 @@ function ControlView() {
           </React.Fragment>
         )}
         {tab === "workforce" && (
+          <React.Fragment>
           <table className="tbl"><thead><tr><th>Skill class</th><th>Origin concentration</th><th>Risk</th></tr></thead>
             <tbody>{RD.workforce.map((v) => {
               const b = v.risk === "HIGH" ? "high" : v.risk === "MEDIUM" ? "moderate" : "good";
               return <tr key={v.skill}><td style={{ fontWeight: 600 }}>{v.skill}</td><td className="muted mono" style={{ fontSize: 11.5 }}>{v.origin}</td>
                 <td><span className={`tag-band band-${b}`}><span></span>{v.risk}</span></td></tr>;
             })}</tbody></table>
+          <div className="helper" style={{ marginTop: 10 }}>Origin splits are analyst estimates assembled from public labour reporting — no official dataset publishes this breakdown at this precision.</div>
+          </React.Fragment>
         )}
         {tab === "obligations" && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -747,10 +750,10 @@ function MaturityRow() {
         <Panel title="Model validation" icon="check" label="PREDICTED vs. ACTUAL"
           right={<Fx payload={{
             kicker: "Validation", title: "How accuracy is judged",
-            text: "Each past event compares the model's predicted score change to what was later observed. Closeness sets a qualitative accuracy grade.",
+            text: "Predicted is each scenario's computed overall (0.60 × worst-hit sector + 0.40 × mean sector delta). Actual is the estimated peak drop in Live Resilience during the event window — illustrative until enough retained score history exists to measure it properly. Closeness sets a coarse accuracy grade.",
             formula: "Accuracy  =  grade(| predicted − actual |)",
             inputs: RD.validation.map((v) => ({ k: v.event, v: v.actual === null ? "predicted " + v.predicted + ", awaiting outcome" : "pred " + v.predicted + " · actual " + v.actual })),
-            assumption: "Grades (HIGH / MODERATE / UNTESTED) are coarse on purpose — the model is illustrative and not yet fully calibrated.",
+            assumption: "Grades (HIGH / MODERATE / UNTESTED) are coarse on purpose, and the 'actual' figures are illustrative estimates pending retained history — treat this table as a method demonstration, not a calibration record.",
           }} />}>
           <table className="tbl"><thead><tr><th>Event</th><th>Predicted</th><th>Actual</th><th>Accuracy</th></tr></thead>
             <tbody>{RD.validation.map((v) => {
@@ -782,7 +785,7 @@ function MaturityRow() {
 function MethodologyView() {
   const qs = [
     { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving ceiling — your fundamentals. Live Resilience is that ceiling minus today's active load, and tracks toward it: live strength climbs back to what your fundamentals allow as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm. Structural Resilience itself breaks into three capacities — Absorb, Recover and Adapt — measured against your most-exposed sector." },
-    { n: "2", t: "What is the DRI — and how is it built?", d: "The Dependency Risk Index scores how fragile a single import is, from two parts. Structural fragility (0.67 of the score) blends the four supply dimensions, with Route carrying the largest weight — 0.34 against 0.22 each for the others, because dependence on a contested maritime chokepoint is a higher-severity, harder-to-mitigate risk. — Source concentration: how few suppliers provide it today. — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. Buffer fragility (0.33 of the score) adds the half a dims-only index misses: the buffer is your reaction time, so a thin buffer is itself a fragility — full credit only past ~180 days of cover. That is why Dolphin gas (30-day buffer) and LEU fuel (540-day) land at very different DRIs even with comparable dimensions." },
+    { n: "2", t: "What is the DRI — and how is it built?", d: "The Dependency Risk Index scores how fragile a single import is, from two parts — six inputs, all on the same 0–100 fragility scale, so the weights are the only thing that differs. Structural fragility (0.67 of the score) blends the four supply dimensions, with Route carrying the largest weight — 0.34 against 0.22 each for the others, because dependence on a contested maritime chokepoint is a higher-severity, harder-to-mitigate risk. — Source concentration: how few suppliers provide it today. — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. Buffer fragility (0.33 of the score) adds the half a dims-only index misses: the buffer is your reaction time, so a thin buffer is itself a fragility — full credit only past ~180 days of cover. That is why Dolphin gas (30-day buffer) and LEU fuel (540-day) land at very different DRIs even with comparable dimensions." },
     { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one. Structural Resilience anchors to the most-exposed sector — 60% most-exposed + 40% overall capacity — so one concentrated dependency stays visible behind healthy ones, while still reading the full picture." },
     { n: "4", t: "How is consequence weighting calculated?", d: "It is computed, not assigned. Each import's 0–1 national-consequence weight is a blend of four publicly-grounded factors — Essentiality (how vital the end-service is), Service reliance (how much of that service rides on this input), Immediacy (continuous-flow vs slow-burn consumable) and Breadth (sectors and population touched) — combined as 0.40·ess + 0.25·svc + 0.20·imm + 0.15·brd. Piped gas scores 1.00 (powers electricity and desalination, continuous, universal); gold doré ~0.23 (a refining margin, narrow). The weight then scales each dependency's pull on its sector score and on Absorb capacity, so it moves only when the underlying facts move. Open any import on the Dependencies view to see its four factors. Distinct from the DRI, which scores supplier fragility, not national importance." },
     { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, route & partner-supply news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying its tier, and the status bar shows whether each live feed is currently connected (● Live) or temporarily simulated (○ Sim)." },
@@ -966,12 +969,16 @@ function MethodologyView() {
             {[
               "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity (non-compensatory anchor)",
               "Capacity = equal-weight Absorb (buffers vs 90-day benchmark) · Recover (sovereign firepower + substitutability) · Adapt (sectors with a structural plan)",
-              "Live Resilience = Structural ceiling − today's active load (tracks toward it); active load = maritime throughput + trade-route news + partner-supply news + sea state + market stress + sanctions drift + Guinea residual",
-              "Partner-supply news = adverse-only coverage of single/few-source partners (Qatar gas, Taiwan chips, Kazakhstan fuel, China, India), weighted by each import's consequence and capped — moves Live Resilience, not the structural DRI",
+              "Live Resilience = Structural ceiling − today's active load (tracks toward it); active load = maritime throughput + trade-route news + partner-supply news + sea state + market stress + sanctions drift; floored at 25",
+              "Partner-supply news = adverse-only coverage of single/few-source partners (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India), weighted by each import's consequence and capped — moves Live Resilience, not the structural DRI",
               "Structural axis goalpost: 100 = autarky (unreachable), ~72 = realistic-frontier marker — a display anchor only, feeds no score",
-              "Sovereign buffer sub-score from verified SWF AUM (~$2.0T)",
+              "Sovereign buffer sub-score from verified SWF AUM (~$2.1T)",
               "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
-              "DRI = 0.67 × route-weighted dimension fragility (Route weight 0.34 vs 0.22 each for Concentration / Substitution / Counterpart) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — a thin buffer is itself a fragility because the buffer is your reaction time",
+              "Scenario overall = 0.60 × worst-hit sector delta + 0.40 × mean sector delta — computed from each scenario's sector deltas, never hand-set; Combined Maximum's deltas are a hand-authored worst-case vector",
+              "News-lane 'normal volume' baselines are hand-set per lane (route lanes are disruption-keyed; partner lanes adverse-only); pressure = (2-day volume / baseline − 1) / 2, capped — Google News returns at most ~100 items per lane, so extreme surges saturate",
+              "Headline & sector trends are measured against stored score snapshots in this browser (24h / 30d); with no old-enough history the UI shows 'no history yet', never a seeded delta",
+              "OFAC weekly 'new designations' is an illustrative stand-in (no public delta feed); only the live total-entity-count drift enters the score",
+              "DRI = 0.67 × route-weighted dimension fragility (Route weight 0.34 vs 0.22 each for Concentration / Substitution / Counterpart) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — all six inputs on the same 0–100 scale — a thin buffer is itself a fragility because the buffer is your reaction time",
               "Buffer days are curated estimates, not a live inventory feed — most are analyst order-of-magnitude judgements ('est.'); a few (nuclear fuel, strategic grain) reflect reported policy ('stated'). The tag and provenance show on each import in Dependencies.",
               "Score uncertainty = how far each editable assumption (0.60 anchor, 90-day benchmark, sovereign buffer, consequence weights, DRI ±4 — spanning the route weighting and 180-day buffer horizon) moves the score when nudged to its high and low ends; the wider the swing, the lower the confidence label",
               "Gas is a two-state node: contracted Dolphin floor (~$1.50/MMBtu, reported estimate) vs marginal LNG ≈ 12.5% of Brent — losing Dolphin is a price-basis flip, not a volume gap; Henry Hub is not used",

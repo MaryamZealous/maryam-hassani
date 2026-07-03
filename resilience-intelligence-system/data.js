@@ -53,8 +53,10 @@ window.RD = (function () {
         { k: "Structural ceiling", v: "the day's maximum", src: "curated" },
         { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez transit calls vs each strait's 12-month norm (IMF PortWatch)", src: "ais" },
         { k: "Trade-route news", v: "above-normal closure / conflict coverage on the sea routes", src: "gdelt" },
-        { k: "Partner-supply news", v: "adverse coverage of a single- or few-source partner (Qatar gas, Taiwan chips, Kazakhstan fuel, China, India) — negative-sentiment gated", src: "gdelt" },
+        { k: "Partner-supply news", v: "adverse coverage of a single- or few-source partner (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India) — negative-sentiment gated", src: "gdelt" },
         { k: "Energy-market stress", v: "Brent and the Brent-linked LNG replacement cost above their stress marks", src: "yfinance" },
+        { k: "Sea state", v: "wave height above 1.2 m on the chokepoint approaches impairs transit", src: "meteo" },
+        { k: "Counterpart / sanctions", v: "rise in total SDN entities since session baseline (OpenSanctions mirror)", src: "ofac" },
         { k: "Live = ceiling − active load", v: "recomputed every refresh from the live drivers", src: "curated" },
       ],
       assumption: "Live Resilience = structural ceiling − today's active load. Maritime disruption enters through measured vessel throughput, which already reflects how carriers reroute as tension rises — so the Hormuz and Red Sea events shown elsewhere are the causes of that measured drop, presented for context, and are not added to the score a second time.",
@@ -64,8 +66,10 @@ window.RD = (function () {
   // ---- 7 sectors -----------------------------------------------------------
   // Sector scores, topRisk / topDRI and precursor counts are all COMPUTED by
   // computeSpine() from the precursor data below — they are NOT set here. The
-  // only editable inputs are the display name, the 30-day `trend` (the point
-  // change the arrow shows, preserved across recompute) and the plain note.
+  // only editable inputs are the display name and the plain note. The `trend`
+  // literal is LEGACY and no longer drives any UI arrow — displayed 24h/30d
+  // trends come from stored score-snapshot history (see initTrends in live.js);
+  // with no old-enough history the UI says "no history yet", never a seed.
   const sectors = [
     { id: "energy", name: "Energy", trend: -1.7,
       note: "Power and desalination draw on one shared gas envelope, so they move together under load. The acute exposure is gas-side: piped Dolphin gas from Qatar is the highest-consequence input in the model — and because Dolphin is a fixed subsea pipeline (not a maritime chokepoint), and UAE crude exports bypass Hormuz via the Fujairah pipeline, Energy carries no oil-import chokepoint penalty. Its risk is single-counterpart concentration and a contract→oil-linked price-basis flip, not a Strait-of-Hormuz crude story. Grid transformers and LEU fuel round out the legacy imports. The clean-energy buildout adds a newer class of dependency — solar PV, battery storage and copper — that swaps some gas-reliance for China-concentrated processing risk." },
@@ -76,80 +80,80 @@ window.RD = (function () {
     { id: "food", name: "Food", trend: 0.7,
       note: "Diversified sourcing and strategic reserves give the deepest buffer of any sector." },
     { id: "logistics", name: "Logistics", trend: -4.2,
-      note: "~60% of imports land at Jebel Ali, inside the strait; crude exports bypass via Fujairah. Hormuz import-exposure — containerised goods into Jebel Ali — is the dominant variable, partly offset by air-cargo prioritisation." },
+      note: "~60% of imports land at Jebel Ali (est.), inside the strait; crude exports bypass via Fujairah. Hormuz import-exposure — containerised goods into Jebel Ali — is the dominant variable, partly offset by air-cargo prioritisation." },
     { id: "finance", name: "Finance", trend: 0.1,
       note: "Finance's tracked imports are financial rails, not goods: dollar-clearing access and SWIFT messaging — both foreign-controlled and sanctions-exposed — plus gold doré refining feedstock. The UAE's exceptional sovereign-wealth depth is the offsetting strength, and it sits in coping capacity rather than here." },
     { id: "health", name: "Health", trend: -0.3,
-      note: "APIs concentrate 65% in India; vaccine stock is deep but device supply is thin." },
+      note: "APIs concentrate ~65% in India (est.); vaccine stock is deep but device supply is thin." },
   ];
 
   // ---- Critical imports (precursors) --------------------------------------
   const precursors = [
-    { id: "leu", name: "LEU fuel", sector: "energy", source: "Kazakhstan", buffer: 540, cfac: { ess: 0.90, svc: 0.85, imm: 0.30, brd: 0.55 }, dri: 44,
-      dims: { concentration: 22, substitutability: 12, route: 6, counterpart: 4 }, hormuz: false, dolphin: false,
-      note: "Long-lead nuclear fuel for Barakah. No near-term alternative, but enormous buffer." },
+    { id: "leu", name: "LEU fuel", sector: "energy", source: "Kazakhstan (uranium) → KEPCO NF, Korea", buffer: 540, cfac: { ess: 0.90, svc: 0.85, imm: 0.30, brd: 0.55 }, dri: 44,
+      dims: { concentration: 88, substitutability: 48, route: 24, counterpart: 16 }, hormuz: false, dolphin: false,
+      note: "Long-lead nuclear fuel for Barakah. Kazakh uranium is only the first link in the chain — conversion and enrichment happen abroad, and KEPCO NF (Korea) fabricates the finished assemblies. No near-term alternative chain, but an enormous buffer." },
     { id: "chips", name: "Leading-edge chips", sector: "defence", source: "Taiwan", buffer: 90, cfac: { ess: 0.80, svc: 0.80, imm: 0.60, brd: 0.50 }, dri: 66,
-      dims: { concentration: 23, substitutability: 22, route: 6, counterpart: 15 }, hormuz: false, dolphin: false,
+      dims: { concentration: 92, substitutability: 88, route: 24, counterpart: 60 }, hormuz: false, dolphin: false,
       note: "Fabrication concentrates in Taiwan, but the access risk is US export-control licensing, not a supply halt — a channel that eased in Nov 2025 when the US approved G42 to import advanced Nvidia silicon. Feeds EDGE Group guided-systems lines." },
     { id: "ro", name: "RO membranes", sector: "water", source: "Japan / US / Korea", buffer: 75, cfac: { ess: 1.00, svc: 0.90, imm: 0.60, brd: 0.85 }, dri: 55,
-      dims: { concentration: 16, substitutability: 16, route: 13, counterpart: 10 }, hormuz: false, dolphin: false,
-      note: "Competitive but concentrated field — DuPont (US), Toray & Nitto (Japan), LG (Korea) hold ~58% between the top three. Gulf desalination already runs largely on Toray membranes, and regional production is localising (Veolia–Alkhorayef, Saudi, 2026). The binding risk is the ~120-day reorder lead-time vs a 75-day buffer — not single-source failure." },
+      dims: { concentration: 64, substitutability: 64, route: 52, counterpart: 40 }, hormuz: false, dolphin: false,
+      note: "Competitive but concentrated field — DuPont (US), Toray & Nitto (Japan), LG (Korea) hold ~58% between the top three. Gulf desalination already runs largely on Toray membranes, and regional production is localising (LG Chem–Alkhorayef, Saudi, 2026). The binding risk is the ~120-day reorder lead-time vs a 75-day buffer — not single-source failure." },
     { id: "erd", name: "Energy-recovery devices", sector: "water", source: "US (Energy Recovery Inc.)", buffer: 270, cfac: { ess: 0.90, svc: 0.70, imm: 0.30, brd: 0.80 }, dri: 49,
-      dims: { concentration: 20, substitutability: 17, route: 4, counterpart: 8 }, hormuz: false, dolphin: false,
+      dims: { concentration: 80, substitutability: 68, route: 16, counterpart: 32 }, hormuz: false, dolphin: false,
       note: "The isobaric pressure-exchangers that recover energy from reject brine and cut SWRO power use by up to ~60% — without them desalination still runs, but at a far higher energy cost. The market is dominated by one US supplier (Energy Recovery Inc.); Flowserve and Danfoss are partial alternatives. Concentration is high, but the units are durable installed capital — a supply cut bites slowly (new builds and major repairs), not overnight, which is why immediacy is low." },
     { id: "waterchem", name: "Desalination dosing chemicals", sector: "water", source: "US / EU / regional", buffer: 30, cfac: { ess: 0.95, svc: 0.85, imm: 0.90, brd: 0.70 }, dri: 62,
-      dims: { concentration: 18, substitutability: 16, route: 11, counterpart: 7 }, hormuz: true, dolphin: false,
+      dims: { concentration: 72, substitutability: 64, route: 44, counterpart: 28 }, hormuz: true, dolphin: false,
       note: "The continuous chemical feed every desalination train depends on: antiscalants injected into RO feed-water to stop membrane scaling, chlorine / sodium hypochlorite for disinfection, coagulants (ferric chloride) and pH adjusters (sulphuric acid, caustic soda). Specialty antiscalants come from a handful of qualified suppliers (Nalco/Ecolab, BASF, Avista) and can't be swapped without re-validation. Short shelf lives cap how much can be stockpiled, so the buffer is genuinely thin — and without dosing, RO membranes foul and scale within days, not months. A high-consequence, thin-buffer water input the original list missed." },
     { id: "gas", name: "Piped gas (Dolphin)", sector: "energy", source: "Qatar", buffer: 30, cfac: { ess: 1.00, svc: 1.00, imm: 1.00, brd: 1.00 }, dri: 61,
-      dims: { concentration: 23, substitutability: 18, route: 2, counterpart: 18 }, hormuz: false, dolphin: true,
+      dims: { concentration: 92, substitutability: 72, route: 8, counterpart: 72 }, hormuz: false, dolphin: true,
       note: "25% of gas for power + water; contract runs to 2032. The genuine exposure is gas-side and counterpart-driven, not a maritime chokepoint: Dolphin is a fixed subsea pipeline from Qatar, so route/chokepoint exposure is low (it does not transit Hormuz). What carries the risk is single-counterpart concentration (one neighbour, one corridor) and the price BASIS — losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8× the floor). Highest consequence weight in the model. UAE crude exports bypass Hormuz via Fujairah, so the energy line carries no oil-import chokepoint penalty — its acute exposure is gas feedstock." },
     { id: "api", name: "Active pharma ingredients", sector: "health", source: "India", buffer: 60, cfac: { ess: 0.90, svc: 0.75, imm: 0.70, brd: 0.60 }, dri: 55,
-      dims: { concentration: 21, substitutability: 16, route: 10, counterpart: 8 }, hormuz: true, dolphin: false,
-      note: "65% sourced from India. Hospital pharmacology depends on uninterrupted flow." },
+      dims: { concentration: 84, substitutability: 64, route: 40, counterpart: 32 }, hormuz: true, dolphin: false,
+      note: "~65% sourced from India (analyst est.). Hospital pharmacology depends on uninterrupted flow." },
     { id: "potash", name: "Potash (fertilizer)", sector: "food", source: "Canada / Russia", buffer: 120, cfac: { ess: 0.50, svc: 0.55, imm: 0.20, brd: 0.30 }, dri: 38,
-      dims: { concentration: 14, substitutability: 9, route: 9, counterpart: 6 }, hormuz: false, dolphin: false,
+      dims: { concentration: 56, substitutability: 36, route: 36, counterpart: 24 }, hormuz: false, dolphin: false,
       note: "Potassium fertiliser input for domestic agriculture. Reasonably diversified." },
     { id: "vaccines", name: "Vaccines", sector: "health", source: "US / EU", buffer: 180, cfac: { ess: 0.80, svc: 0.60, imm: 0.40, brd: 0.55 }, dri: 31,
-      dims: { concentration: 12, substitutability: 8, route: 7, counterpart: 4 }, hormuz: false, dolphin: false,
+      dims: { concentration: 48, substitutability: 32, route: 28, counterpart: 16 }, hormuz: false, dolphin: false,
       note: "Deep 180-day cold-chain buffer from diversified Western suppliers." },
     { id: "devices", name: "Medical devices", sector: "health", source: "China", buffer: 45, cfac: { ess: 0.75, svc: 0.60, imm: 0.60, brd: 0.50 }, dri: 49,
-      dims: { concentration: 18, substitutability: 14, route: 10, counterpart: 7 }, hormuz: true, dolphin: false,
-      note: "40% from China with a thin 45-day buffer. Counterpart risk rising." },
+      dims: { concentration: 72, substitutability: 56, route: 40, counterpart: 28 }, hormuz: true, dolphin: false,
+      note: "~40% from China (est.) with a thin 45-day buffer. Counterpart risk rising." },
     { id: "transformers", name: "Grid transformers", sector: "energy", source: "South Korea / EU", buffer: 240, cfac: { ess: 0.90, svc: 0.60, imm: 0.50, brd: 0.70 }, dri: 41,
-      dims: { concentration: 15, substitutability: 13, route: 8, counterpart: 5 }, hormuz: false, dolphin: false,
+      dims: { concentration: 60, substitutability: 52, route: 32, counterpart: 20 }, hormuz: false, dolphin: false,
       note: "Long-lead high-voltage transformers. Failure cascades to desalination." },
     { id: "turbines", name: "Turbine hot-section & large pumps", sector: "energy", source: "US / EU / Japan (GE · Siemens · Mitsubishi)", buffer: 120, cfac: { ess: 0.95, svc: 0.85, imm: 0.55, brd: 0.80 }, dri: 50,
-      dims: { concentration: 22, substitutability: 22, route: 8, counterpart: 10 }, hormuz: false, dolphin: false,
+      dims: { concentration: 88, substitutability: 88, route: 32, counterpart: 40 }, hormuz: false, dolphin: false,
       note: "The rotating equipment the power-and-water fleet actually runs on: gas-turbine hot-section components (blades, vanes, combustors) and the large SWRO / cooling pumps. Three OEMs — GE, Siemens, Mitsubishi — hold almost the entire qualified field, parts are proprietary and can't be cross-fitted, and lead times run 12–24 months. N+1 redundancy and held spares cushion a single failure, so immediacy is moderate — but a fleet-wide hot-section campaign or an OEM / export-control cut-off takes generation AND desalination capacity offline, not merely up in cost. For a power-and-water utility this is a structural exposure, arguably deeper than several legacy items on the list." },
     { id: "solarpv", name: "Solar PV modules", sector: "energy", source: "China (polysilicon → module)", buffer: 180, cfac: { ess: 0.55, svc: 0.45, imm: 0.20, brd: 0.55 }, dri: 52,
-      dims: { concentration: 22, substitutability: 14, route: 8, counterpart: 8 }, hormuz: true, dolphin: false,
+      dims: { concentration: 88, substitutability: 56, route: 32, counterpart: 32 }, hormuz: true, dolphin: false,
       note: "The UAE's clean-energy pivot (Mohammed bin Rashid & Al Dhafra solar parks, Masdar, Net Zero 2050) runs on PV modules whose upstream — polysilicon, wafers, cells — concentrates ~80%+ in China. Straight from Material World's sand→silicon thread: a sun-rich desert state, yet the panels that harvest the sun are a China-processing dependency. Low immediacy — modules are durable installed capital, so a supply cut delays NEW capacity rather than darkening existing plants — making this a forward-looking buildout risk, not an acute one." },
     { id: "libattery", name: "Battery storage cells", sector: "energy", source: "China (Li-ion cells)", buffer: 150, cfac: { ess: 0.50, svc: 0.40, imm: 0.25, brd: 0.50 }, dri: 58,
-      dims: { concentration: 24, substitutability: 15, route: 8, counterpart: 11 }, hormuz: true, dolphin: false,
+      dims: { concentration: 96, substitutability: 60, route: 32, counterpart: 44 }, hormuz: true, dolphin: false,
       note: "Grid-scale storage is what lets the solar buildout keep supplying after dark — Masdar's record 24/7 solar-plus-storage projects are gigawatt-hour scale. Lithium-ion cells and their refined lithium / graphite / cathode inputs concentrate heavily in China. Conway's flagship transition material: as it decarbonises, the UAE swaps some gas-dependence for battery-supply dependence. Installed-capital dynamics keep immediacy low; the exposure grows with every GWh added." },
     { id: "copper", name: "Copper (cathode / rod)", sector: "energy", source: "Chile / Zambia → traded", buffer: 90, cfac: { ess: 0.70, svc: 0.55, imm: 0.40, brd: 0.65 }, dri: 40,
-      dims: { concentration: 14, substitutability: 12, route: 9, counterpart: 5 }, hormuz: false, dolphin: false,
+      dims: { concentration: 56, substitutability: 48, route: 36, counterpart: 20 }, hormuz: false, dolphin: false,
       note: "The metal Material World calls the bottleneck of electrification — every solar farm, battery, EV charger and grid upgrade is copper-hungry. The UAE mines none; refined cathode and rod feed Ducab's cabling and the federal grid expansion. More diversified than the China-processed inputs (globally traded, multiple sources), so route and counterpart risk are lower — but Conway's warning is the structural one: demand outruns new supply over the decade ahead." },
     { id: "wheat", name: "Wheat", sector: "food", source: "Russia / Australia", buffer: 150, cfac: { ess: 0.70, svc: 0.50, imm: 0.30, brd: 0.60 }, dri: 34,
-      dims: { concentration: 13, substitutability: 7, route: 9, counterpart: 5 }, hormuz: false, dolphin: false,
+      dims: { concentration: 52, substitutability: 28, route: 36, counterpart: 20 }, hormuz: false, dolphin: false,
       note: "Strategic reserves plus diversified sourcing keep this comfortable." },
     { id: "gps", name: "Timing / GNSS modules", sector: "defence", source: "United States", buffer: 90, cfac: { ess: 0.75, svc: 0.70, imm: 0.80, brd: 0.50 }, dri: 47,
-      dims: { concentration: 17, substitutability: 13, route: 11, counterpart: 6 }, hormuz: false, dolphin: false,
+      dims: { concentration: 68, substitutability: 52, route: 44, counterpart: 24 }, hormuz: false, dolphin: false,
       note: "Precision-timing modules. Vulnerable to GPS-jamming spikes in the Gulf." },
     { id: "avparts", name: "Aviation spares", sector: "logistics", source: "US / EU", buffer: 60, cfac: { ess: 0.65, svc: 0.60, imm: 0.60, brd: 0.50 }, dri: 43,
-      dims: { concentration: 14, substitutability: 12, route: 11, counterpart: 6 }, hormuz: false, dolphin: false,
+      dims: { concentration: 56, substitutability: 48, route: 44, counterpart: 24 }, hormuz: false, dolphin: false,
       note: "Keeps air-bridge capacity alive when sea routes degrade." },
     { id: "container", name: "Containerised imports (Hormuz)", sector: "logistics", source: "Asia via Hormuz", buffer: 45, cfac: { ess: 0.80, svc: 0.80, imm: 0.70, brd: 0.85 }, dri: 45,
-      dims: { concentration: 11, substitutability: 13, route: 18, counterpart: 3 }, hormuz: true, dolphin: false,
+      dims: { concentration: 44, substitutability: 52, route: 72, counterpart: 12 }, hormuz: true, dolphin: false,
       note: "The bulk of containerised consumer & industrial goods arrive at Jebel Ali, which sits inside the Gulf — so they are Hormuz-locked. Fujairah (on the Gulf of Oman, outside the strait) is a partial bypass but a fraction of Jebel Ali's box capacity, which is why route exposure dominates this line." },
     { id: "golddore", name: "Gold doré", sector: "finance", source: "Africa (various)", buffer: 30, cfac: { ess: 0.20, svc: 0.30, imm: 0.25, brd: 0.15 }, dri: 22,
-      dims: { concentration: 8, substitutability: 6, route: 5, counterpart: 3 }, hormuz: false, dolphin: false,
+      dims: { concentration: 32, substitutability: 24, route: 20, counterpart: 12 }, hormuz: false, dolphin: false,
       note: "Refining feedstock for Dubai's gold trade. Low national-consequence weight — the bottom of the scale." },
     { id: "usdclearing", name: "USD clearing access", sector: "finance", source: "US correspondent banks", buffer: 21, cfac: { ess: 0.90, svc: 0.85, imm: 0.85, brd: 0.90 }, dri: 40,
-      dims: { concentration: 14, substitutability: 15, route: 1, counterpart: 10 }, hormuz: false, dolphin: false,
+      dims: { concentration: 56, substitutability: 60, route: 4, counterpart: 40 }, hormuz: false, dolphin: false,
       note: "Correspondent-banking access to dollar settlement — the rail under most cross-border trade. Counterpart-driven: the UAE sat on the FATF 'grey list' Feb 2022–Feb 2024, a documented reminder that this access is a live permission, not a stockpile. The dirham's USD peg deepens the dependence; CIPS/euro rails are only partial substitutes, hence high substitution difficulty." },
     { id: "swift", name: "Cross-border messaging (SWIFT)", sector: "finance", source: "SWIFT (Belgium)", buffer: 30, cfac: { ess: 0.65, svc: 0.60, imm: 0.70, brd: 0.65 }, dri: 33,
-      dims: { concentration: 12, substitutability: 11, route: 1, counterpart: 9 }, hormuz: false, dolphin: false,
+      dims: { concentration: 48, substitutability: 44, route: 4, counterpart: 36 }, hormuz: false, dolphin: false,
       note: "Foreign-controlled financial messaging that instructs the settlement above. Distinct mechanism from clearing — messaging, not money — and sanctions-exposed, as 2022 SWIFT disconnections elsewhere showed. Domestic and regional alternatives exist but at reduced reach." },
   ];
 
@@ -212,20 +216,30 @@ window.RD = (function () {
       status: "moderate", src: "yfinance", spark: [84,86,85,88,90,91,92,93], note: "Live from market feed. Within normal range." },
     { id: "gasbasis", name: "Gas — replacement basis", value: "$12.0", unit: "/ MMBtu marginal", delta: 0, dir: "flat",
       status: "moderate", src: "curated", twoState: true, spark: [11.3,11.6,11.4,11.8,12.1,11.9,12.0,12.0],
-      note: "Two price worlds at once. Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor; the molecule that would replace it if Dolphin failed is sea-borne LNG, priced at ~12.5% of Brent (~$12 today, ≈8× the floor). The exposure is a price-BASIS flip from contract to oil-linked, not a volume gap against a buffer. Henry Hub (US ~$3) is the wrong benchmark for the UAE and is not used here." },
-    { id: "sanctions", name: "OFAC SDN updates", value: "2", unit: "new designations · partner-dependency risk", delta: 0, dir: "flat",
-      status: "moderate", src: "ofac", spark: [1,0,2,1,2,1,0,3],
-      note: "Counts entities and individuals added this week to the US Treasury OFAC Specially Designated Nationals (SDN) list that touch UAE-relevant counterparties — banks, trading houses, shipping and front companies operating in or through the Emirates. New designations can freeze dollar-clearing access and force counterparties to be dropped, so this feeds the counterpart-risk adjustment on the finance and logistics dependencies.",
-      fx: { kicker: "Leading indicator · live feed", title: "OFAC SDN updates — new UAE-linked designations",
-        text: "This tracks additions to the US Treasury's Specially Designated Nationals (SDN) list — the sanctions roster that bars US persons and the dollar system from dealing with the named party. The count shown is new designations this week that are relevant to UAE counterparties: entities or individuals in banking, commodity trading, shipping or corporate fronts operating in or through the Emirates. It is an early-warning signal because a fresh designation can abruptly cut a counterparty's dollar-clearing access and force UAE firms to unwind exposure.",
-        formula: "Value  =  count of new UAE-relevant SDN additions in the trailing 7 days",
+      short: "what replacement LNG would cost if Dolphin failed — oil-linked at ~12.5% of Brent, ≈8× the ~$1.50 contract floor",
+      fx: { kicker: "Leading indicator · two price worlds", title: "Gas — replacement basis",
+        text: "Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor (reported, never official). The molecule that would replace it if Dolphin failed is sea-borne LNG, priced oil-linked at ~12.5% of Brent — about $12 today, roughly 8× the contract floor. So the exposure is a price-BASIS flip from contract to oil-linked, not a volume gap against a buffer. Henry Hub (US, ~$3) is the wrong benchmark for the UAE and is not used here.",
+        formula: "Marginal replacement cost  =  0.125 × Brent  +  $0.40 shipping/regas",
         inputs: [
-          { k: "Source list", v: "US Treasury OFAC SDN list", src: "ofac" },
-          { k: "Filter", v: "designations touching UAE-linked counterparties (banking / trade / shipping)" },
-          { k: "Window", v: "new additions in the trailing 7 days" },
-          { k: "Why it matters", v: "a designation can freeze dollar-clearing and force counterparty exits" },
+          { k: "Contract floor", v: "~$1.50 / MMBtu — reported Dolphin price, tagged assumption", src: "assumption" },
+          { k: "Brent (live)", v: "drives the oil-linked replacement basis", src: "yfinance" },
+          { k: "Slope", v: "~12.5% of Brent — standard Qatari oil-indexed LNG convention (10–15% band)" },
         ],
-        assumption: "The UAE-relevance filter is a curated judgement over the raw SDN delta feed — not every global designation is counted, only those with a plausible UAE counterparty nexus." } },
+        assumption: "The watch signal is the SPREAD between the two worlds: the wider Brent pushes the replacement basis above the contract floor, the more a Dolphin curtailment would cost per MMBtu from day one." },
+      note: "Two price worlds at once. Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor; the molecule that would replace it if Dolphin failed is sea-borne LNG, priced at ~12.5% of Brent (~$12 today, ≈8× the floor). The exposure is a price-BASIS flip from contract to oil-linked, not a volume gap against a buffer. Henry Hub (US ~$3) is the wrong benchmark for the UAE and is not used here." },
+    { id: "sanctions", name: "OFAC SDN updates", value: "2", unit: "new designations · illustrative", delta: 0, dir: "flat",
+      status: "moderate", src: "assumption", spark: [1,0,2,1,2,1,0,3],
+      short: "illustrative stand-in — new UAE-relevant designations would warn of a counterparty losing dollar access",
+      note: "An ILLUSTRATIVE weekly count of new SDN designations touching UAE-relevant counterparties. The live OFAC connection (OpenSanctions mirror) exposes only the TOTAL SDN entity count — that real total is what powers the counterpart/sanctions driver on the Overview. A true weekly 'new designations' delta needs OFAC's Sanctions List Service; until then this count is a simulated stand-in, tagged as an assumption, and it never enters any score.",
+      fx: { kicker: "Leading indicator · illustrative stand-in", title: "OFAC SDN updates — new UAE-linked designations",
+        text: "What this WOULD track with a delta feed: additions to the US Treasury's Specially Designated Nationals (SDN) list relevant to UAE counterparties — banking, commodity trading, shipping or corporate fronts operating in or through the Emirates — because a fresh designation can abruptly cut a counterparty's dollar-clearing access. What it tracks TODAY: nothing live. The number shown is a simulated stand-in for the shape of the signal; the genuine live OFAC signal in this system is the total-entity-count drift on the Overview's driver panel.",
+        formula: "Value  =  simulated stand-in (no public weekly-delta feed is connected)",
+        inputs: [
+          { k: "Live today", v: "total SDN entity count (OpenSanctions mirror) → counterpart/sanctions driver", src: "ofac" },
+          { k: "Not live", v: "weekly UAE-relevant designation deltas — needs OFAC's paid Sanctions List Service" },
+          { k: "This value", v: "illustrative simulation, shown for the shape of the signal", src: "assumption" },
+        ],
+        assumption: "Honest scope: the weekly designation count is simulated until a real delta feed exists, and it never enters any score — only the real total-count drift adds live drag." } },
   ];
 
   // ---- Two-state gas pricing node -----------------------------------------
@@ -270,11 +284,21 @@ window.RD = (function () {
       trigger: "Sustained Houthi attacks keep Bab-el-Mandeb effectively closed.",
       watch: [{ k:"choke", id:"redsea" }, { k:"news", id:"redsea" }, { k:"sea", id:"redsea" }, { k:"acled", c:"Yemen" }],
       deltas: { energy:-2, water:-1, defence:-2, food:-4, logistics:-14, finance:0, health:-2 }, overall: -9 },
-    { id: "max", name: "Combined Maximum", sub: "All shocks at 4× severity (stress test)", severity: 5,
-      trigger: "Every modelled shock at once, at 4× severity — a deliberate stress-test ceiling, not a forecast.",
+    { id: "max", name: "Combined Maximum", sub: "Hand-authored worst-case vector (stress test)", severity: 5,
+      trigger: "Every modelled shock at once, at extreme severity — a deliberately hand-authored stress-test ceiling. Its sector deltas are set by judgement, not a multiple of the other scenarios, and it is a ceiling test, not a forecast.",
       watch: [{ k:"choke", id:"hormuz" }, { k:"choke", id:"redsea" }, { k:"news", id:"general" }, { k:"acled", c:"Iran" }],
       deltas: { energy:-22, water:-31, defence:-30, food:-12, logistics:-48, finance:-2, health:-14 }, overall: -58 },
   ];
+  // Scenario OVERALL is COMPUTED from the seven sector deltas with the same
+  // non-compensatory anchoring as the structural score — never hand-set. The
+  // literals above are seeds only; this overwrites them.
+  //   overall = 0.60 × worst-hit sector delta + 0.40 × mean sector delta
+  scenarios.forEach((s) => {
+    const ds = Object.values(s.deltas);
+    const worst = Math.min(...ds);
+    const mean = ds.reduce((a, b) => a + b, 0) / ds.length;
+    s.overall = +(0.60 * worst + 0.40 * mean).toFixed(1);
+  });
 
   // ---- Cascade graph (for the signature animation) -------------------------
   // Layered: trigger -> precursor -> asset -> sector -> overall
@@ -325,8 +349,8 @@ window.RD = (function () {
   const sovereign = [
     { name: "ADIA", aum: 1000, liquidity: "High", deployable: 350 },
     { name: "ICD", aum: 320, liquidity: "Medium", deployable: 90 },
-    { name: "Mubadala", aum: 280, liquidity: "Medium", deployable: 100 },
-    { name: "L'IMAD / ADQ", aum: 199, liquidity: "Medium", deployable: 60 },
+    { name: "Mubadala", aum: 330, liquidity: "Medium", deployable: 100 },
+    { name: "ADQ", aum: 199, liquidity: "Medium", deployable: 60 },
     { name: "Dubai Holding", aum: 130, liquidity: "Low", deployable: 25 },
     { name: "EIA", aum: 87, liquidity: "High", deployable: 40 },
     { name: "RAK Investment", aum: 12, liquidity: "Low", deployable: 3 },
@@ -375,20 +399,20 @@ window.RD = (function () {
     ],
   };
   const health = {
-    apis: "60-day buffer · India 65% source",
+    apis: "60-day buffer · India ~65% source (est.)",
     vaccines: "180-day buffer · US / EU",
-    devices: "45-day buffer · China 40%",
+    devices: "45-day buffer · China ~40% (est.)",
     beds: "14,000 hospital beds",
     threshold: "Critical shortage threshold: 21 days (ICU consumables)",
   };
-  // Predicted vs. actual are national-headline (Live Resilience) point changes, on
-  // the same scale as each scenario's `overall` — so the table validates the
-  // scenarios the model actually runs (Hormuz -22, chips -14, Red Sea -9).
+  // Predicted = each scenario's COMPUTED overall (0.60 × worst-hit sector +
+  // 0.40 × mean sector delta), so the table can only reference scenarios the
+  // model actually runs. Actuals are illustrative pending retained history.
+  const scnOverall = (id) => { const s = scenarios.find((x) => x.id === id); return s ? s.overall : null; };
   const validation = [
-    { event: "Guinea seizure", predicted: -8, actual: -6, accuracy: "MODERATE" },
-    { event: "Hormuz escalation", predicted: -22, actual: -20, accuracy: "HIGH" },
-    { event: "Chip embargo", predicted: -14, actual: null, accuracy: "UNTESTED" },
-    { event: "Red Sea Houthi", predicted: -9, actual: -5, accuracy: "MODERATE" },
+    { event: "Hormuz escalation", predicted: scnOverall("hormuz"), actual: -20, accuracy: "MODERATE" },
+    { event: "Chip embargo", predicted: scnOverall("chips"), actual: null, accuracy: "UNTESTED" },
+    { event: "Red Sea Houthi", predicted: scnOverall("redsea"), actual: -5, accuracy: "MODERATE" },
   ];
   const roadmap = [
     { part: "Dependencies mapped", pct: 80 },
@@ -404,11 +428,11 @@ window.RD = (function () {
 
   // ---- Data sources / freshness -------------------------------------------
   const sources = {
-    live:     { label: "6 live feeds", full: "Six live public feeds combined — PortWatch, Open-Meteo, Google News, Markets, OFAC, ACLED", endpoint: "see individual feeds", url: "https://portwatch.imf.org/", cadence: "continuous", fresh: "live", kind: "live" },
+    live:     { label: "Live feeds", full: "Six live public feeds — five move the Live score (PortWatch, Open-Meteo, Google News, Markets, OFAC); ACLED powers counterpart-risk context", endpoint: "see individual feeds", url: "https://portwatch.imf.org/", cadence: "continuous", fresh: "live", kind: "live" },
     acled:    { label: "ACLED", full: "Armed Conflict Location & Event Data", endpoint: "ACLED API · Gulf & Red Sea geofilter", url: "https://acleddata.com/explorer/", cadence: "5 min", fresh: "connecting…", kind: "live" },
     ais:      { label: "PortWatch", full: "IMF PortWatch · daily chokepoint transit calls (satellite AIS, ~90k ships)", endpoint: "services9.arcgis.com · Daily_Chokepoints_Data · transit calls vs 12-month norm", url: "https://portwatch.imf.org/", cadence: "weekly (Tue)", fresh: "connecting…", kind: "live" },
-    yfinance: { label: "Markets", full: "Oil & gas prices (yfinance)", endpoint: "Yahoo Finance · BZ=F, NG=F", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "connecting…", kind: "live" },
-    ofac:     { label: "OFAC", full: "US Treasury SDN sanctions list", endpoint: "treasury.gov SDN delta feed", url: "https://sanctionssearch.ofac.treas.gov/", cadence: "6 h", fresh: "connecting…", kind: "live" },
+    yfinance: { label: "Markets", full: "Oil price — Brent (yfinance)", endpoint: "Yahoo Finance · BZ=F", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "connecting…", kind: "live" },
+    ofac:     { label: "OFAC", full: "US Treasury SDN sanctions list (OpenSanctions mirror)", endpoint: "data.opensanctions.org · us_ofac_sdn · total entity count (no delta)", url: "https://www.opensanctions.org/datasets/us_ofac_sdn/", cadence: "6 h", fresh: "connecting…", kind: "live" },
     meteo:    { label: "Open-Meteo", full: "Marine & weather (Open-Meteo, live)", endpoint: "marine-api.open-meteo.com · wave height · wind · temperature", url: "https://open-meteo.com/", cadence: "10 min", fresh: "connecting…", kind: "live" },
     gdelt:    { label: "Google News", full: "Supply & trade-route news monitor (Google News RSS, live · GDELT fallback)", endpoint: "news.google.com/rss · closure, conflict & partner-supply coverage · GDELT fallback", url: "https://news.google.com/", cadence: "6 min", fresh: "connecting…", kind: "live" },
     curated:  { label: "Curated", full: "Hand-curated public-source CSV", endpoint: "versioned CSV · public reporting", url: "", cadence: "manual", fresh: "reviewed", kind: "curated" },
@@ -417,7 +441,7 @@ window.RD = (function () {
 
   // ---- Assets (for map) ----------------------------------------------------
   const assets = [
-    { id: "jebelali", name: "Jebel Ali Port", lat: 25.0, lng: 55.06, weight: 1.0, kind: "port", note: "60% of national imports" },
+    { id: "jebelali", name: "Jebel Ali Port", lat: 25.0, lng: 55.06, weight: 1.0, kind: "port", note: "≈60% of national imports (est.)" },
     { id: "barakah", name: "Barakah Nuclear", lat: 23.97, lng: 52.23, weight: 0.9, kind: "energy", note: "5.6 GW baseload" },
     { id: "taweelah", name: "Taweelah Desalination", lat: 24.78, lng: 54.7, weight: 0.95, kind: "water", note: "World's largest RO plant" },
     { id: "fujairah", name: "Fujairah Terminal", lat: 25.17, lng: 56.33, weight: 0.85, kind: "port", note: "Off-Gulf oil export bypass" },
@@ -450,8 +474,9 @@ window.RD = (function () {
       p.consequence = round2(CW.ess * c.ess + CW.svc * c.svc + CW.imm * c.imm + CW.brd * c.brd);
     });
 
-    // 0.5 · DEPENDENCY RISK INDEX — recomputed from the four dimensions, with
-    //     ROUTE up-weighted (a contested-chokepoint shipment is a higher-severity,
+    // 0.5 · DEPENDENCY RISK INDEX — recomputed from the four dimensions (each
+    //     scored 0–100, like every other score in the model), with ROUTE
+    //     up-weighted (a contested-chokepoint shipment is a higher-severity,
     //     harder-to-mitigate risk than the other axes), PLUS a buffer-fragility
     //     term. The buffer is your REACTION TIME: a 30-day buffer (Dolphin) and a
     //     540-day one (LEU) are not the same risk even with identical dimensions,
@@ -462,10 +487,10 @@ window.RD = (function () {
     precursors.forEach((p) => {
       const d = p.dims;
       const structFrag =
-        ( DRI_W.route            * (d.route / 25)
-        + DRI_W.concentration    * (d.concentration / 25)
-        + DRI_W.substitutability * (d.substitutability / 25)
-        + DRI_W.counterpart      * (d.counterpart / 25) ) * 100;
+          DRI_W.route            * d.route
+        + DRI_W.concentration    * d.concentration
+        + DRI_W.substitutability * d.substitutability
+        + DRI_W.counterpart      * d.counterpart;
       const bufferFrag = (1 - Math.min(p.buffer / BUF_HORIZON, 1)) * 100;
       p.driStruct = round1(structFrag);
       p.driBuffer = round1(bufferFrag);
@@ -497,10 +522,10 @@ window.RD = (function () {
     const cw = precursors.reduce((a, p) => a + p.consequence, 0);
     const absorb = Math.round((aw / cw) * 100);
 
-    const FINANCIAL = 72; // sovereign-buffer sub-score (~$2.0T verified SWF AUM)
+    const FINANCIAL = 72; // sovereign-buffer sub-score (~$2.1T verified SWF AUM)
     const meanSub = precursors.reduce((a, p) => a + p.dims.substitutability, 0) / precursors.length;
-    const subPenalty = Math.round(meanSub * 4);
-    const resourcing = Math.round(100 - meanSub * 4);
+    const subPenalty = Math.round(meanSub);
+    const resourcing = Math.round(100 - meanSub);
     const recover = Math.round(0.5 * FINANCIAL + 0.5 * resourcing);
 
     // Sectors with a committed structural plan in the response catalog
@@ -563,7 +588,7 @@ window.RD = (function () {
       const aw = precursors.reduce((a, p) => a + cons[p.id] * Math.min(p.buffer / o.bench, 1), 0);
       const absorb = (aw / cwAll) * 100;
       const meanSub2 = precursors.reduce((a, p) => a + p.dims.substitutability, 0) / precursors.length;
-      const resourcing2 = 100 - meanSub2 * 4;
+      const resourcing2 = 100 - meanSub2;
       const recover2 = 0.5 * o.fin + 0.5 * resourcing2;
       const adapt2 = (PLAN_SECTORS.length / sectors.length) * 100;
       const blend2 = (absorb + recover2 + adapt2) / 3;

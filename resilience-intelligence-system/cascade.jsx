@@ -5,7 +5,7 @@
 const { useState, useEffect } = React;
 const W = 1180, H = 440, NW = 152, NH = 46;
 const LAYER_X = [100, 345, 590, 835, 1080];
-const LAYER_NAME = ["Trigger", "Precursors", "Assets", "Sectors", "National"];
+const LAYER_NAME = ["Trigger", "Critical imports", "Assets", "Sectors", "National"];
 
 function buildLayout() {
   const byLayer = {};
@@ -69,7 +69,7 @@ function CascadeDiagram() {
 
   const openNode = (n) => {
     setSel(n.id);
-    const layerName = ["Trigger", "Precursor", "Asset", "Sector", "National score"][n.layer];
+    const layerName = ["Trigger", "Critical import", "Asset", "Sector", "National score"][n.layer];
     explain({
       kicker: layerName + (n.day ? " · activates day " + n.day : " · day 0"),
       title: n.label,

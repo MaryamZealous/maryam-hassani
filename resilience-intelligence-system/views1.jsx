@@ -54,11 +54,11 @@ function LiveGap() {
   const sanc = RD.indicators.find((i) => i.id === "sanctions");
   const brent = RD.indicators.find((i) => i.id === "brent");
   const gasb = RD.indicators.find((i) => i.id === "gasbasis");
-  const lsd = +(live.value - live.prev).toFixed(1);
+  const lsd = RD.trends ? RD.trends.live : null;
   const items = [
-    { label: "Live Resilience", v: (lsd > 0 ? "+" : "") + lsd, dir: lsd >= 0 ? "up" : "down", note: "vs yesterday's baseline", src: "ais" },
+    { label: "Live Resilience", v: lsd == null ? "—" : (lsd > 0 ? "+" : "") + lsd, dir: lsd == null ? "flat" : lsd >= 0 ? "up" : "down", note: "change vs 24h ago", src: "ais" },
     { label: "Hormuz", v: "−" + hz.drop + "%", dir: "down", note: hz.vessels + " of " + hz.baseline + " transit calls/day", src: "ais" },
-    { label: "OFAC", v: sanc.value, dir: "flat", note: "new SDN designations", src: "ofac" },
+    { label: "OFAC", v: sanc.value, dir: "flat", note: "new designations (illustrative)", src: "assumption" },
     { label: "Brent", v: (brent.delta > 0 ? "+" : "") + brent.delta + "%", dir: brent.delta >= 0 ? "up" : "down", note: brent.value + " / barrel", src: "yfinance" },
     { label: "Gas basis", v: gasb.value, dir: "flat", note: "marginal LNG vs $" + (RD.gasNode ? RD.gasNode.floor.toFixed(2) : "1.50") + " floor", src: "curated" },
   ];
@@ -125,7 +125,7 @@ function DriverTrace() {
         })}
       </div>
       <div className="helper" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent &amp; gas · OFAC/OpenSanctions. Every driver is a connected live feed; a driver reading near zero is quiet, not missing.
+        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent · OFAC/OpenSanctions. {liveN} of {drivers.length} drivers are on a connected live feed right now — the rest are badged SIM until theirs connects. A live driver reading near zero is quiet, not missing.
       </div>
     </Panel>
   );
@@ -161,7 +161,7 @@ function Capacities() {
         text: "How quickly function is restored after a hit: a blend of financial firepower (sovereign capital that can be redeployed fast) and how substitutable the critical imports are. Deep pockets help, but money cannot compress a 120-day reorder lead time — which is why recovery, not absorption, is the binding capacity here.",
         formula: "Recover  =  0.5 × financial firepower  +  0.5 × re-sourcing ease",
         inputs: [
-          { k: "Financial firepower", v: "sovereign buffer 72 (~$2.0T SWFs)", src: "curated" },
+          { k: "Financial firepower", v: "sovereign buffer 72 (~$2.1T SWFs)", src: "curated" },
           { k: "Re-sourcing ease", v: "100 − substitution-difficulty penalty (" + subPenalty + ") = " + resourcing },
           { k: "Blend (0.5 / 0.5)", v: recover + " / 100" },
         ],
@@ -249,6 +249,8 @@ function OverviewView({ go }) {
 
       <div style={{ marginTop: 16 }}><LiveGap /></div>
 
+      <div style={{ marginTop: 16 }}><DriverTrace /></div>
+
       <Panel title="Sector resilience" icon="gauge"
         right={<span className="helper" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
           Most-exposed sector sets the floor <Fx payload={{
@@ -276,10 +278,10 @@ function OverviewView({ go }) {
           <div className="panel-b" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
             <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
               The model's core idea: a single disruption doesn't stay put. Watch a Hormuz closure travel from
-              chokepoint to precursor to asset to sector to the national score — day by day, every step explained.
+              chokepoint to critical import to asset to sector to the national score — day by day, every step explained.
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              {["Trigger", "Precursor", "Asset", "Sector", "National"].map((t, i) => (
+              {["Trigger", "Import", "Asset", "Sector", "National"].map((t, i) => (
                 <React.Fragment key={t}>
                   <span className="pill"><span className="sq" style={{ background: i === 0 || i === 4 ? "var(--crit)" : "var(--high)" }}></span>{t}</span>
                   {i < 4 && <Icon name="arrowRight" size={14} style={{ color: "var(--faint)" }} />}
@@ -412,7 +414,7 @@ function TradeRouteNews() {
   const AREAS = [
     { id: "qatar", label: "Qatar — piped gas" },
     { id: "taiwan", label: "Taiwan — chips" },
-    { id: "kazakhstan", label: "Kazakhstan — nuclear fuel" },
+    { id: "kazakhstan", label: "Kazakhstan — uranium (fuel chain)" },
     { id: "china", label: "China — solar / battery / devices" },
     { id: "india", label: "India — pharma APIs" },
     { id: "hormuz", label: "Strait of Hormuz" },
@@ -713,7 +715,7 @@ function resolveWatch(w) {
   if (w.k === "market") {
     const m = RD.indicators.find((x) => x.id === w.id);
     if (!m) return null;
-    return { label: m.name, value: m.value + (m.unit ? " " + m.unit : ""), ref: m.note || "live market feed", band: m.status || "good", src: m.src, live: true };
+    return { label: m.name, value: m.value + (m.unit ? " " + m.unit : ""), ref: m.short || m.note || "live market feed", band: m.status || "good", src: m.src, live: true, fx: m.fx };
   }
   if (w.k === "note") return { note: true, label: w.t };
   return null;
@@ -767,7 +769,21 @@ function ScenariosView() {
               <div className="kpi"><span className="kpi-v mono" style={{ color: scn.overall < 0 ? "var(--crit)" : "var(--ink)" }}>{after}</span><span className="kpi-l">Under this scenario</span></div>
               <div style={{ marginLeft: "auto", textAlign: "right" }}>
                 <div className="mono" style={{ fontSize: 26, fontWeight: 700, color: netChange < 0 ? "var(--crit)" : "var(--muted)" }}>{netChange === 0 ? "—" : netChange}</div>
-                <div className="label">net change</div>
+                <div className="label" style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end" }}>net change
+                  {(() => { const ds = Object.values(scn.deltas); const worst = Math.min(...ds); const mean = ds.reduce((a, b) => a + b, 0) / ds.length;
+                    return <Fx payload={{
+                      kicker: "Scenario impact · computed", title: "How the national impact is derived",
+                      text: "The scenario's national impact is computed from its seven sector deltas with the same non-compensatory anchoring as the structural score: the worst-hit sector dominates, and the mean across all sectors fills in the rest. The result is then applied to today's live score (floored at 0).",
+                      formula: "Overall  =  0.60 × worst-hit sector delta  +  0.40 × mean sector delta",
+                      inputs: [
+                        { k: "Worst-hit sector delta", v: worst.toFixed(1) + " pts" },
+                        { k: "Mean sector delta (7 sectors)", v: mean.toFixed(1) + " pts" },
+                        { k: "Overall", v: "0.60×" + worst.toFixed(1) + " + 0.40×" + mean.toFixed(1) + " = " + scn.overall },
+                        { k: "Applied to today's score", v: baseLive.toFixed(1) + " → " + after },
+                      ],
+                      assumption: "Sector deltas are curated stress judgements per scenario (Combined compounds its two parents element-wise: the worse shock + 0.6 × the lesser; Combined Maximum is a hand-authored worst-case vector). The 0.60 anchor mirrors the structural formula.",
+                    }} />; })()}
+                </div>
               </div>
             </div>
             {floored && (
@@ -808,11 +824,13 @@ function ScenariosView() {
                     if (!r) return null;
                     if (r.note) return <div key={i} className="helper" style={{ padding: "9px 0 9px 8px", borderBottom: "1px solid var(--line)" }}>{r.label}</div>;
                     return (
-                      <div className={`band-${r.band}`} key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0 10px 8px", borderBottom: "1px solid var(--line)", borderLeft: "2px solid var(--bc)" }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, minWidth: 184 }}>{r.label}</span>
-                        <span className="helper" style={{ flex: 1 }}>{r.ref}</span>
-                        <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: r.live ? "var(--bc)" : "var(--faint)", minWidth: 92, textAlign: "right" }}>{r.value}</span>
-                        <SourceTag src={r.src} />
+                      <div className={`band-${r.band}`} key={i} style={{ padding: "10px 0 10px 10px", borderBottom: "1px solid var(--line)", borderLeft: "2px solid var(--bc)" }}>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 5 }}>{r.label}{r.fx ? <Fx payload={r.fx} /> : null}</span>
+                          <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: r.live ? "var(--bc)" : "var(--faint)", marginLeft: "auto", whiteSpace: "nowrap" }}>{r.value}</span>
+                          <SourceTag src={r.src} />
+                        </div>
+                        <div className="helper" style={{ marginTop: 3, lineHeight: 1.5 }}>{r.ref}</div>
                       </div>
                     );
                   })}

@@ -175,7 +175,7 @@ exports.handler = async function () {
     if (okCount >= 2) {
       return { statusCode: 200, headers: HEAD_OK, body: JSON.stringify({ ok: true, src: "googlenews", areas, ts: Date.now() }) };
     }
-    throw new Error("googlenews thin (" + okCount + "/4)");
+    throw new Error("googlenews thin (" + okCount + "/" + ids.length + ")");
   } catch (ePrimary) {
     // 2) FALLBACK — GDELT combined query, bucketed.
     try {

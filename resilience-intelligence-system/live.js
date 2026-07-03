@@ -145,47 +145,6 @@ window.LIVE = (function () {
       }
     })();
 
-    // 2c) Dolphin gas flow — PINNED at contractual nominal (100%), NOT a random
-    // walk. Dolphin is piped and does not transit Hormuz, so there is no basis
-    // for a standing shortfall and no public live flow meter. It deflects below
-    // 100 ONLY when the live regional news / conflict proxy indicates an actual
-    // disturbance in the Gulf–Qatar theatre — so every dip is traceable to an
-    // event, never a hardcoded guess. With no live news feed, it holds at 100.
-    (function () {
-      const ind = RD.indicators.find((x) => x.id === "dolphin");
-      if (!ind) return;
-      let defl = 0;
-      if (REAL.news) {
-        const sc = (id) => (REAL.news[id] && REAL.news[id].score != null) ? clamp(REAL.news[id].score, 0, 1) : 0;
-        defl = clamp(sc("hormuz") * 18 + sc("general") * 10, 0, 30);   // regional disturbance → flow risk
-      }
-      const flow = Math.round(clamp(100 - defl, 70, 100));
-      ind.value = String(flow);
-      ind.spark = ind.spark.slice(-7).concat(flow);
-      ind.delta = flow - 100;
-      ind.dir = ind.delta < -0.5 ? "down" : "flat";
-      ind.status = flow >= 97 ? "good" : flow >= 90 ? "moderate" : "high";
-      ind.statusText = defl > 0.5 ? "disrupted" : "";
-    })();
-
-    // 2d) RO membrane stock — the ~75-day reserve is a STATED buffer, never a
-    // fabricated countdown. The only live element is resupply STATUS: membranes
-    // are sea-borne, so the route-disruption proxy (Hormuz / Red Sea) flips it
-    // between clear / strained / impaired. Day-by-day drawdown is modelled in
-    // the cascade & scenario simulator, not animated against the wall clock.
-    (function () {
-      const ro = RD.indicators.find((x) => x.id === "romembrane");
-      if (ro == null) return;
-      const dropOf = (id) => { const c = RD.chokepoints.find((x) => x.id === id); return c ? c.drop : 0; };
-      const routeStress = clamp(dropOf("hormuz") * 0.012 + dropOf("redsea") * 0.006, 0, 1);
-      ro.value = "75";
-      ro.delta = 0;
-      ro.dir = "flat";
-      if (routeStress > 0.5) { ro.status = "high"; ro.statusText = "impaired"; }
-      else if (routeStress > 0.2) { ro.status = "moderate"; ro.statusText = "strained"; }
-      else { ro.status = "good"; ro.statusText = "clear"; }
-    })();
-
     // 3) Live Stress — decomposed into named drivers, real feeds add live drag
     const ck = {};
     RD.chokepoints.forEach((c) => { ck[c.id] = c.drop; });
@@ -248,8 +207,12 @@ window.LIVE = (function () {
 
     const totalDrag = throughputDrag + seaStateDrag + newsDrag + partnerDrag + marketDrag + sanctionDrag;
     const ceiling = RD.headline.structural.value;
-    const live = clamp(ceiling - totalDrag, 25, ceiling - 0.1);
+    // floored at 25 (a stated assumption — drag alone can't collapse a 0–100
+    // index into systemic-failure territory; scenarios can, and floor at 0).
+    const live = clamp(ceiling - totalDrag, 25, ceiling);
     RD.headline.live.value = +live.toFixed(1);
+    // measured 24h trend — vs the stored snapshot history (see initTrends).
+    if (RD.trends) RD.trends.live = (RD._trendBase24 && RD._trendBase24.live != null) ? +(live - RD._trendBase24.live).toFixed(1) : null;
 
     // decomposition for the attribution trace. real = driven by a connected
     // feed. read = the actual live reading, so a quiet driver is visibly alive
@@ -365,6 +328,44 @@ window.LIVE = (function () {
     const pressure = Math.max(0, Math.min(1, Math.log10(top.events + 1) / Math.log10(3000)));
     return { live: true, tracked: true, events: top.events, pressure, band: CONFLICT_BAND(pressure), country: top.country, since: acled.since };
   }
+
+  /* ---- measured trend history -------------------------------------------
+     Headline and sector deltas come from PERSISTED SNAPSHOTS of the computed
+     scores, never from seeded literals: the 24h delta compares against the
+     newest snapshot ≥20 h old, the 30-day deltas against the newest ≥25 days
+     old. With no old-enough history the trend is null and the UI says
+     "no history yet" instead of dressing a seed up as a measurement.
+     Snapshots are saved at most once per 6 h under their own storage key. */
+  (function initTrends() {
+    const KEY = "ris_trend_snaps_v1";
+    const H = 3600e3, D = 24 * H;
+    let snaps = [];
+    try { snaps = JSON.parse(localStorage.getItem(KEY) || "[]") || []; } catch (e) { snaps = []; }
+    const now = Date.now();
+    const newestOlder = (age) => { const c = snaps.filter((s) => now - s.t >= age); return c.length ? c[c.length - 1] : null; };
+    const s24 = newestOlder(20 * H);
+    const s30 = newestOlder(25 * D);
+    const trends = { live: null, structural: null, sectors: {} };
+    if (s24 && s24.live != null) trends.live = +(RD.headline.live.value - s24.live).toFixed(1);
+    if (s30 && s30.structural != null) trends.structural = +(RD.headline.structural.value - s30.structural).toFixed(1);
+    RD.sectors.forEach((sec) => {
+      const v = (s30 && s30.sectors) ? s30.sectors[sec.id] : null;
+      trends.sectors[sec.id] = v != null ? +(sec.score - v).toFixed(1) : null;
+    });
+    RD.trends = trends;
+    RD._trendBase24 = s24;
+    // save a fresh snapshot ~60s after load (lets the live feeds connect first)
+    setTimeout(() => {
+      try {
+        const last = snaps[snaps.length - 1];
+        if (last && Date.now() - last.t < 6 * H) return;
+        snaps.push({ t: Date.now(), live: RD.headline.live.value, structural: RD.headline.structural.value,
+          sectors: Object.fromEntries(RD.sectors.map((s) => [s.id, s.score])) });
+        if (snaps.length > 200) snaps = snaps.slice(-200);
+        localStorage.setItem(KEY, JSON.stringify(snaps));
+      } catch (e) {}
+    }, 60 * 1000);
+  })();
 
   const interval = setInterval(step, 1500);
 

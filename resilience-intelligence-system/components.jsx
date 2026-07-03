@@ -79,16 +79,25 @@ function Sparkline({ data, w = 84, h = 26, band = "moderate", fluid = false }) {
   );
 }
 
-/* ---- trend chip --------------------------------------------------------- */
-function Trend({ now, prev, suffix = "", horizon = "24h" }) {
-  const d = +(now - prev).toFixed(1);
+/* ---- trend chip ----------------------------------------------------------
+   delta comes from RD.trends (measured against stored score snapshots in this
+   browser — see initTrends in live.js). null = no old-enough history yet, and
+   the chip says so instead of showing a seeded number. */
+function Trend({ delta, suffix = "", horizon = "24h" }) {
+  if (delta == null) return (
+    <span className="trend flat" title={`The measured ${horizon} change appears once enough score history has accumulated in this browser — trends are computed from stored snapshots, never seeded.`}>
+      <Icon name="flat" size={13} />—
+      <span className="faint" style={{ fontSize: 10 }}>{horizon} · resilience</span>
+    </span>
+  );
+  const d = +(+delta).toFixed(1);
   const dir = d > 0.05 ? "up" : d < -0.05 ? "down" : "flat";
   const ic = dir === "up" ? "arrowUp" : dir === "down" ? "arrowDown" : "flat";
   const tip = dir === "up"
-    ? `Resilience rose ${d} pts over ${horizon} — higher is stronger, so this is an improvement.`
+    ? `Resilience rose ${d} pts over the last ${horizon} (vs stored history) — higher is stronger, so this is an improvement.`
     : dir === "down"
-    ? `Resilience fell ${Math.abs(d)} pts over ${horizon} — higher is stronger, so a drop is an erosion.`
-    : `Effectively flat over ${horizon}.`;
+    ? `Resilience fell ${Math.abs(d)} pts over the last ${horizon} (vs stored history) — higher is stronger, so a drop is an erosion.`
+    : `Effectively flat over the last ${horizon} (vs stored history).`;
   return (
     <span className={`trend ${dir}`} title={tip}>
       <Icon name={ic} size={13} />{d > 0 ? "+" : ""}{d}{suffix}
@@ -155,10 +164,10 @@ function ScoreCard({ d }) {
         <span style={{ marginLeft: "auto" }}>
           {d === RD.headline.live ? (
             <span className="src live" role="button" tabIndex={0} style={{ cursor: "pointer" }}
-              title="Live Resilience blends six public feeds — PortWatch, Open-Meteo, Google News, Markets, OFAC, ACLED"
+              title="Live Resilience blends five public feeds — PortWatch, Open-Meteo, Google News, Markets, OFAC; ACLED powers counterpart context on other views"
               onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
                 kicker: "Live feeds · updating continuously", title: "What feeds the Live Resilience score",
-                text: "Live Resilience is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from six public feeds. Maritime throughput (PortWatch) is the largest mover, which is why it often leads — but it is never the only input. The news monitor adds two early-warning lanes: trade-route closure coverage and adverse partner-supply coverage (a Qatar, Taiwan, Kazakhstan, China or India supply shock), so a partner disruption registers here before throughput data would confirm it.",
+                text: "Live Resilience is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from five public feeds. Maritime throughput (PortWatch) is the largest mover, which is why it often leads — but it is never the only input. The news monitor adds two early-warning lanes: trade-route closure coverage and adverse partner-supply coverage (a Qatar, Taiwan, Kazakhstan, China or India supply shock), so a partner disruption registers here before throughput data would confirm it. A sixth feed, ACLED conflict data, deliberately does not enter this score — it powers the live counterpart-risk context on the Dependencies and Control views.",
                 formula: "Active load  =  maritime throughput + sea state + trade-route news + partner-supply news + market stress + sanctions drift",
                 inputs: [
                   { k: "Maritime throughput — largest driver", v: "chokepoint transit calls vs 12-month norm", src: "ais" },
@@ -168,9 +177,9 @@ function ScoreCard({ d }) {
                   { k: "Market stress", v: "Brent & the Brent-linked LNG replacement cost", src: "yfinance" },
                   { k: "Sanctions drift", v: "OFAC SDN updates", src: "ofac" },
                 ],
-                assumption: "PortWatch is the dominant mover, but the score is a blend of all six live feeds against the structural ceiling — never PortWatch alone.",
+                assumption: "PortWatch is the dominant mover, but the active load blends six terms from five live feeds (Google News contributes two lanes) against the structural ceiling — never PortWatch alone. ACLED informs counterpart context, not this score.",
               }); }}>
-              <span className="d"></span>6 live feeds
+              <span className="d"></span>5 live feeds
             </span>
           ) : <SourceTag src="curated" />}
         </span>
@@ -180,7 +189,7 @@ function ScoreCard({ d }) {
         <span className="score-of mono">/ 100</span>
         <div className="score-meta">
           <span className="score-band"><span className="sq"></span>{b.label}</span>
-          <Trend now={d.value} prev={d.prev} horizon={d.horizon || "24h"} />
+          <Trend delta={RD.trends ? (d === RD.headline.live ? RD.trends.live : RD.trends.structural) : null} horizon={d.horizon || "24h"} />
         </div>
       </div>
       <div className="score-track" style={{ position: "relative" }}>
@@ -227,7 +236,7 @@ function SectorCard({ s, onOpen }) {
   driInputs.push(
     { k: "Consequence-weighted mean DRI", v: s.wdri + " / 100  (fragility)" },
     { k: "Resilience = 100 − " + s.wdri, v: s.score.toFixed(1) + " / 100" },
-    { k: "30d change", v: (s.score - s.prev).toFixed(1) + " pts" },
+    { k: "30d change", v: (RD.trends && RD.trends.sectors && RD.trends.sectors[s.id] != null) ? RD.trends.sectors[s.id].toFixed(1) + " pts — measured from stored score history" : "no stored history yet — accumulates in this browser" },
   );
   return (
     <div className={`sector band-${b.key} fade-in`} onClick={() => onOpen(s)}>
@@ -237,9 +246,10 @@ function SectorCard({ s, onOpen }) {
       </div>
       <div className="sector-score">
         <span className="sector-num mono">{s.score.toFixed(1)}</span>
-        <span className={`mini-trend ${s.score >= s.prev ? "up" : "down"}`}>
-          {s.score >= s.prev ? "▲" : "▼"} {Math.abs(+(s.score - s.prev).toFixed(1))}
-        </span>
+        {(() => { const t = RD.trends && RD.trends.sectors ? RD.trends.sectors[s.id] : null;
+          return t == null
+            ? <span className="mini-trend" style={{ color: "var(--faint)" }} title="The 30-day change appears once a month of score history has accumulated in this browser.">30d —</span>
+            : <span className={`mini-trend ${t >= 0 ? "up" : "down"}`} title="Measured 30-day change from stored score history">{t >= 0 ? "▲" : "▼"} {Math.abs(t).toFixed(1)} · 30d</span>; })()}
         {shalf > 0 && (
           <span className="sector-conf mono" title={`Sensitivity range ${slo.toFixed(1)}–${shi.toFixed(1)}${s.confidence ? " · " + s.confidence.label : ""}`}>±{shalf.toFixed(1)}</span>
         )}
@@ -249,7 +259,7 @@ function SectorCard({ s, onOpen }) {
             text: s.note + " The score is computed, not hand-set: it takes the Dependency Risk Index of each tracked import, weights it by national consequence (so the imports that matter most count most), averages them, and subtracts from 100. The ★ import — the most fragile — is the one to watch.",
             formula: "Sector  =  100  −  ( Σ(DRI × consequence) / Σ consequence )",
             inputs: driInputs,
-            assumption: "This score is calculated straight from the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. DRI's own four dimensions are equally weighted (0–25 each). Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
+            assumption: "This score is calculated straight from the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. DRI route-weights its four dimensions (Route 0.34 vs 0.22 each) and adds a buffer-fragility term — open any import's DRI drawer for the full breakdown. Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
             range: s.rangeHalf != null ? { lo: slo, hi: shi, half: shalf, confidence: s.confidence } : undefined,
             sensitivity: s.sensitivity,
           }} />
@@ -375,7 +385,7 @@ function IllusBadge() {
       text: "The UAE National Resilience Intelligence System is an ILLUSTRATIVE decision-support model. It combines live, publicly-available data feeds with hand-curated open-source datasets and a set of transparent, documented assumptions.",
       formula: "Live public data  +  Curated open sources  +  Stated assumptions  →  Explainable estimate",
       inputs: [
-        { k: "Live feeds (6)", v: "IMF PortWatch chokepoint transits, Google News trade-route coverage, Open-Meteo sea state, oil & gas prices, OFAC sanctions, ACLED conflict", src: "live" },
+        { k: "Live feeds (6)", v: "Five move the Live score — IMF PortWatch transits, Google News trade-route & partner coverage, Open-Meteo sea state, Brent, OFAC sanctions total — plus ACLED conflict for counterpart context", src: "live" },
         { k: "Curated data", v: RD.precursors.length + " critical imports, " + RD.assets.length + " strategic assets, " + RD.scenarios.length + " scenarios — human-readable CSV", src: "curated" },
         { k: "Assumptions", v: "Goalposts, weights & buffers — all stated and editable", src: "assumption" },
       ],

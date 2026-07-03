@@ -21,7 +21,8 @@
 .feat-chrome .d{width:10px;height:10px;border-radius:50%;background:#2A323C}
 .feat-chrome .u{margin-left:12px;font-family:var(--mono);font-size:11px;color:#6A7686;letter-spacing:.02em}
 .feat-shot{position:relative;display:block;width:100%;aspect-ratio:924/540;overflow:hidden}
-.feat-shot img{width:100%;display:block}
+.feat-shot img{width:100%;display:block;transition:opacity .25s ease}
+.feat-frame:hover .feat-shot img{opacity:.9}
 .feat-shot .enter{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   background:rgba(10,14,18,0);opacity:0;transition:opacity .25s ease,background .25s ease}
 .feat-frame:hover .enter{opacity:1;background:rgba(10,14,18,.34)}
@@ -33,7 +34,7 @@
 .feat-meta p{font-family:var(--sans);font-size:15px;line-height:1.62;color:var(--ink-2);margin:0 0 14px;max-width:42ch}
 .feat-meta p.dim{color:var(--muted)}
 .feat-tags{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 26px}
-.feat-tags span{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);
+.feat-tags span{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);white-space:nowrap;
   border:1px solid var(--line);border-radius:2px;padding:5px 10px;background:#FBFAF7}
 .feat-cta{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--mono);
   font-size:14px;font-weight:500;letter-spacing:.02em;color:var(--paper);background:var(--ink);
