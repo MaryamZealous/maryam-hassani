@@ -48,7 +48,7 @@ function Posture({ staged, evalById }) {
   const liveB = RD.band(liveNew), n = staged.size;
   const gap = +(ceilNew - liveNew).toFixed(1);
   return (
-    <div className="act-posture">
+    <div className="act-posture" style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--bg)", boxShadow: "0 6px 14px -10px rgba(0,0,0,0.25)" }}>
       <div className="act-posture-scores">
         <div className="act-pscore">
           <span className="label">Live resilience now</span>
@@ -397,10 +397,10 @@ function ActView() {
       <Posture staged={staged} evalById={evalById} />
 
       <div className="grid cols-2" style={{ gridTemplateColumns: "minmax(360px, 0.95fr) 1.45fr", alignItems: "start", marginTop: 16 }}>
-        <div className="stack act-left">
+        <div className="stack act-left" style={{ position: "sticky", top: 120, alignSelf: "start" }}>
         <Panel title="National response queue" icon="ops" label={ACT.PLAYS.length + " RESPONSES"}
           right={<span className="helper" style={{ marginLeft: "auto" }}>Ranked by weakness, payoff &amp; time-pressure</span>}>
-          <div className="act-queue">
+          <div className="act-queue" style={{ overflowY: "auto", maxHeight: "52vh", paddingRight: 4, overscrollBehavior: "contain" }}>
             {ranked.map(({ p, r }, i) => (
               <QueueRow key={p.id} p={p} rank={i + 1} prio={prio[p.id]} r={r}
                 selected={selId === p.id} isStaged={staged.has(p.id)}
