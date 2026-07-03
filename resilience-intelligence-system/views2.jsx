@@ -652,7 +652,9 @@ function ControlView() {
             <tbody>{RD.agreements.map((v) => {
               const c = LIVE.conflictFor(v.partner);
               return (
-              <tr key={v.name}><td style={{ fontWeight: 600 }}>{v.name}</td><td className="muted">{v.partner}</td>
+              <tr key={v.name}><td style={{ fontWeight: 600 }}>{v.url
+                ? <a href={v.url} target="_blank" rel="noopener" style={{ color: "var(--ink)", textDecoration: "none", borderBottom: "1px solid var(--line-2)" }} title={v.urlNote || ("Open the source for " + v.name + " (new tab)")}>{v.name} <span style={{ color: "var(--faint)", fontSize: 11 }}>↗</span></a>
+                : v.name}</td><td className="muted">{v.partner}</td>
                 <td><span className="mono" style={{ color: v.urgent ? "var(--high)" : "var(--ink)" }}>{v.expiry}{v.urgent && " ⚠"}</span></td>
                 <td><span className={`tag-band band-${v.status === "Active" ? "good" : "high"}`}><span></span>{v.status}</span></td>
                 <td>{!c.live

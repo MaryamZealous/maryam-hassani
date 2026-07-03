@@ -363,10 +363,10 @@ window.RD = (function () {
     { name: "Fertiglobe", country: "Egypt / NL", host: "Medium", eff: 0.72 },
   ];
   const agreements = [
-    { name: "Dolphin gas", partner: "Qatar", expiry: "2032", status: "Active", urgent: false },
-    { name: "123 Agreement", partner: "United States", expiry: "Indefinite", status: "Active", urgent: false },
-    { name: "CEPA transit", partner: "India", expiry: "2027", status: "Active", urgent: true },
-    { name: "Defence framework", partner: "France", expiry: "2029", status: "Active", urgent: false },
+    { name: "Dolphin gas", partner: "Qatar", expiry: "2032", status: "Active", urgent: false, url: "https://www.dolphinenergy.com/", urlNote: "Dolphin Energy — the venture operating the Qatar–UAE pipeline; contract terms are reported, not published" },
+    { name: "123 Agreement", partner: "United States", expiry: "Indefinite", status: "Active", urgent: false, url: "https://2009-2017.state.gov/r/pa/prs/ps/2009/05/123746.htm", urlNote: "US State Dept — the 2009 US–UAE civil-nuclear 123 Agreement announcement" },
+    { name: "CEPA transit", partner: "India", expiry: "2027", status: "Active", urgent: true, url: "https://www.moet.gov.ae/en/cepa_india", urlNote: "UAE Ministry of Economy — official UAE–India CEPA page with the agreement text" },
+    { name: "Defence framework", partner: "France", expiry: "2029", status: "Active", urgent: false, url: "https://gulfnews.com/uae/uae-and-france-sign-new-defence-cooperation-agreement-1.500546551", urlNote: "Gulf News — the May 2026 UAE–France defence cooperation agreement, building on the 1995/2009 accords" },
     { name: "Food corridor", partner: "Sudan", expiry: "2026", status: "At risk", urgent: true },
   ];
   const obligations = [

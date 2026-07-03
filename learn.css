@@ -1,9 +1,9 @@
 /* learn.css — influence constellation */
-.learn-head{max-width:1180px;margin:0 auto;padding:46px 48px 10px}
-.learn-h1{font-family:var(--sans);font-weight:700;font-size:40px;line-height:1.06;letter-spacing:-.026em;
-  color:var(--ink);margin:18px 0 0;max-width:20ch}
+.learn-head{max-width:1180px;margin:0 auto;padding:74px 48px 8px}
+.learn-h1{font-family:var(--sans);font-weight:700;font-size:50px;line-height:1.05;letter-spacing:-.028em;
+  color:var(--ink);margin:22px 0 0;max-width:20ch}
 .learn-h1 .em{font-family:var(--serif);font-style:italic;font-weight:400}
-.learn-lede{font-family:var(--sans);font-size:16.5px;line-height:1.55;color:var(--muted);margin:16px 0 0;max-width:62ch}
+.learn-lede{font-family:var(--sans);font-size:18px;line-height:1.55;color:var(--muted);margin:22px 0 0;max-width:58ch;font-weight:400}
 
 /* graph stage */
 .lg-stage{max-width:1280px;margin:18px auto 0;padding:0 24px}
@@ -92,7 +92,7 @@
 .lg-chip:hover{border-color:var(--ink);color:var(--ink);transform:translateY(-1px)}
 
 @media(max-width:760px){
-  .learn-h1{font-size:30px}
+  .learn-h1{font-size:38px}
   .lg-wrap{height:78vh}
   .lg-label{font-size:12px}
   .learn-head,.topbar,.pfoot{padding-left:22px;padding-right:22px}
