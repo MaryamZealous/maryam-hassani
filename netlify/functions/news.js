@@ -33,12 +33,13 @@ const QUERIES = {
   kazakhstan: '(Kazakhstan uranium OR Kazatomprom OR "nuclear fuel export") (halt OR cut OR ban OR disrupt OR suspend OR sanction OR unrest)',
   china:   '(China "rare earth" OR gallium OR polysilicon OR "solar export" OR "export controls") (ban OR curb OR restrict OR halt OR suspend)',
   india:   '(India pharmaceutical OR "API export" OR "drug export" OR "generic drug") (ban OR halt OR restrict OR shortage OR curb OR suspend)',
+  feedgrain: '("soybean export" OR "soymeal" OR "corn export" OR "grain export" OR "animal feed" OR alfalfa) (ban OR halt OR restrict OR tax OR drought OR shortage OR suspend OR curb)',
   general: '"shipping disruption" OR "port closure" OR "trade route" OR "supply chain disruption"',
 };
 // typical 2-day adverse-article volume per lane — the "normal" baseline to beat
-const BASELINE = { hormuz: 30, redsea: 35, suez: 30, general: 60, qatar: 6, taiwan: 14, kazakhstan: 4, china: 22, india: 9 };
+const BASELINE = { hormuz: 30, redsea: 35, suez: 30, general: 60, qatar: 6, taiwan: 14, kazakhstan: 4, china: 22, india: 9, feedgrain: 8 };
 // partner lanes are sentiment-gated; route lanes are already disruption-keyed
-const PARTNER_IDS = new Set(["qatar", "taiwan", "kazakhstan", "china", "india"]);
+const PARTNER_IDS = new Set(["qatar", "taiwan", "kazakhstan", "china", "india", "feedgrain"]);
 const NEG_RE = /\b(halt|halts|halted|ban|bans|banned|curb|curbs|curtail|cut|cuts|suspend|suspends|disrupt|disrupts|disruption|shortage|sanction|sanctions|restrict|restricts|restriction|embargo|export control|force majeure|outage|strike|attack|seize|seized|tension|tensions|dispute|shutdown|stoppage|crisis|threat|threaten|escalat|blockad|shut|crackdown|standoff|conflict|war|invasion|unrest)\b/i;
 
 /* ---- date + entity helpers ---------------------------------------------- */
@@ -99,7 +100,7 @@ const GDELT_COMBINED =
   + 'OR "Taiwan Strait" OR "semiconductor export" OR "chip export" OR "TSMC" '
   + 'OR "uranium export" OR "Kazatomprom" OR "nuclear fuel" '
   + 'OR "China export controls" OR "rare earth export" OR "gallium" OR "polysilicon" '
-  + 'OR "pharmaceutical export" OR "API export")';
+  + 'OR "pharmaceutical export" OR "API export" OR "soybean export" OR "grain export" OR "animal feed")';
 const ROUTE_RE = {
   hormuz: /hormuz/i,
   redsea: /bab.?el.?mandeb|bab.?al.?mandab|red sea|houthi/i,
@@ -109,6 +110,7 @@ const ROUTE_RE = {
   kazakhstan: /kazakhstan|kazatomprom|uranium|nuclear fuel/i,
   china:  /china|rare earth|gallium|germanium|polysilicon|solar (module|export|panel)/i,
   india:  /(india|indian).*(pharma|api|drug|generic)|pharmaceutical export|api export/i,
+  feedgrain: /(brazil|argentin|soy(bean|meal)?|corn export|grain export|animal feed|alfalfa|fodder)/i,
 };
 async function gdeltOnce() {
   const url = "https://api.gdeltproject.org/api/v2/doc/doc?query="
@@ -128,7 +130,7 @@ async function gdeltBuckets() {
     catch (e) { lastErr = e; if (e.status && e.status !== 429 && e.status !== 503) break; }
   }
   if (!arts) throw lastErr;
-  const hit = { hormuz: [], redsea: [], suez: [], qatar: [], taiwan: [], kazakhstan: [], china: [], india: [] };
+  const hit = { hormuz: [], redsea: [], suez: [], qatar: [], taiwan: [], kazakhstan: [], china: [], india: [], feedgrain: [] };
   for (const a of arts) {
     const hay = `${a.title || ""} ${a.url || ""} ${a.domain || ""}`;
     const neg = NEG_RE.test(hay);
@@ -139,7 +141,7 @@ async function gdeltBuckets() {
     }
   }
   return { hormuz: hit.hormuz, redsea: hit.redsea, suez: hit.suez, qatar: hit.qatar,
-    taiwan: hit.taiwan, kazakhstan: hit.kazakhstan, china: hit.china, india: hit.india, general: arts };
+    taiwan: hit.taiwan, kazakhstan: hit.kazakhstan, china: hit.china, india: hit.india, feedgrain: hit.feedgrain, general: arts };
 }
 
 /* ---- scoring ------------------------------------------------------------ */
@@ -189,6 +191,7 @@ exports.handler = async function () {
         kazakhstan: summarize("kazakhstan", b.kazakhstan),
         china:  summarize("china", b.china),
         india:  summarize("india", b.india),
+        feedgrain: summarize("feedgrain", b.feedgrain),
         general: summarize("general", b.general),
       };
       return { statusCode: 200, headers: HEAD_OK, body: JSON.stringify({ ok: true, src: "gdelt", areas, ts: Date.now() }) };

@@ -210,6 +210,9 @@ function ScoreCard({ d }) {
           inputs: d.inputs, assumption: d.assumption,
           range: d.rangeHalf != null ? { lo, hi, half, confidence: conf } : undefined,
           sensitivity: d.sensitivity,
+          links: d.name === "Live Resilience"
+            ? [{ label: "Today's live drivers · Live signals", view: "threats" }, { label: "Stress-test the score · Scenarios", view: "scenarios" }, { label: "Model chain & ledger · How this works", view: "methodology" }]
+            : [{ label: "The imports behind the weak link · Dependencies", view: "dependencies" }, { label: "Raise the ceiling · Response & pre-mortem", view: "act" }, { label: "Model chain & ledger · How this works", view: "methodology" }],
           context: [
             { h: dr.kicker, t: dr.text },
             d.cap ? { h: "Reading the scale", t: d.cap.lead + " " + d.cap.body } : null,
@@ -232,6 +235,7 @@ function SectorCard({ s, onOpen }) {
   const driInputs = ps.map((p) => ({
     k: (p.name === s.topRisk ? "★ " : "") + p.name,
     v: "DRI " + p.dri + " × consequence " + p.consequence.toFixed(2),
+    go: { view: "dependencies", opts: { sector: s.id, import: p.id }, hint: "Open " + p.name + " in Dependencies — sources, buffer, DRI breakdown" },
   }));
   driInputs.push(
     { k: "★ Anchor — " + s.topRisk, v: "DRI " + s.topDRI + " × 0.6 · selected by DRI × consequence" + (s.topSel != null ? " = " + s.topSel : "") + " — the most fragile import that matters" },
@@ -264,6 +268,11 @@ function SectorCard({ s, onOpen }) {
             assumption: "This score is calculated straight from the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. The 0.6 anchor mirrors the national 60/40 rule and is selected by DRI × consequence, so it always lands on the import whose fragility would hurt most; the ★ import's DRI drawer is the first place to look. Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
             range: s.rangeHalf != null ? { lo: slo, hi: shi, half: shalf, confidence: s.confidence } : undefined,
             sensitivity: s.sensitivity,
+            links: [
+              { label: "The " + ps.length + " tracked " + s.name + " imports · Dependencies", view: "dependencies", opts: { sector: s.id } },
+              { label: "Responses for " + s.name + " · Response & pre-mortem", view: "act" },
+              { label: "How sector scores roll up · How this works", view: "methodology" },
+            ],
           }} />
         </span>
       </div>
@@ -293,6 +302,16 @@ function Drawer({ payload, onClose }) {
           <div>
             <div className="drawer-kicker">{payload.kicker || "Explain"}</div>
             <div className="drawer-title">{payload.title}</div>
+            {payload.links && payload.links.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 9 }}>
+                {payload.links.map((l, i) => (
+                  <button key={i} className="exp" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+                    onClick={() => { onClose(); window.__go && window.__go(l.view, l.opts || {}); }}>
+                    {l.label} →
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <button className="icon-btn drawer-x" onClick={onClose}><Icon name="close" size={15} /></button>
         </header>
@@ -319,8 +338,10 @@ function Drawer({ payload, onClose }) {
             <div className="exp-sec">
               <h4>Inputs &amp; live values</h4>
               {payload.inputs.map((r, i) => (
-                <div className="input-row" key={i}>
-                  <div className="input-k">{r.k}</div>
+                <div className="input-row" key={i} onClick={r.go ? () => { onClose(); window.__go && window.__go(r.go.view, r.go.opts || {}); } : undefined}
+                  style={r.go ? { cursor: "pointer" } : undefined}
+                  title={r.go ? (r.go.hint || "Open in " + r.go.view) : undefined}>
+                  <div className="input-k">{r.k}{r.go ? <span style={{ color: "var(--accent, var(--bc))", marginLeft: 5, fontSize: 11 }}>→</span> : null}</div>
                   <div className="input-v">{r.v}{r.src && <> <SourceTag src={r.src} /></>}</div>
                 </div>
               ))}

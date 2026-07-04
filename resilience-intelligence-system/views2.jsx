@@ -428,7 +428,7 @@ function DependenciesView({ initial }) {
   const [filter, setFilter] = useState((initial && initial.sector) || "all");
   const [q, setQ] = useState("");
   const list = RD.precursors.filter((p) => (filter === "all" || p.sector === filter) && p.name.toLowerCase().includes(q.toLowerCase()));
-  const [selId, setSelId] = useState(list[0] ? list[0].id : "ro");
+  const [selId, setSelId] = useState((initial && initial.import) || (list[0] ? list[0].id : "ro"));
   const sel = RD.precursors.find((p) => p.id === selId) || RD.precursors[0];
   const dims = [
     ["concentration", "Source concentration", "How few suppliers or countries provide it today. One dominant source scores high — all your eggs in one basket right now."],
@@ -489,6 +489,10 @@ function DependenciesView({ initial }) {
                   { k: "DRI", v: "0.67 × " + sel.driStruct + "  +  0.33 × " + sel.driBuffer + "  =  " + sel.dri + " / 100" },
                 ],
                 assumption: "All five inputs sit on the same 0–100 fragility scale; the weights just set how much each counts — 0.34/0.22 across the four dimensions, then 0.67/0.33 between the structural and buffer halves. Route carries the largest dimension weight because chokepoint exposure is a higher-severity, harder-to-mitigate risk. The buffer term treats reaction time as a first-class fragility: zero only past ~180 days of cover, the point where stock is no longer the binding constraint. Both the 0.34 route weight and the 180-day horizon are tunable model assumptions.",
+                links: [
+                  { label: "How DRI rolls up into its sector score · Overview", view: "overview" },
+                  { label: "Weights & horizons · Assumptions ledger", view: "methodology" },
+                ],
               }} /></span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.buffer}</span><span className="kpi-l">Buffer days{sel.bufferProv ? " · " + (sel.bufferProv.t === "stated" ? "stated" : "est.") : ""}</span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.consequence.toFixed(2)}</span><span className="kpi-l" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>Consequence weight <Fx payload={{
@@ -503,6 +507,10 @@ function DependenciesView({ initial }) {
                   { k: "Weighted result", v: sel.consequence.toFixed(2) + " / 1.00" },
                 ],
                 assumption: "The four factors are scored from public, documented facts — demand shares, which end-service the input feeds, and whether the need is continuous. The 0.40/0.25/0.20/0.15 weights are editable; essentiality dominates because an input feeding a non-essential service can't be a top national consequence however concentrated its supply. Distinct from DRI: DRI scores SUPPLIER fragility (can we get it?); consequence scores national importance (how bad if we can't?).",
+                links: [
+                  { label: "Where this weight is used · Overview sector grid", view: "overview" },
+                  { label: "Responses that lower this risk · Response & pre-mortem", view: "act" },
+                ],
               }} /></span></div>
               <div className="kpi"><span className="kpi-v" style={{ fontSize: 15, fontFamily: "var(--font-display)" }}>{RD.sectors.find((s) => s.id === sel.sector).name}</span><span className="kpi-l">Sector</span></div>
             </div>
@@ -870,7 +878,7 @@ function MethodologyView() {
     { t: "Roll imports up into 7 sector scores", f: "Sector = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean) · anchor = highest DRI × consequence",
       d: "A sector's score anchors to its riskiest import — the most fragile one that matters most carries 60% — with the consequence-weighted average of all its imports as the other 40%. Non-compensatory: one critical dependency can never hide behind a portfolio of safer ones.", where: "Overview → Sector resilience" },
     { t: "Set the calm-day ceiling — Structural Resilience", f: "Structural = 0.60 × most-exposed sector + 0.40 × capacity (Absorb · Recover · Adapt)",
-      d: "The same weakest-link rule, one level up: the single most-exposed sector carries 60%, blended with the country's coping capacity — buffers vs a 90-day benchmark, sovereign firepower and substitutability, and how many sectors have a structural plan. This is fair-weather strength; it moves monthly, not daily.", where: "Overview → Structural Resilience" },
+      d: "The same weakest-link rule, one level up: the single most-exposed sector carries 60%, blended with the country's coping capacity — buffers vs a 90-day benchmark, sovereign firepower and substitutability, and the depth and speed of each sector's structural plan. This is fair-weather strength; it moves monthly, not daily.", where: "Overview → Structural Resilience" },
     { t: "Subtract today's measured pressure — Live Resilience", f: "Live = ceiling − (throughput + route news + partner news + sea state + market stress + sanctions drift)",
       d: "Six drag terms, each measured from a live public feed and individually capped, subtract from the ceiling to give strength right now. The gap between the two scores is today's pressure — and exactly where the Response queue points.", where: "Overview → Live Resilience · Response" },
   ];
@@ -1024,7 +1032,7 @@ function MethodologyView() {
             ))}
           </Panel>
           <Panel title="Data sources & freshness" icon="layers" label="LIVE / SIMULATED">
-            {Object.entries(RD.sources).map(([k, s]) => {
+            {Object.entries(RD.sources).filter(([k]) => k !== "live").map(([k, s]) => {
               const isLive = s.kind === "live";
               const mode = s.mode || "sim";
               return (
@@ -1045,11 +1053,12 @@ function MethodologyView() {
             {[
               "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity (non-compensatory anchor)",
               "Sector resilience = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean DRI); anchor = import with the highest DRI × consequence — the same weakest-link rule as the national headline, applied within each sector",
-              "Capacity = equal-weight Absorb (buffers vs 90-day benchmark) · Recover (sovereign firepower + substitutability) · Adapt (sectors with a structural plan)",
-              "Live Resilience = Structural ceiling − today's active load (tracks toward it); active load = maritime throughput + trade-route news + partner-supply news + sea state + market stress + sanctions drift; floored at 25",
-              "Partner-supply news = adverse-only coverage of single/few-source partners (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India), weighted by each import's consequence and capped — moves Live Resilience, not the structural DRI",
+              "Capacity = equal-weight Absorb (consequence-weighted buffers vs 90-day benchmark) · Recover (sovereign firepower + consequence-weighted re-sourcing ease) · Adapt (per-sector plan depth × speed from the response catalog, consequence-weighted — 2.5 ceiling-pts and 24 months = full credit; no structural play = 0)",
+              "Capacity is deliberately compensatory across its three components (they are complementary coping modes, not substitutable sectors) — and it scores stocks, money and plans only; infrastructure redundancy, workforce continuity, institutional response speed and alliance access are tracked qualitatively in the Control layer but do not enter the score",
+              "Live Resilience = Structural ceiling − today's active load (tracks toward it); active load = maritime throughput + trade-route news + partner-supply news + sea state + market stress + sanctions drift — each term individually capped so no single feed can swamp the score, and the total floored at 25",
+              "Partner-supply news = adverse-only coverage of single/few-source partners (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India, Brazil/Argentina feed grain), scaled by the highest-consequence import riding on that partner and capped — moves Live Resilience, not the structural DRI",
               "Structural axis goalpost: 100 = autarky (unreachable), ~72 = realistic-frontier marker — a display anchor only, feeds no score",
-              "Sovereign buffer sub-score from verified SWF AUM (~$2.1T)",
+              "Financial firepower = 100 × min(liquidity-weighted deployable sovereign capital / $750bn stress benchmark, 1) — deployable figures from the Control layer's sovereign table (~$2.1T verified AUM), liquidity factors High 1.0 / Medium 0.6 / Low 0.3; the benchmark ≈ 18 months of the national import bill (est.), an editable goalpost",
               "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
               "Scenario overall = 0.60 × worst-hit sector delta + 0.40 × mean sector delta — computed from each scenario's sector deltas, never hand-set; Combined Maximum's deltas are a hand-authored worst-case vector",
               "News-lane 'normal volume' baselines are hand-set per lane (route lanes are disruption-keyed; partner lanes adverse-only); pressure = (2-day volume / baseline − 1) / 2, capped — Google News returns at most ~100 items per lane, so extreme surges saturate",
@@ -1057,11 +1066,11 @@ function MethodologyView() {
               "OFAC weekly 'new designations' is an illustrative stand-in (no public delta feed); only the live total-entity-count drift enters the score",
               "DRI = 0.67 × route-weighted dimension fragility (Route weight 0.34 vs 0.22 each for Concentration / Substitution / Counterpart) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — all five inputs on the same 0–100 scale — a thin buffer is itself a fragility because the buffer is your reaction time",
               "Buffer days are curated estimates, not a live inventory feed — most are analyst order-of-magnitude judgements ('est.'); a few (nuclear fuel, strategic grain) reflect reported policy ('stated'). The tag and provenance show on each import in Dependencies.",
-              "Score uncertainty = how far each editable assumption (0.60 anchor, 90-day benchmark, sovereign buffer, consequence weights, DRI ±4 — spanning the route weighting and 180-day buffer horizon) moves the score when nudged to its high and low ends; the wider the swing, the lower the confidence label",
+              "Score uncertainty = how far each editable assumption (0.60 anchor, 90-day benchmark, sovereign firepower ±10, consequence weights, DRI ±4 — spanning the route weighting and 180-day buffer horizon) moves the score when nudged to its high and low ends; the wider the swing, the lower the confidence label",
               "Gas is a two-state node: contracted Dolphin floor (~$1.50/MMBtu, reported estimate) vs marginal LNG ≈ 12.5% of Brent — losing Dolphin is a price-basis flip, not a volume gap; Henry Hub is not used",
               "Episode log: a disruption episode opens when the live score falls 3+ pts below its recent baseline with ≥3 feeds live, and closes on recovery to within 1 pt — the rules run centrally on one shared log (monitored every 6 h around the clock, every 10 min while a dashboard is open), so the record is identical for all visitors and simulated readings never enter it",
               "Calibration: a measured episode can be applied as a live-drag multiplier (measured ÷ anchor, clamped 0.5–1.5×) — per-browser, revertable, always disclosed in the validation panel; scenario sector deltas stay curated",
-              "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure (speed & value-for-money inform the scope decision, not the ranking)",
+              "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure, each factor rescaled to its range across the queue so the stated weights hold in practice (speed & value-for-money inform the scope decision, not the ranking)",
               "Response effects are independent & additive: Live′ = min(Ceiling′, live + staged points)",
             ].map((a, i, arr) => (
               <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: i < arr.length - 1 ? "1px solid var(--line)" : "none", fontSize: 12.5 }}>

@@ -53,7 +53,7 @@ window.RD = (function () {
         { k: "Structural ceiling", v: "the day's maximum", src: "curated" },
         { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez transit calls vs each strait's 12-month norm (IMF PortWatch)", src: "ais" },
         { k: "Trade-route news", v: "above-normal closure / conflict coverage on the sea routes", src: "gdelt" },
-        { k: "Partner-supply news", v: "adverse coverage of a single- or few-source partner (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India) — negative-sentiment gated", src: "gdelt" },
+        { k: "Partner-supply news", v: "adverse coverage of a single- or few-source partner (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India, Brazil/Argentina feed grain) — negative-sentiment gated", src: "gdelt" },
         { k: "Energy-market stress", v: "Brent and the Brent-linked LNG replacement cost above their stress marks", src: "yfinance" },
         { k: "Sea state", v: "wave height above 1.2 m on the chokepoint approaches impairs transit", src: "meteo" },
         { k: "Counterpart / sanctions", v: "rise in total SDN entities since session baseline (OpenSanctions mirror)", src: "ofac" },
@@ -78,7 +78,7 @@ window.RD = (function () {
     { id: "defence", name: "Defence", trend: 0,
       note: "Guided-systems production leans on advanced silicon. The binding risk is US export-control licensing, not Taiwanese supply — a channel that eased in late 2025." },
     { id: "food", name: "Food", trend: 0.7,
-      note: "Diversified sourcing and strategic reserves give the deepest buffer of any sector." },
+      note: "Grain reserves are deep and sourcing diversified — but the sector's real anchor is animal feed: domestic eggs, poultry, dairy and farmed fish all run on imported feed with only weeks of stock, so protein self-sufficiency sits one step down the chain from an import." },
     { id: "logistics", name: "Logistics", trend: -4.2,
       note: "~60% of imports land at Jebel Ali (est.), inside the strait; crude exports bypass via Fujairah. Hormuz import-exposure — containerised goods into Jebel Ali — is the dominant variable, partly offset by air-cargo prioritisation." },
     { id: "finance", name: "Finance", trend: 0.1,
@@ -137,6 +137,9 @@ window.RD = (function () {
     { id: "wheat", name: "Wheat", sector: "food", source: "Russia / Australia", buffer: 150, cfac: { ess: 0.70, svc: 0.50, imm: 0.30, brd: 0.60 }, dri: 34,
       dims: { concentration: 52, substitutability: 28, route: 36, counterpart: 20 }, hormuz: false, dolphin: false,
       note: "Strategic reserves plus diversified sourcing keep this comfortable." },
+    { id: "feed", name: "Animal feed & fodder", sector: "food", source: "Brazil / Argentina / US / Spain", buffer: 45, cfac: { ess: 0.65, svc: 0.75, imm: 0.65, brd: 0.50 }, dri: 47,
+      dims: { concentration: 60, substitutability: 40, route: 36, counterpart: 20 }, hormuz: false, dolphin: false,
+      note: "The hidden import under every domestic protein line: soybean meal and corn for poultry and aquaculture, alfalfa and hay for dairy. The UAE's real self-sufficiency in eggs, chicken, milk and farmed fish rides on this continuous feed flow — local production that looks like independence but sits one step down the chain from an import. Feed mills hold weeks of working stock, not months, so a feed disruption reaches domestic protein output faster than a wheat shock reaches bread." },
     { id: "gps", name: "Timing / GNSS modules", sector: "defence", source: "United States", buffer: 90, cfac: { ess: 0.75, svc: 0.70, imm: 0.80, brd: 0.50 }, dri: 47,
       dims: { concentration: 68, substitutability: 52, route: 44, counterpart: 24 }, hormuz: false, dolphin: false,
       note: "Precision-timing modules. Vulnerable to GPS-jamming spikes in the Gulf." },
@@ -187,6 +190,7 @@ window.RD = (function () {
   const BUFFER_PROV = {
     leu:       { t: "stated", n: "ENEC holds multiple Barakah fuel reloads — long-lead nuclear fuel stockpile (reported)." },
     wheat:     { t: "stated", n: "UAE strategic grain reserve — reported national-stockpile policy." },
+    feed:      { t: "est", n: "Feed mills hold weeks of working stock — bulk silo capacity, not a strategic reserve." },
     waterchem: { t: "est", n: "Plant dosing-chemical stock is only weeks of continuous use — short shelf lives cap how much can be held." },
     turbines:  { t: "est", n: "Critical-spares inventory plus N+1 fleet redundancy; high-value hot-section parts are stocked sparingly against 12–24-month lead times." },
     chips:     { t: "est", n: "Estimate — access is export-licence-gated, not a physical stock; the buffer stands in for licensing latency." },
@@ -527,20 +531,58 @@ window.RD = (function () {
     const cw = precursors.reduce((a, p) => a + p.consequence, 0);
     const absorb = Math.round((aw / cw) * 100);
 
-    const FINANCIAL = 72; // sovereign-buffer sub-score (~$2.1T verified SWF AUM)
-    const meanSub = precursors.reduce((a, p) => a + p.dims.substitutability, 0) / precursors.length;
+    // FINANCIAL FIREPOWER — computed from the Control layer's sovereign table,
+    // not hand-set. Each fund's DEPLOYABLE capital is discounted by a liquidity
+    // factor (High 1.0 / Medium 0.6 / Low 0.3 — how fast it can actually move),
+    // then set against a stated stress benchmark: $750bn ≈ 18 months of the
+    // national import bill (est.), the scale of a worst-case crisis year.
+    const LIQ_W = { High: 1.0, Medium: 0.6, Low: 0.3 };
+    const FIN_BENCH = 750; // $bn · editable goalpost
+    const deployW = sovereign.reduce((a, f) => a + f.deployable * (LIQ_W[f.liquidity] || 0.3), 0);
+    const FINANCIAL = Math.round(100 * Math.min(deployW / FIN_BENCH, 1));
+    // Re-sourcing ease: consequence-weighted mean substitutability — the imports
+    // that matter most dominate, consistent with every other roll-up in the model.
+    const meanSub = precursors.reduce((a, p) => a + p.dims.substitutability * p.consequence, 0) / cw;
     const subPenalty = Math.round(meanSub);
     const resourcing = Math.round(100 - meanSub);
     const recover = Math.round(0.5 * FINANCIAL + 0.5 * resourcing);
 
-    // Sectors with a committed structural plan in the response catalog
-    // (actions.js → ACT.PLAYS). Food has none; the other six do. Kept here as
-    // an explicit, documented input so the whole spine stays self-contained.
-    const PLAN_SECTORS = ["water", "energy", "logistics", "health", "finance", "defence"];
-    const adapt = Math.round((PLAN_SECTORS.length / sectors.length) * 100);
+    // ADAPT — computed from the substance of the response catalog, not its mere
+    // existence. Per sector with a play: DEPTH = the ceiling points its deepest
+    // tier would add (2.5 pts = full credit) × SPEED = how fast the first
+    // structural effect lands (≤24 months = full credit), blended 0.6/0.4.
+    // Sectors are weighted by their imports' total consequence; a sector with
+    // no structural play scores 0 (all seven currently have one). PLAN_FACTS
+    // mirrors actions.js →
+    // ACT.PLAYS (deepest-tier ceilPts · days of the first ceiling-raising tier)
+    // — kept here as an explicit documented input so the spine stays
+    // self-contained; update it if the catalog changes.
+    const PLAN_FACTS = {
+      water:     { ceil: 2.6, days: 660 },   // RO membranes play · T3 · T2 first structural
+      energy:    { ceil: 2.8, days: 540 },   // solar-for-water play · T3 · T1 first structural
+      logistics: { ceil: 2.4, days: 1100 },  // Fujairah bypass · T3 · T2 first structural
+      health:    { ceil: 2.2, days: 900 },   // pharma localisation · T3 · T2 first structural
+      finance:   { ceil: 0.5, days: 365 },   // emergency fund · T3 (mostly a live tool)
+      defence:   { ceil: 2.6, days: 1100 },  // chips ladder · T3 · T2 first structural
+      food:      { ceil: 1.6, days: 720 },   // indoor-farming play · T3 · T2 first structural
+    };
+    const ADAPT_DEPTH_FULL = 2.5, ADAPT_SPEED_FULL = 730;
+    let adNum = 0, adDen = 0; const adaptDetail = [];
+    sectors.forEach((s) => {
+      const w = precursors.filter((p) => p.sector === s.id).reduce((a, p) => a + p.consequence, 0);
+      const f = PLAN_FACTS[s.id];
+      const depth = f ? Math.min(f.ceil / ADAPT_DEPTH_FULL, 1) : 0;
+      const speed = f ? Math.min(ADAPT_SPEED_FULL / f.days, 1) : 0;
+      const sa = f ? 0.6 * depth + 0.4 * speed : 0;
+      adNum += w * sa; adDen += w;
+      adaptDetail.push({ id: s.id, name: s.name, w: round2(w), depth: round2(depth), speed: round2(speed), score: round2(sa) });
+    });
+    const adapt = Math.round(100 * adNum / adDen);
+    const PLAN_SECTORS = Object.keys(PLAN_FACTS);
 
     const blend = Math.round((absorb + recover + adapt) / 3);
     capacity = { absorb, recover, adapt, blend, resourcing, financial: FINANCIAL,
+      finDeployW: Math.round(deployW), finBench: FIN_BENCH, adaptDetail,
       subPenalty, planCount: PLAN_SECTORS.length, planSectors: PLAN_SECTORS, sectorCount: sectors.length };
 
     // 3 · STRUCTURAL RESILIENCE = 0.60 × most-exposed sector + 0.40 × capacity
@@ -594,10 +636,10 @@ window.RD = (function () {
       const cwAll = precursors.reduce((a, p) => a + cons[p.id], 0);
       const aw = precursors.reduce((a, p) => a + cons[p.id] * Math.min(p.buffer / o.bench, 1), 0);
       const absorb = (aw / cwAll) * 100;
-      const meanSub2 = precursors.reduce((a, p) => a + p.dims.substitutability, 0) / precursors.length;
+      const meanSub2 = precursors.reduce((a, p) => a + p.dims.substitutability * cons[p.id], 0) / cwAll;
       const resourcing2 = 100 - meanSub2;
       const recover2 = 0.5 * o.fin + 0.5 * resourcing2;
-      const adapt2 = (PLAN_SECTORS.length / sectors.length) * 100;
+      const adapt2 = adapt; // plan depth × speed — independent of the nudged axes
       const blend2 = (absorb + recover2 + adapt2) / 3;
       const exposed2 = Math.min(...Object.values(sScore));
       const structural = o.anchor * exposed2 + (1 - o.anchor) * blend2;
@@ -607,7 +649,7 @@ window.RD = (function () {
     const AXES = [
       { k: "Exposure-anchor weight (0.60)",   lo: { anchor: 0.50 }, hi: { anchor: 0.70 } },
       { k: "Absorb benchmark (90 days)",      lo: { bench: 120 },   hi: { bench: 60 } },
-      { k: "Sovereign-buffer sub-score (72)", lo: { fin: 62 },      hi: { fin: 82 } },
+      { k: "Sovereign-firepower score (" + FINANCIAL + ")", lo: { fin: FINANCIAL - 10 }, hi: { fin: FINANCIAL + 10 } },
       { k: "Essentiality weight (0.40)",      lo: { essW: 0.30 },   hi: { essW: 0.50 } },
       { k: "DRI scoring granularity (±4)",    lo: { driJ: 4 },      hi: { driJ: -4 } },
     ];

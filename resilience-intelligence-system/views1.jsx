@@ -147,36 +147,47 @@ function Capacities() {
       fx: { kicker: "Capacity · Absorb", title: "Absorb — shock-absorbing buffers",
         text: "How much disruption the system soaks up before function degrades: the depth of reserves across the " + RD.precursors.length + " critical imports, weighted by national consequence. Maps to the 'absorptive capacity' shared by the OECD and IPCC resilience frameworks.",
         formula: "Absorb  =  Σ(consequence × min(buffer / 90, 1))  /  Σ consequence",
-        inputs: [
-          { k: "Benchmark", v: "90 days of cover = full credit" },
-          { k: "Piped gas (Dolphin)", v: "30-day buffer → 0.33 cover · weight 1.00" },
-          { k: "RO membranes", v: "75-day buffer → 0.83 cover · weight 0.87" },
-          { k: "Most imports", v: "90+ day buffers → full cover" },
-          { k: "Weighted result", v: absorb + " / 100" },
-        ],
-        assumption: "The 90-day benchmark (one quarter of cover) is an editable goalpost." } },
+        inputs: (() => {
+          const below = RD.precursors.filter((p) => p.buffer < 90)
+            .sort((a, b) => (a.consequence * Math.min(a.buffer / 90, 1)) - (b.consequence * Math.min(b.buffer / 90, 1)) || b.consequence - a.consequence);
+          const full = RD.precursors.length - below.length;
+          return [
+            { k: "Benchmark", v: "90 days of cover = full credit" },
+            ...below.map((p) => ({ k: p.name, v: p.buffer + "-day buffer → " + (p.buffer / 90).toFixed(2) + " cover · weight " + p.consequence.toFixed(2) })),
+            { k: full + " remaining imports", v: "90+ day buffers → full cover" },
+            { k: "Weighted result", v: absorb + " / 100" },
+          ];
+        })(),
+        assumption: "The 90-day benchmark (one quarter of cover) is an editable goalpost.",
+        links: [{ label: "Every import's buffer & provenance · Dependencies", view: "dependencies" }],
+      } },
     { key: "Recover", n: recover, q: "How fast can we bounce back?",
       sub: "Sovereign firepower to fund recovery + how easily critical inputs can be re-sourced",
       fx: { kicker: "Capacity · Recover", title: "Recover — bounce-back speed",
         text: "How quickly function is restored after a hit: a blend of financial firepower (sovereign capital that can be redeployed fast) and how substitutable the critical imports are. Deep pockets help, but money cannot compress a 120-day reorder lead time — which is why recovery, not absorption, is the binding capacity here.",
         formula: "Recover  =  0.5 × financial firepower  +  0.5 × re-sourcing ease",
         inputs: [
-          { k: "Financial firepower", v: "sovereign buffer 72 (~$2.1T SWFs)", src: "curated" },
-          { k: "Re-sourcing ease", v: "100 − substitution-difficulty penalty (" + subPenalty + ") = " + resourcing },
+          { k: "Financial firepower", v: "100 × min($" + cap.finDeployW + "bn liquidity-weighted deployable / $" + cap.finBench + "bn stress benchmark, 1) = " + cap.financial, src: "curated" },
+          { k: "— deployable capital", v: "per-fund deployable from the Control layer's sovereign table (~$2.1T total AUM), × liquidity factor High 1.0 / Medium 0.6 / Low 0.3" },
+          { k: "— stress benchmark", v: "$" + cap.finBench + "bn ≈ 18 months of the national import bill (est.) — an editable goalpost" },
+          { k: "Re-sourcing ease", v: "100 − consequence-weighted substitution-difficulty (" + subPenalty + ") = " + resourcing },
           { k: "Blend (0.5 / 0.5)", v: recover + " / 100" },
         ],
-        assumption: "Equal 0.5/0.5 weighting is an editable judgement. Maps to 'rapidity / resourcefulness' in the resilience-engineering 4 R's." } },
+        assumption: "Equal 0.5/0.5 weighting is an editable judgement. Maps to 'rapidity / resourcefulness' in the resilience-engineering 4 R's.",
+        links: [{ label: "The sovereign table behind the firepower score · Control layer", view: "control" }],
+      } },
     { key: "Adapt", n: adapt, q: "Are we cutting future risk?",
-      sub: sectorsWithPlay + " of " + RD.sectors.length + " sectors have a credible structural plan — capacity to adapt; commit it in Response & pre-mortem",
+      sub: "Depth × speed of each sector's structural plan, weighted by how much the sector matters — commit plans in Response & pre-mortem",
       fx: { kicker: "Capacity · Adapt", title: "Adapt — bounce-forward capacity",
-        text: "Whether the system can structurally reduce its exposure for next time — 'bounce forward', not just back. Measured as the share of sectors with a credible, precedent-anchored structural plan ready to commit. This is adaptive CAPACITY; realized adaptation tracks what you actually commit in the Response & pre-mortem view.",
-        formula: "Adapt  =  sectors with a structural plan  /  total sectors",
+        text: "Whether the system can structurally reduce its exposure for next time — 'bounce forward', not just back. Having a plan is not enough: each sector's play is scored on DEPTH (how many structural ceiling points its deepest tier would add — 2.5 pts = full credit) and SPEED (how fast the first structural effect lands — 24 months or less = full credit), blended 0.6/0.4 and weighted by the sector's total import consequence. A sector with no structural play scores zero. This is adaptive CAPACITY; realized adaptation tracks what you actually commit in the Response & pre-mortem view.",
+        formula: "Adapt  =  Σ( sector weight × (0.6 × depth + 0.4 × speed) )  /  Σ weight",
         inputs: [
-          { k: "Sectors with a play", v: sectorsWithPlay + " — water, energy, logistics, health, finance, defence" },
-          { k: "No play needed", v: "Food — deepest buffers, lowest exposure" },
-          { k: "Result", v: adapt + " / 100" },
+          ...RD.capacity.adaptDetail.map((d) => ({ k: d.name, v: d.score === 0 ? "no structural play → 0" : "depth " + d.depth + " · speed " + d.speed + " → " + d.score + " · weight " + d.w })),
+          { k: "Weighted result", v: adapt + " / 100" },
         ],
-        assumption: "Counts capacity (plans that exist), not realized change. Maps to the 'bounce forward' / transformative-capacity split of the Index of Future Readiness." } },
+        assumption: "Depth and speed come from the response catalog's own tiers (deepest-tier ceiling points; days to the first ceiling-raising tier). The 2.5-pt depth and 24-month speed goalposts are editable judgements. Counts capacity (credible plans), not realized change — maps to the 'bounce forward' / transformative-capacity split of the Index of Future Readiness.",
+        links: [{ label: "The plans being scored · Response & pre-mortem", view: "act" }],
+      } },
   ];
 
   return (
@@ -336,7 +347,7 @@ function ProvenanceLedger() {
   const DMETA = {
     "Sea state": { ref: "drag begins above 1.2 m wave", feeds: "Sea-state drag", assume: "Open-Meteo wave height & wind on the chokepoint approaches; adds live drag only above the 1.2 m threshold." },
     "Trade-route news": { ref: "coverage vs each route's normal volume", feeds: "Trade-route news drag", assume: "Above-normal closure / conflict coverage on Hormuz, Red Sea and Suez (Google News, GDELT fallback). A surge over baseline, not a single headline." },
-    "Partner-supply news": { ref: "adverse coverage vs each partner's normal", feeds: "Partner-supply drag", assume: "Adverse-only coverage of single/few-source partners (Qatar, Taiwan, Kazakhstan, China, India), weighted by each import's consequence and capped." },
+    "Partner-supply news": { ref: "adverse coverage vs each partner's normal", feeds: "Partner-supply drag", assume: "Adverse-only coverage of single/few-source partners (Qatar, Taiwan, Kazakhstan, China, India, Brazil/Argentina feed grain), scaled by the highest-consequence import riding on each partner and capped." },
     "Energy-market stress": { ref: "Brent > $96 / marginal LNG > $14", feeds: "Energy-market drag", assume: "Brent crude and the Brent-linked marginal LNG replacement cost; adds drag only above the stress marks." },
     "Counterpart / sanctions": { ref: "new SDN designations vs baseline", feeds: "Counterpart / sanctions drag", assume: "OFAC SDN delta — a rise in designations touching UAE counterparties adds counterpart drag." },
   };
@@ -417,6 +428,7 @@ function TradeRouteNews() {
     { id: "kazakhstan", label: "Kazakhstan — uranium (fuel chain)" },
     { id: "china", label: "China — solar / battery / devices" },
     { id: "india", label: "India — pharma APIs" },
+    { id: "feedgrain", label: "Brazil / Argentina — feed grain" },
     { id: "hormuz", label: "Strait of Hormuz" },
     { id: "redsea", label: "Bab-el-Mandeb / Red Sea" },
     { id: "suez", label: "Suez Canal" },
@@ -443,8 +455,8 @@ function TradeRouteNews() {
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
         With no free real-time vessel feed, <b>news is the early detector for supply disruption</b>. We scan world
         media every few minutes across two fronts — <b>trade-route closures</b> (Hormuz, Red Sea, Suez) and <b>partner-supply
-        shocks</b>, led by the single- and few-source dependencies (Qatar gas, Taiwan chips, Kazakhstan fuel), then China and
-        India. Partner lanes count <b>only adverse coverage</b> — a "deal signed" doesn't add pressure, a halt or export ban does.
+        shocks</b>, led by the single- and few-source dependencies (Qatar gas, Taiwan chips, Kazakhstan fuel), then China,
+        India and the Brazil/Argentina feed-grain belt. Partner lanes count <b>only adverse coverage</b> — a "deal signed" doesn't add pressure, a halt or export ban does.
         A surge above a lane's normal volume registers as <b>news pressure</b> and adds live drag before throughput or trade data would confirm it.
       </p>
       {!news ? (
@@ -782,6 +794,10 @@ function ScenariosView() {
                         { k: "Applied to today's score", v: baseLive.toFixed(1) + " → " + after },
                       ],
                       assumption: "Sector deltas are curated stress judgements per scenario (Combined compounds its two parents element-wise: the worse shock + 0.6 × the lesser; Combined Maximum is a hand-authored worst-case vector). The 0.60 anchor mirrors the structural formula.",
+                      links: [
+                        { label: "Watch this unfold day by day · Cascade", view: "cascade" },
+                        { label: "Responses that blunt it · Response & pre-mortem", view: "act" },
+                      ],
                     }} />; })()}
                 </div>
               </div>

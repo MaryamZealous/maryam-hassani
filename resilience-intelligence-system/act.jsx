@@ -94,10 +94,10 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
         <div className="act-row-top">
           <span className="act-row-title">{p.title}</span>
           <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, flex: "0 0 auto" }} onClick={(e) => e.stopPropagation()}>
-            <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--bc)" }} title="Priority score">P{prio.score}</span>
+            <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--bc)" }} title="Priority score, 0–100 — relative standing within this queue; higher = more urgent">{prio.score}<span style={{ fontSize: 9.5, fontWeight: 500, color: "var(--muted)" }}>/100</span></span>
             <Fx payload={{
               kicker: "Priority · computed", title: "Why this rank",
-              text: "Priority ranks the PROBLEM, not the plan you're eyeing. It's a flat blend of three things: how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own. Each factor is first rescaled to its range across the six responses — so a factor whose values naturally cluster (sector fragilities sit close together) counts with its full stated weight instead of being silently outvoted by one that spreads widely (payoffs). Priority is therefore a relative standing within this queue, not an absolute grade.",
+              text: "Priority ranks the PROBLEM, not the plan you're eyeing. It's a flat blend of three things: how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own. Each factor is first rescaled to its range across the responses in this queue — so a factor whose values naturally cluster (sector fragilities sit close together) counts with its full stated weight instead of being silently outvoted by one that spreads widely (payoffs). Priority is therefore a relative standing within this queue, not an absolute grade — the lowest-ranked response scores 0 by construction, meaning 'least urgent of these', not 'worthless'.",
               formula: "Priority  =  0.5 × Weakness  +  0.3 × Payoff  +  0.2 × Time-pressure   (each rescaled to its range across the queue)",
               inputs: [
                 { k: "Weakness (anchored sector fragility)", v: prio.wdri + " / 100 → " + prio.rel.weakness + " relative" },
@@ -106,6 +106,10 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
                 { k: "→ Priority", v: prio.score + " / 100 (relative to the other responses)" },
               ],
               assumption: "Weakness leads (half the weight), and the rescaling is what makes that true in practice — without it, the wide spread of payoffs would dominate the narrow spread of sector fragilities regardless of the weights. Time-pressure is the only hand-set factor (chips' export-licence clock lifts Defence; Finance's depth and absent clock keep it low). A response scoring low here is lower-priority than its peers, not unimportant.",
+              links: [
+                { label: "The " + p.sector + " sector's score & imports · Overview", view: "overview" },
+                { label: "The imports behind the weakness · Dependencies", view: "dependencies", opts: { sector: p.sector } },
+              ],
             }} />
           </span>
         </div>

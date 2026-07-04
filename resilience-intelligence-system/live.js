@@ -178,10 +178,11 @@ window.LIVE = (function () {
     // (c2) partner-supply news — REAL (GDELT): above-normal ADVERSE coverage of a
     // SUPPLY PARTNER's disruption, prioritised by supply concentration — the
     // single- and few-source dependencies lead (Qatar gas, Taiwan chips,
-    // Kazakhstan fuel), then China processing and India APIs. Negative-sentiment
+    // Kazakhstan fuel), then China processing, India APIs and the Brazil/
+    // Argentina feed-grain belt. Negative-sentiment
     // gated upstream, so positive coverage of the same topic adds no drag.
     // Weighted by the consequence of the imports that ride on each partner.
-    const PARTNER_LANES = { qatar: ["gas"], taiwan: ["chips"], kazakhstan: ["leu"], china: ["solarpv", "libattery", "devices"], india: ["api"] };
+    const PARTNER_LANES = { qatar: ["gas"], taiwan: ["chips"], kazakhstan: ["leu"], china: ["solarpv", "libattery", "devices"], india: ["api"], feedgrain: ["feed"] };
     let partnerDrag = 0; const partnerHot = [];
     if (REAL.news) {
       for (const lane in PARTNER_LANES) {

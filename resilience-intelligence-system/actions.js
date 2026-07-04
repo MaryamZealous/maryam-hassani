@@ -504,6 +504,86 @@ window.ACT = (function () {
           mitigation: "Write training programmes and staff exchanges with the big chip makers into the deal from day one — these facilities run on rare specialists the UAE would import, so the fix carries the same workforce risk it is trying to cure." },
       ],
     },
+
+    /* ---- 7 · FOOD — grow the essentials indoors --------------------------- */
+    {
+      id: "food-localisation",
+      title: "Food — grow the essentials indoors",
+      sector: "food", window: 0.35,
+      addresses: "Grain reserves cover ~150 days — but fresh produce has no reserve, and domestic protein rides on ~45 days of imported feed",
+      sponsor: { name: "ADQ (Silal) + Ministry of Climate Change & Environment", why: "ADQ owns Silal and the agri-food portfolio; the ministry owns the National Food Security Strategy the play delivers against." },
+      thesis: "Food is the strongest sector in the model — but that strength is purchasing power plus grain reserves, and both are import-facing. Two things the reserves cannot hold: the perishable layer (fresh produce spoils in days, so it arrives continuously by ship and plane), and the protein layer — the UAE's genuine self-sufficiency in eggs, chicken, milk and farmed fish runs on imported animal feed with weeks of stock, not months. The UAE has already proven half the answer at commercial scale — one of the world's largest vertical farms operates beside Al Maktoum airport today. The play: reserve what can be stored, grow indoors what cannot, secure the feed under domestic protein, and only then localise the inputs behind the farms. Grains stay imported by design — that is comparative advantage, not weakness.",
+      site: {
+        where: "Food Tech Valley (Dubai) + Silal's Al Ain agri hub",
+        why: "Food Tech Valley is the federal AgTech zone built for exactly this; Al Ain holds the country's existing farm base, packhouses and Silal's offtake network. Both sit inland, away from the coastal infrastructure a maritime shock stresses.",
+      },
+      tech: {
+        summary: "Controlled-environment agriculture: sealed, stacked growing halls where crops grow in nutrient water under LEDs, using ~95% less water than field farming — the scarce input it spends instead is electricity. That is the honest trade: indoor farming swaps food-import risk for energy-and-water dependence, which is why this play assumes the energy play's solar buildout succeeds.",
+        inputs: [
+          { name: "Seed stock (high-performance varieties)", status: "imported", note: "specialty breeding concentrates in NL / US / Japan — the quiet bottleneck" },
+          { name: "Nutrient salts & fertiliser base", status: "partial", note: "potash imported (tracked); nitrogen inputs can draw on Fertiglobe's domestic ammonia/urea" },
+          { name: "LED and climate systems", status: "imported", note: "several suppliers, long but manageable lead times" },
+          { name: "Water + power", status: "domestic", note: "desalinated water and grid power — the cross-dependency this play accepts" },
+        ],
+      },
+      partners: [
+        { name: "Crop One / Emirates Flight Catering", role: "operators of the proven Al Maktoum vertical farm — the template and the anchor customer" },
+        { name: "Silal (ADQ)", role: "domestic offtake, packhouses and farmer network — the route from harvest to shelf" },
+        { name: "Fertiglobe", role: "the Tier-3 path: blending nutrient inputs from domestic ammonia and urea" },
+      ],
+      precedent: {
+        flag: "knowledge",
+        title: "ECO 1 — the Emirates × Crop One farm already running (figures from general knowledge)",
+        facts: [
+          "Opened July 2022 beside Al Maktoum airport at ~US$40M — among the world's largest hydroponic vertical farms",
+          "Produces on the order of a million kilograms of leafy greens a year using ~95% less water than field farming — proof the model works at commercial scale in the UAE's own climate",
+        ],
+      },
+      tiers: [
+        {
+          id: "t1", name: "Tier 1 · Reserve the perishables", kind: "live", recommended: true,
+          deliverable: "A rolling frozen-and-processed reserve — produce AND protein — managed through Silal's packhouses, a 90-day strategic feed reserve at the mills so domestic poultry, dairy and aquaculture keep producing through a disruption, plus pre-contracted air-cargo capacity for fresh imports if sea routes degrade.",
+          cost: 0.60, vehicle: "Federal food-security budget + ADQ",
+          costBasis: "≈ AED 400m for cold-store capacity and rotation contracts plus ≈ AED 200m for feed silo capacity and stock. Illustrative — the carrying cost depends on how much of the basket is covered.",
+          days: 120, timeBasis: "~4 months: cold-store leasing and rotation contracts. Nothing is built; capacity exists.",
+          livePts: 0.8, ceilPts: 0, local: 0,
+          residual: "Perishables expire even frozen — rotation through school, hospital and airline kitchens is the whole game. And the feed reserve buys the protein chain time, not independence: the feed itself is still 100% imported.",
+          milestones: [["M0", "Basket defined — which produce and protein lines matter under disruption"], ["M2", "Cold-store, feed-silo and rotation contracts signed"], ["M4", "Rolling reserves live through Silal's network and the feed mills"]],
+        },
+        {
+          id: "t2", name: "Tier 2 · Scale the indoor farms", kind: "mixed",
+          deliverable: "Roughly ten ECO 1-class growing facilities across Food Tech Valley and Al Ain, sized to cover the majority of leafy-green and vegetable demand — with Silal as offtaker so the produce lands in ordinary supermarkets, not a niche.",
+          cost: 1.50, vehicle: "ADQ + Operation 300bn co-investment",
+          costBasis: "Anchored to the real ~US$40M per facility, ~10 facilities plus shared packhouse and logistics ≈ AED 1.5bn. Unit costs fall with each copy.",
+          days: 720, timeBasis: "~24 months — ECO 1 ran roughly two years from ground-break to full output, and the copies can build in parallel.",
+          livePts: 0.2, ceilPts: 1.0, local: 50,
+          residual: "Covers the perishable layer, not calories — grains and proteins stay imported by design. And the farms' own inputs (seeds, nutrients, LEDs) are still imported: the dependency narrows rather than disappears.",
+          milestones: [["M0", "Sites allocated · Crop One-class operator JV signed"], ["M8", "First tranche of growing halls up"], ["M18", "Silal offtake running · second tranche building"], ["M24", "Target capacity live"]],
+        },
+        {
+          id: "t3", name: "Tier 3 · Close the input loop", kind: "ceiling",
+          deliverable: "A Gulf seed bank and breeding programme, nutrient blending from Fertiglobe's domestic ammonia and urea, an expanded aquaculture protein line — fish convert feed roughly twice as efficiently as livestock, making it the feed-smart protein path — and partial feed substitution from insect-protein and food-waste streams, so the farms and the protein chain stop depending on weekly imports.",
+          cost: 3.0, vehicle: "ADQ + federal food-security budget",
+          costBasis: "Modelled — seed programmes and aquaculture at this scale run in the US$0.5–1bn class combined. A planning estimate until the crop list is fixed.",
+          days: 1460, timeBasis: "~4 years — breeding programmes and aquaculture certification simply take seasons, not budget.",
+          livePts: 0, ceilPts: 1.6, local: 70,
+          residual: "Calories stay globally sourced by design — the end-state is essential fresh nutrition that survives a long blockade, not autarky. The honest ceiling for a desert nation.",
+          milestones: [["Y0", "Crop list + seed-bank mandate set"], ["Y1", "Nutrient blending line at Fertiglobe agreed"], ["Y2", "Seed bank operating · aquaculture pilot"], ["Y4", "Farm inputs majority-domestic"]],
+        },
+      ],
+      premortem: [
+        { mode: "The farms trade food risk for power-and-water risk", likelihood: "High",
+          indicator: "Electricity and water share of cost per kilogram grown", tracked: true,
+          trackedWhere: "Overview → Energy & Water sector scores — the dependencies this play leans on",
+          mitigation: "Contract dedicated renewable supply (the energy play's solar buildout) and design halls to run degraded — fewer racks, not zero output — when power or water tightens." },
+        { mode: "The economics never close and the halls go dark", likelihood: "High",
+          indicator: "Cost per kilogram vs the imported equivalent, tracked per facility", tracked: false,
+          mitigation: "Copy the ECO 1 model exactly: anchor demand with airline, hospitality and institutional kitchens before building, and grow premium perishables — not commodities that ships deliver cheaper." },
+        { mode: "Seeds, nutrients — and feed — become the new bottleneck", likelihood: "Medium",
+          indicator: "Supplier concentration of the seed, nutrient and animal-feed contracts", tracked: false,
+          mitigation: "Tier 3 exists for exactly this — a seed bank, domestically blended nutrients and partial feed substitution — and until it lands, qualify seed and feed suppliers on three continents." },
+      ],
+    },
   ];
 
   /* ---- Evaluation --------------------------------------------------------
