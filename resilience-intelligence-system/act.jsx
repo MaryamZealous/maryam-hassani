@@ -86,7 +86,7 @@ function Posture({ staged, evalById }) {
 
 /* ---- Ranked queue row -------------------------------------------------- */
 function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
-  const b = prio.weakness >= 0.52 ? "critical" : prio.weakness >= 0.45 ? "high" : "moderate";
+  const b = prio.weakness >= 0.56 ? "critical" : prio.weakness >= 0.5 ? "high" : "moderate";
   return (
     <div className={`act-row band-${b} ${selected ? "sel" : ""}`} onClick={() => onSelect(p.id)}>
       <div className="act-rank mono">{String(rank).padStart(2, "0")}</div>
@@ -100,7 +100,7 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
               text: "Priority ranks the PROBLEM, not the plan you're eyeing. It's a flat blend of three things: how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own. Each factor is first rescaled to its range across the six responses — so a factor whose values naturally cluster (sector fragilities sit close together) counts with its full stated weight instead of being silently outvoted by one that spreads widely (payoffs). Priority is therefore a relative standing within this queue, not an absolute grade.",
               formula: "Priority  =  0.5 × Weakness  +  0.3 × Payoff  +  0.2 × Time-pressure   (each rescaled to its range across the queue)",
               inputs: [
-                { k: "Weakness (sector DRI)", v: prio.wdri + " / 100 → " + prio.rel.weakness + " relative" },
+                { k: "Weakness (anchored sector fragility)", v: prio.wdri + " / 100 → " + prio.rel.weakness + " relative" },
                 { k: "Payoff — points the recommended fix recovers", v: (prio.payoff * 100).toFixed(0) + " / 100 → " + prio.rel.payoff + " relative" },
                 { k: "Time-pressure", v: (p.window * 100).toFixed(0) + " / 100 → " + prio.rel.time + " relative" + (p.window >= 0.75 ? " — closing clock" : p.window <= 0.4 ? " — no clock" : "") },
                 { k: "→ Priority", v: prio.score + " / 100 (relative to the other responses)" },
@@ -111,7 +111,7 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
         </div>
         <div className="act-row-addr">{p.addresses}</div>
         <div className="act-row-stats">
-          <span className="mono" style={{ color: "var(--bc)", fontWeight: 600 }} title="Sector fragility — consequence-weighted DRI, the same number behind the sector score">DRI {prio.wdri}</span>
+          <span className="mono" style={{ color: "var(--bc)", fontWeight: 600 }} title="Sector fragility — anchored (0.6 × anchor import DRI + 0.4 × consequence-weighted mean), the exact complement of the sector score on the Overview">DRI {prio.wdri}</span>
           <span className="act-row-tier">{r.tier.name.replace(/Tier (\d) · /, "T$1 · ")}</span>
           <span className="mono act-stat-pts">+{r.pts.toFixed(1)}</span>
           <span className="mono">{ACT.fmtAED(r.cost)}</span>

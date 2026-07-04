@@ -234,7 +234,9 @@ function SectorCard({ s, onOpen }) {
     v: "DRI " + p.dri + " × consequence " + p.consequence.toFixed(2),
   }));
   driInputs.push(
-    { k: "Consequence-weighted mean DRI", v: s.wdri + " / 100  (fragility)" },
+    { k: "★ Anchor — " + s.topRisk, v: "DRI " + s.topDRI + " × 0.6 · selected by DRI × consequence" + (s.topSel != null ? " = " + s.topSel : "") + " — the most fragile import that matters" },
+    { k: "Consequence-weighted mean DRI", v: (s.wmean != null ? s.wmean : s.wdri) + " × 0.4" },
+    { k: "Anchored fragility", v: s.wdri + " / 100" },
     { k: "Resilience = 100 − " + s.wdri, v: s.score.toFixed(1) + " / 100" },
     { k: "30d change", v: (RD.trends && RD.trends.sectors && RD.trends.sectors[s.id] != null) ? RD.trends.sectors[s.id].toFixed(1) + " pts — measured from stored score history" : "no stored history yet — accumulates in this browser" },
   );
@@ -256,10 +258,10 @@ function SectorCard({ s, onOpen }) {
         <span style={{ marginLeft: "auto" }}>
           <Fx payload={{
             kicker: "Sector score · computed", title: s.name + " resilience",
-            text: s.note + " The score is computed, not hand-set: it takes the Dependency Risk Index of each tracked import, weights it by national consequence (so the imports that matter most count most), averages them, and subtracts from 100. The ★ import — the most fragile — is the one to watch.",
-            formula: "Sector  =  100  −  ( Σ(DRI × consequence) / Σ consequence )",
+            text: s.note + " The score is computed, not hand-set — and it is non-compensatory, the same rule the national headline uses: the sector's anchor import (★) carries 60% of the score, so one catastrophic dependency can never hide behind a portfolio of safer ones. The anchor is the import with the highest DRI × consequence — the most fragile import that matters — so a fragile but nationally trivial import can't seize it. The remaining 40% is the consequence-weighted average of all tracked imports, so breadth still counts.",
+            formula: "Sector = 100 − ( 0.6 × anchor DRI + 0.4 × Σ(DRI × consequence) / Σ consequence )   ·   anchor = argmax(DRI × consequence)",
             inputs: driInputs,
-            assumption: "This score is calculated straight from the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. DRI route-weights its four dimensions (Route 0.34 vs 0.22 each) and adds a buffer-fragility term — open any import's DRI drawer for the full breakdown. Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
+            assumption: "This score is calculated straight from the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. The 0.6 anchor mirrors the national 60/40 rule and is selected by DRI × consequence, so it always lands on the import whose fragility would hurt most; the ★ import's DRI drawer is the first place to look. Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
             range: s.rangeHalf != null ? { lo: slo, hi: shi, half: shalf, confidence: s.confidence } : undefined,
             sensitivity: s.sensitivity,
           }} />

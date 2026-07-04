@@ -853,7 +853,7 @@ function MethodologyView() {
   const qs = [
     { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving ceiling — your fundamentals. Live Resilience is that ceiling minus today's active load, and tracks toward it: live strength climbs back to what your fundamentals allow as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm. Structural Resilience itself breaks into three capacities — Absorb, Recover and Adapt — measured against your most-exposed sector." },
     { n: "2", t: "What is the DRI — and how is it built?", d: "The Dependency Risk Index scores how fragile a single import is from five inputs — the four supply dimensions plus the buffer — all on the same 0–100 fragility scale, so the weights are the only thing that differs. Structural fragility (0.67 of the score) blends the four supply dimensions, with Route carrying the largest weight — 0.34 against 0.22 each for the others, because dependence on a contested maritime chokepoint is a higher-severity, harder-to-mitigate risk. — Source concentration: how few suppliers provide it today. — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. Buffer fragility (0.33 of the score) adds the half a dims-only index misses: the buffer is your reaction time, so a thin buffer is itself a fragility — full credit only past ~180 days of cover. That is why Dolphin gas (30-day buffer) and LEU fuel (540-day) land at very different DRIs even with comparable dimensions." },
-    { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one. Structural Resilience anchors to the most-exposed sector — 60% most-exposed + 40% overall capacity — so one concentrated dependency stays visible behind healthy ones, while still reading the full picture." },
+    { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one — and the rule applies at both levels. Within a sector, the anchor import — the one with the highest DRI × consequence, the most fragile import that matters — carries 60% of the sector score. Nationally, Structural Resilience anchors to the most-exposed sector — 60% most-exposed + 40% overall capacity — so one concentrated dependency stays visible behind healthy ones, while still reading the full picture." },
     { n: "4", t: "How is consequence weighting calculated?", d: "It is computed, not assigned. Each import's 0–1 national-consequence weight is a blend of four publicly-grounded factors — Essentiality (how vital the end-service is), Service reliance (how much of that service rides on this input), Immediacy (continuous-flow vs slow-burn consumable) and Breadth (sectors and population touched) — combined as 0.40·ess + 0.25·svc + 0.20·imm + 0.15·brd. Piped gas scores 1.00 (powers electricity and desalination, continuous, universal); gold doré ~0.23 (a refining margin, narrow). The weight then scales each dependency's pull on its sector score and on Absorb capacity, so it moves only when the underlying facts move. Open any import on the Dependencies view to see its four factors. Distinct from the DRI, which scores supplier fragility, not national importance." },
     { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, route & partner-supply news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying its tier, and the status bar shows whether each live feed is currently connected (● Live) or temporarily simulated (○ Sim)." },
     { n: "6", t: "Does the system recommend actions?", d: "Yes — the Response & pre-mortem view closes the loop from sense → simulate → act. It holds a ranked queue of national responses. Each one is a concrete implementation brief — what gets built, where, with which technology and partners — anchored to a real precedent project and its actual cost and timeline. The one decision per response is how far to go: three scope tiers, from quick stopgap to full build. Live tiers improve today's score; ceiling tiers raise the structural ceiling. Priority ranks the problem, not the plan you pick: it blends how weak the sector is (its DRI), how much the recommended fix would recover, and any time-pressure the weakness can't show on its own — weakness leads. Speed and value-for-money aren't in the ranking; they're the lens for the scope decision." },
@@ -863,12 +863,16 @@ function MethodologyView() {
     { n: "10", t: "Why is gas modelled as two prices, not one?", d: "Because the UAE lives in two gas-price worlds at once, and a single market print hides the real risk. Contracted Dolphin gas is a fixed ~$1.50/MMBtu floor; the molecule that would replace it if Dolphin were curtailed is sea-borne LNG, priced off oil at ~12.5% of Brent (~$12 today). Losing Dolphin is therefore a price-basis flip from contract to oil-linked — roughly an 8× reprice of the marginal gas — not a volume gap against a buffer. The dashboard deliberately does not use Henry Hub (US gas, ~$3): it is the wrong price basis for the UAE." },
   ];
   const STEPS = [
-    { t: "Start with what the country must import", d: "We track " + RD.precursors.length + " supplies the UAE cannot function without — natural gas, desalination membranes, medicines, advanced chips, dollar-clearing access and more.", where: "Dependencies" },
-    { t: "Score how shaky each supply is", d: "Each import gets a fragility score built from five things: how few suppliers it has, how hard it would be to switch, how exposed its shipping route is (the most heavily weighted of the five), how reliable the seller is, and how thin its stockpile buffer is — because that buffer is your time to react.", where: "Dependencies → DRI" },
-    { t: "Weigh how much each one matters", d: "Each import also gets an importance weight — how badly the country would feel its loss, based on how essential it is and how many people and sectors rely on it.", where: "Dependencies → Consequence" },
-    { t: "Roll the imports up into 7 sectors", d: "Imports group into sectors — energy, water, health, food, defence, logistics, finance. A sector's strength is its imports' fragility, weighted by how much each one matters.", where: "Overview → Sector resilience" },
-    { t: "Set the fair-weather national strength", d: "The single weakest sector, combined with the country's ability to absorb shocks, recover and adapt, sets Structural Resilience — strength on a calm day.", where: "Overview → Structural Resilience" },
-    { t: "Subtract today's real-world pressure", d: "Live events — shipping disruptions, conflict, market stress — subtract from that baseline to give Live Resilience, the strength right now. The gap between the two is exactly where the system recommends action.", where: "Overview → Live Resilience · Response" },
+    { t: "Score each import's fragility — the DRI", f: "DRI = 0.67 × route-weighted supply fragility + 0.33 × buffer fragility",
+      d: "We track " + RD.precursors.length + " supplies the UAE cannot function without — gas, desalination membranes, medicines, chips, dollar-clearing and more. Each gets a 0–100 fragility score from four supply dimensions — source concentration, substitution difficulty, route exposure (the most heavily weighted, because shipping chokepoints are the UAE's defining exposure) and counterpart risk — plus its stockpile buffer, because a thin buffer means no time to react.", where: "Dependencies → DRI" },
+    { t: "Weigh each import's consequence", f: "Consequence = 0.40 essentiality + 0.25 service reliance + 0.20 immediacy + 0.15 breadth",
+      d: "Fragility alone isn't risk — a shaky supply of something trivial doesn't matter. Each import also gets a 0–1 weight for how badly the nation would feel its loss.", where: "Dependencies → Consequence" },
+    { t: "Roll imports up into 7 sector scores", f: "Sector = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean) · anchor = highest DRI × consequence",
+      d: "A sector's score anchors to its riskiest import — the most fragile one that matters most carries 60% — with the consequence-weighted average of all its imports as the other 40%. Non-compensatory: one critical dependency can never hide behind a portfolio of safer ones.", where: "Overview → Sector resilience" },
+    { t: "Set the calm-day ceiling — Structural Resilience", f: "Structural = 0.60 × most-exposed sector + 0.40 × capacity (Absorb · Recover · Adapt)",
+      d: "The same weakest-link rule, one level up: the single most-exposed sector carries 60%, blended with the country's coping capacity — buffers vs a 90-day benchmark, sovereign firepower and substitutability, and how many sectors have a structural plan. This is fair-weather strength; it moves monthly, not daily.", where: "Overview → Structural Resilience" },
+    { t: "Subtract today's measured pressure — Live Resilience", f: "Live = ceiling − (throughput + route news + partner news + sea state + market stress + sanctions drift)",
+      d: "Six drag terms, each measured from a live public feed and individually capped, subtract from the ceiling to give strength right now. The gap between the two scores is today's pressure — and exactly where the Response queue points.", where: "Overview → Live Resilience · Response" },
   ];
   const GLOSS = [
     ["Structural Resilience", "Fair-weather strength — how well the country copes on a calm day. Slow to change."],
@@ -877,6 +881,7 @@ function MethodologyView() {
     ["DRI", "Dependency Risk Index — a 0–100 fragility score for one import. Higher means shakier supply."],
     ["Consequence", "How badly losing an import would hurt the nation, scored 0 to 1."],
     ["Buffer", "How many days the country can keep going on existing stock if a supply stops."],
+    ["Sector resilience", "A 0–100 strength score per sector: 100 minus its anchored fragility — the anchor import's DRI carries 60%, the consequence-weighted average of all its imports 40%. The anchor is the import with the highest DRI × consequence, so the weak link that matters always shows. Runs opposite to DRI — higher is stronger, so the lowest-scoring sector is the most at risk."],
     ["Absorb · Recover · Adapt", "The three ways a country copes: take a hit, bounce back, and cut future risk."],
     ["Non-compensatory", "A strong sector can't hide a weak one — the weakest link always shows in the score."],
     ["Cascade", "A timeline of what would break first if a shock hit, as buffers run down."],
@@ -891,9 +896,9 @@ function MethodologyView() {
       </div>
 
       <div style={{ marginBottom: 22 }}>
-        <Panel title="How a national score is built" icon="layers" label="START HERE · PLAIN ENGLISH">
+        <Panel title="The model in five steps" icon="layers" label="START HERE · PLAIN ENGLISH">
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6, margin: "0 0 18px", maxWidth: 900 }}>
-            Every number on this platform is built the same way, from the ground up. Here is the whole chain in six plain steps.
+            Every number on this platform is built the same way, from the ground up — five formulas, each consuming the one below. In one sentence: <b style={{ color: "var(--ink)" }}>score what's fragile, weight it by what matters, never let averages hide the weak link, set the calm-day ceiling, subtract today's measured pressure.</b>
           </p>
           <div>
             {STEPS.map((s, i) => (
@@ -904,12 +909,16 @@ function MethodologyView() {
                 </div>
                 <div style={{ paddingBottom: i < STEPS.length - 1 ? 18 : 0 }}>
                   <div style={{ fontWeight: 600, fontSize: 14.5, marginBottom: 3 }}>{s.t}</div>
+                  {s.f && <div className="mono" style={{ fontSize: 11.5, color: "var(--accent)", background: "var(--panel-2)", border: "1px solid var(--line)", borderRadius: 6, padding: "5px 10px", margin: "2px 0 7px", display: "inline-block", maxWidth: "100%" }}>{s.f}</div>}
                   <div className="muted" style={{ fontSize: 13, lineHeight: 1.55, marginBottom: 5 }}>{s.d}</div>
                   <span className="helper" style={{ fontSize: 11 }}>In the app: <b style={{ color: "var(--accent)" }}>{s.where}</b></span>
                 </div>
               </div>
             ))}
           </div>
+          <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.55, margin: "16px 0 0", paddingTop: 12, borderTop: "1px solid var(--line)", maxWidth: 900 }}>
+            Everything else derives from these five: scenarios push sector-delta vectors through the same 60/40 anchor, the cascade runs buffers down through time, the Response queue ranks plays by 0.5 × sector fragility + 0.3 × payoff + 0.2 × time-pressure, and measured episodes recalibrate the live drag terms.
+          </p>
         </Panel>
       </div>
 
@@ -1035,6 +1044,7 @@ function MethodologyView() {
           <Panel title="Assumptions ledger" icon="book" label="EDITABLE">
             {[
               "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity (non-compensatory anchor)",
+              "Sector resilience = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean DRI); anchor = import with the highest DRI × consequence — the same weakest-link rule as the national headline, applied within each sector",
               "Capacity = equal-weight Absorb (buffers vs 90-day benchmark) · Recover (sovereign firepower + substitutability) · Adapt (sectors with a structural plan)",
               "Live Resilience = Structural ceiling − today's active load (tracks toward it); active load = maritime throughput + trade-route news + partner-supply news + sea state + market stress + sanctions drift; floored at 25",
               "Partner-supply news = adverse-only coverage of single/few-source partners (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India), weighted by each import's consequence and capped — moves Live Resilience, not the structural DRI",

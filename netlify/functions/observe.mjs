@@ -11,7 +11,7 @@
    CEILING mirrors the computed Structural Resilience in data.js — update it
    if the structural model changes materially.
 */
-const CEILING = 56.6;
+const CEILING = 54.7;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const p90 = (arr) => { const s = [...arr].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(0.9 * s.length))]; };
 

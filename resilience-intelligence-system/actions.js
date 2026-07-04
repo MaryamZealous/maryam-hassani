@@ -527,15 +527,16 @@ window.ACT = (function () {
 
        Priority = 0.5·Weakness + 0.3·Payoff + 0.2·Time-pressure
 
-       • Weakness  — how fragile the sector is: its consequence-weighted DRI,
-                     the same number behind the sector score on the Overview.
+       • Weakness  — how fragile the sector is: its anchored fragility
+                     (0.6 × anchor DRI + 0.4 × weighted mean), the exact
+                     complement of the sector score on the Overview.
        • Payoff    — points the recommended fix would recover.
        • Time-pressure — the one hand-set factor: a closing-clock the fragility
                      number can't see (e.g. an export licence open today).
 
      Each factor is min-max RESCALED to its observed range across the queue
      before weighting — otherwise a factor with a naturally narrow spread
-     (sector fragilities cluster ~0.43–0.54) is silently outvoted by one with
+     (sector fragilities cluster ~0.29–0.58) is silently outvoted by one with
      a wide spread (payoffs span 0.4–1.0), and the stated weights lie. With
      rescaling, 0.5/0.3/0.2 mean what they say and weakness genuinely leads.
      Scores are therefore RELATIVE standings within this queue, not absolutes.
@@ -544,13 +545,16 @@ window.ACT = (function () {
      they're the lens for the *scope decision* on the right. Weights editable. */
   const _recPts = (p) => { const t = p.tiers.find((x) => x.recommended) || p.tiers[0]; return t.livePts + t.ceilPts; };
   const REF_PTS = Math.max(0.1, ...PLAYS.map(_recPts));
-  // Weakness = consequence-weighted mean DRI / 100 (0–1). Same basis as the
-  // sector score (100 − that wDRI), so it always agrees with the Overview grid.
+  // Weakness = the sector's anchored fragility (0.6 × anchor DRI + 0.4 ×
+  // consequence-weighted mean) / 100, anchor selected by DRI × consequence —
+  // the exact complement of the sector score, so it agrees with the Overview.
   function sectorFragility(sectorId) {
     const ps = RD.precursors.filter((x) => x.sector === sectorId);
     if (!ps.length) return 0.5;
     const cw = ps.reduce((a, x) => a + x.consequence, 0) || 1;
-    const wdri = ps.reduce((a, x) => a + x.dri * x.consequence, 0) / cw;
+    const wmean = ps.reduce((a, x) => a + x.dri * x.consequence, 0) / cw;
+    const anchorP = ps.reduce((a, b) => (b.dri * b.consequence > a.dri * a.consequence ? b : a), ps[0]);
+    const wdri = 0.6 * anchorP.dri + 0.4 * wmean;
     return Math.min(1, wdri / 100);
   }
   const W_WEAK = 0.5, W_PAYOFF = 0.3, W_TIME = 0.2;

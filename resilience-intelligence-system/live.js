@@ -217,6 +217,21 @@ window.LIVE = (function () {
     // index into systemic-failure territory; scenarios can, and floor at 0).
     const live = clamp(ceiling - scaledDrag, 25, ceiling);
     RD.headline.live.value = +live.toFixed(1);
+    // Rewrite the drawer so it shows the actual arithmetic of THIS refresh —
+    // each drag term in points, the calibration multiplier, and the subtraction.
+    const pts = (v) => "−" + v.toFixed(2) + " pts";
+    RD.headline.live.formula = "Live = ceiling − (throughput + route news + partner news + sea state + market stress + sanctions drift)" + (calScale !== 1 ? " × " + calScale.toFixed(2) + " calibration" : "");
+    RD.headline.live.inputs = [
+      { k: "Structural ceiling", v: ceiling.toFixed(1) + " — the day's maximum, from the structural model", src: "curated" },
+      { k: "Maritime throughput", v: pts(throughputDrag) + " · transit calls vs each strait's 12-month norm, ×0.55/0.30/0.15 (Hormuz/Red Sea/Suez)", src: "ais" },
+      { k: "Trade-route news", v: pts(newsDrag) + " · closure / conflict coverage above each route's normal volume", src: "gdelt" },
+      { k: "Partner-supply news", v: pts(partnerDrag) + " · adverse coverage of single-source partners, negative-sentiment gated", src: "gdelt" },
+      { k: "Sea state", v: pts(seaStateDrag) + " · wave height above 1.2 m on chokepoint approaches", src: "meteo" },
+      { k: "Energy-market stress", v: pts(marketDrag) + " · Brent above $96 (×0.12) + LNG replacement above $14 (×0.25)", src: "yfinance" },
+      { k: "Sanctions drift", v: pts(sanctionDrag) + " · SDN entities added since session baseline, ÷200, capped at 0.5", src: "ofac" },
+      { k: "Active load (sum" + (calScale !== 1 ? " × calibration" : "") + ")", v: "−" + scaledDrag.toFixed(2) + " pts", src: "curated" },
+      { k: "Live = " + ceiling.toFixed(1) + " − " + scaledDrag.toFixed(2), v: live.toFixed(1) + " / 100 · recomputed every refresh", src: "curated" },
+    ];
     // measured 24h trend — vs the stored snapshot history (see initTrends).
     if (RD.trends) RD.trends.live = (RD._trendBase24 && RD._trendBase24.live != null) ? +(live - RD._trendBase24.live).toFixed(1) : null;
 
@@ -339,8 +354,8 @@ window.LIVE = (function () {
      Headline and sector deltas come from PERSISTED SNAPSHOTS of the computed
      scores, never from seeded literals: the 24h delta compares against the
      newest snapshot ≥20 h old, the 30-day deltas against the newest ≥25 days
-     old. With no old-enough history the trend is null and the UI says
-     "no history yet" instead of dressing a seed up as a measurement.
+     old. With no old-enough history the trend is null and the UI shows
+     a dash instead of dressing a seed up as a measurement.
      Snapshots are saved at most once per 6 h under their own storage key. */
   (function initTrends() {
     const KEY = "ris_trend_snaps_v1";

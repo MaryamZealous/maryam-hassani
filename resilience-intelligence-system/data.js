@@ -59,7 +59,7 @@ window.RD = (function () {
         { k: "Counterpart / sanctions", v: "rise in total SDN entities since session baseline (OpenSanctions mirror)", src: "ofac" },
         { k: "Live = ceiling − active load", v: "recomputed every refresh from the live drivers", src: "curated" },
       ],
-      assumption: "Live Resilience = structural ceiling − today's active load. Maritime disruption enters through measured vessel throughput, which already reflects how carriers reroute as tension rises — so the Hormuz and Red Sea events shown elsewhere are the causes of that measured drop, presented for context, and are not added to the score a second time.",
+      assumption: "Live Resilience = structural ceiling − today's active load. Each drag term is capped so no single feed can swamp the score, and the total is floored at 25 — day-to-day pressure alone can't read as systemic failure (stress-test scenarios can, and floor at 0). Maritime disruption enters through measured vessel throughput, which already reflects how carriers reroute as tension rises — so the Hormuz and Red Sea events shown elsewhere are the causes of that measured drop, presented for context, and are not added to the score a second time.",
     },
   };
 
@@ -69,7 +69,7 @@ window.RD = (function () {
   // only editable inputs are the display name and the plain note. The `trend`
   // literal is LEGACY and no longer drives any UI arrow — displayed 24h/30d
   // trends come from stored score-snapshot history (see initTrends in live.js);
-  // with no old-enough history the UI says "no history yet", never a seed.
+  // with no old-enough history the UI shows a dash, never a seed.
   const sectors = [
     { id: "energy", name: "Energy", trend: -1.7,
       note: "Power and desalination draw on one shared gas envelope, so they move together under load. The acute exposure is gas-side: piped Dolphin gas from Qatar is the highest-consequence input in the model — and because Dolphin is a fixed subsea pipeline (not a maritime chokepoint), and UAE crude exports bypass Hormuz via the Fujairah pipeline, Energy carries no oil-import chokepoint penalty. Its risk is single-counterpart concentration and a contract→oil-linked price-basis flip, not a Strait-of-Hormuz crude story. Grid transformers and LEU fuel round out the established import lines. The clean-energy buildout adds a newer class of dependency — solar PV, battery storage and copper — that swaps some gas-reliance for China-concentrated processing risk." },
@@ -497,22 +497,28 @@ window.RD = (function () {
       p.dri = Math.round(DRI_STRUCT_W * structFrag + DRI_BUFFER_W * bufferFrag);
     });
 
-    // 1 · SECTOR RESILIENCE = 100 − consequence-weighted mean DRI of the
-    //     sector's tracked critical imports. (DRI is a 0–100 fragility score;
-    //     higher = more fragile, so a sector loaded with fragile, high-
-    //     consequence imports scores low.) The 30-day trend is preserved.
+    // 1 · SECTOR RESILIENCE = 100 − (0.6 × anchor DRI + 0.4 × consequence-
+    //     weighted mean DRI). Non-compensatory within the sector, mirroring the
+    //     national 60/40 anchor. The anchor import is selected by DRI ×
+    //     consequence — the most fragile import that MATTERS — so a fragile but
+    //     nationally trivial import can never seize the anchor; its raw DRI is
+    //     then used so the score stays on the 0–100 fragility scale.
     sectors.forEach((s) => {
       const ps = precursors.filter((p) => p.sector === s.id);
       const cw = ps.reduce((a, p) => a + p.consequence, 0) || 1;
-      const wdri = ps.reduce((a, p) => a + p.dri * p.consequence, 0) / cw;
+      const wmean = ps.reduce((a, p) => a + p.dri * p.consequence, 0) / cw;
+      const worst = ps.reduce((a, b) => (b.dri * b.consequence > a.dri * a.consequence ? b : a), ps[0]);
+      const wdri = 0.6 * worst.dri + 0.4 * wmean;
       const delta = s.trend || 0;
       s.score = round1(100 - wdri);
       s.prev = round1(s.score - delta);
-      const top = ps.reduce((a, b) => (b.dri > a.dri ? b : a), ps[0]);
-      s.topRisk = top.name;
-      s.topDRI = top.dri;
+      s.topRisk = worst.name;
+      s.topDRI = worst.dri;
+      s.topSel = round1(worst.dri * worst.consequence);
       s.precursors = ps.length;
       s.wdri = round1(wdri);
+      s.wmean = round1(wmean);
+      s.anchorW = 0.6;
     });
 
     // 2 · COPING CAPACITY — Absorb · Recover · Adapt, each 0–100.
@@ -580,8 +586,10 @@ window.RD = (function () {
       sectors.forEach((s) => {
         const ps = precursors.filter((p) => p.sector === s.id);
         const cwt = ps.reduce((a, p) => a + cons[p.id], 0) || 1;
-        const wdri = ps.reduce((a, p) => a + clampN(p.dri + o.driJ, 0, 100) * cons[p.id], 0) / cwt;
-        sScore[s.id] = 100 - wdri;
+        const wmean2 = ps.reduce((a, p) => a + clampN(p.dri + o.driJ, 0, 100) * cons[p.id], 0) / cwt;
+        const anchorP2 = ps.reduce((a, b) => (clampN(b.dri + o.driJ, 0, 100) * cons[b.id] > clampN(a.dri + o.driJ, 0, 100) * cons[a.id] ? b : a), ps[0]);
+        const worst2 = clampN(anchorP2.dri + o.driJ, 0, 100);
+        sScore[s.id] = 100 - (0.6 * worst2 + 0.4 * wmean2);
       });
       const cwAll = precursors.reduce((a, p) => a + cons[p.id], 0);
       const aw = precursors.reduce((a, p) => a + cons[p.id] * Math.min(p.buffer / o.bench, 1), 0);
