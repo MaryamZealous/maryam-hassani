@@ -453,7 +453,7 @@ function TradeRouteNews() {
     <Panel title="Supply & trade-route news monitor" icon="globe" label="GOOGLE NEWS · CLOSURE, CONFLICT & PARTNER-SUPPLY" style={{ marginTop: 16 }}
       right={<span style={{ marginLeft: "auto" }}><SourceTag src="gdelt" /></span>}>
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
-        With no free real-time vessel feed, <b>news is the early detector for supply disruption</b>. We scan world
+        Vessel data (PortWatch) updates weekly, so <b>news is the early detector between updates</b>. We scan world
         media every few minutes across two fronts — <b>trade-route closures</b> (Hormuz, Red Sea, Suez) and <b>partner-supply
         shocks</b>, led by the single- and few-source dependencies (Qatar gas, Taiwan chips, Kazakhstan fuel), then China,
         India and the Brazil/Argentina feed-grain belt. Partner lanes count <b>only adverse coverage</b> — a "deal signed" doesn't add pressure, a halt or export ban does.
@@ -683,7 +683,7 @@ function CascadeView() {
       <div className="grid cols-3" style={{ marginTop: 16 }}>
         {[
           { n: "1", t: "Buffers, not bangs", d: "Nothing fails instantly. Each import carries a stated buffer in days; the shock simply starts the clock." },
-          { n: "2", t: "Consequence-weighted", d: "RO membranes (0.87) and the gas balancing input (1.00) propagate hard; gold doré (0.23) barely moves the system." },
+          { n: "2", t: "Consequence-weighted", d: (() => { const c = (id) => { const p = RD.precursors.find((x) => x.id === id); return p ? p.consequence.toFixed(2) : "?"; }; return `RO membranes (${c("ro")}) and the gas balancing input (${c("gas")}) propagate hard; gold doré (${c("golddore")}) barely moves the system.`; })() },
           { n: "3", t: "Non-compensatory end", d: "Once Water turns critical, the national score is capped — strong Finance and Food cannot buy it back." },
         ].map((c) => (
           <div className="method-q" key={c.n} style={{ marginBottom: 0 }}>
@@ -727,7 +727,7 @@ function resolveWatch(w) {
   if (w.k === "market") {
     const m = RD.indicators.find((x) => x.id === w.id);
     if (!m) return null;
-    return { label: m.name, value: m.value + (m.unit ? " " + m.unit : ""), ref: m.short || m.note || "live market feed", band: m.status || "good", src: m.src, live: true, fx: m.fx };
+    return { label: m.name, value: m.value + (m.unit ? " " + m.unit : ""), ref: m.short || m.note || "live market feed", band: m.status || "good", src: m.src, live: true, fx: w.id === "gasbasis" ? gasBasisFx() : m.fx };
   }
   if (w.k === "note") return { note: true, label: w.t };
   return null;

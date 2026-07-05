@@ -232,16 +232,17 @@ function SectorCard({ s, onOpen }) {
   const shi = Math.min(100, +(s.score + shalf).toFixed(1));
   const ps = RD.precursors.filter((p) => p.sector === s.id);
   const cw = ps.reduce((a, p) => a + p.consequence, 0) || 1;
+  const sumSel = ps.reduce((a, p) => a + p.dri * p.consequence, 0);
   const driInputs = ps.map((p) => ({
     k: (p.name === s.topRisk ? "★ " : "") + p.name,
-    v: "DRI " + p.dri + " × consequence " + p.consequence.toFixed(2),
+    v: "DRI " + p.dri + " × consequence " + p.consequence.toFixed(2) + " = " + (p.dri * p.consequence).toFixed(1),
     go: { view: "dependencies", opts: { sector: s.id, import: p.id }, hint: "Open " + p.name + " in Dependencies — sources, buffer, DRI breakdown" },
   }));
   driInputs.push(
-    { k: "★ Anchor — " + s.topRisk, v: "DRI " + s.topDRI + " × 0.6 · selected by DRI × consequence" + (s.topSel != null ? " = " + s.topSel : "") + " — the most fragile import that matters" },
-    { k: "Consequence-weighted mean DRI", v: (s.wmean != null ? s.wmean : s.wdri) + " × 0.4" },
-    { k: "Anchored fragility", v: s.wdri + " / 100" },
-    { k: "Resilience = 100 − " + s.wdri, v: s.score.toFixed(1) + " / 100" },
+    { k: "Step 1 · Pick the anchor ★", v: s.topRisk + " has the highest DRI × consequence (" + (s.topSel != null ? s.topSel : "—") + " above) — the most fragile import that matters. That product only SELECTS it; its raw DRI (" + s.topDRI + ") is what enters the formula, keeping the score on the 0–100 scale." },
+    { k: "Step 2 · Weighted mean DRI", v: "Σ(DRI × consequence) ÷ Σ consequence = " + sumSel.toFixed(1) + " ÷ " + cw.toFixed(2) + " = " + (s.wmean != null ? s.wmean : s.wdri) },
+    { k: "Step 3 · Anchored fragility", v: (() => { const a = +(0.6 * s.topDRI).toFixed(1); const b = +(s.wdri - a).toFixed(1); return "0.6 × " + s.topDRI + " + 0.4 × " + (s.wmean != null ? s.wmean : s.wdri) + " = " + a.toFixed(1) + " + " + b.toFixed(1) + " = " + s.wdri; })() },
+    { k: "Step 4 · Resilience", v: "100 − " + s.wdri + " = " + s.score.toFixed(1) + " / 100" },
     { k: "30d change", v: (RD.trends && RD.trends.sectors && RD.trends.sectors[s.id] != null) ? RD.trends.sectors[s.id].toFixed(1) + " pts — measured from stored score history" : "no stored history yet — accumulates in this browser" },
   );
   return (

@@ -224,7 +224,7 @@ window.LIVE = (function () {
     RD.headline.live.formula = "Live = ceiling − (throughput + route news + partner news + sea state + market stress + sanctions drift)" + (calScale !== 1 ? " × " + calScale.toFixed(2) + " calibration" : "");
     RD.headline.live.inputs = [
       { k: "Structural ceiling", v: ceiling.toFixed(1) + " — the day's maximum, from the structural model", src: "curated" },
-      { k: "Maritime throughput", v: pts(throughputDrag) + " · transit calls vs each strait's 12-month norm, ×0.55/0.30/0.15 (Hormuz/Red Sea/Suez)", src: "ais" },
+      { k: "Maritime throughput", v: pts(throughputDrag) + " · transit calls vs each strait's 12-month norm — per % drop: Hormuz ×0.047 · Red Sea ×0.020 · Suez ×0.004", src: "ais" },
       { k: "Trade-route news", v: pts(newsDrag) + " · closure / conflict coverage above each route's normal volume", src: "gdelt" },
       { k: "Partner-supply news", v: pts(partnerDrag) + " · adverse coverage of single-source partners, negative-sentiment gated", src: "gdelt" },
       { k: "Sea state", v: pts(seaStateDrag) + " · wave height above 1.2 m on chokepoint approaches", src: "meteo" },
