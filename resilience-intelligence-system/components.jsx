@@ -211,8 +211,8 @@ function ScoreCard({ d }) {
           range: d.rangeHalf != null ? { lo, hi, half, confidence: conf } : undefined,
           sensitivity: d.sensitivity,
           links: d.name === "Live Resilience"
-            ? [{ label: "Today's live drivers · Live signals", view: "threats" }, { label: "Stress-test the score · Scenarios", view: "scenarios" }, { label: "Model chain & ledger · How this works", view: "methodology" }]
-            : [{ label: "The imports behind the weak link · Dependencies", view: "dependencies" }, { label: "Raise the ceiling · Response & pre-mortem", view: "act" }, { label: "Model chain & ledger · How this works", view: "methodology" }],
+            ? [{ label: "Today's live drivers · Live signals", view: "threats" }, { label: "Stress-test the score · Scenarios", view: "scenarios" }, { label: "Model chain & ledger · How it works", view: "methodology" }]
+            : [{ label: "The imports behind the weak link · Dependencies", view: "dependencies" }, { label: "Raise the ceiling · Response & pre-mortem", view: "act" }, { label: "Model chain & ledger · How it works", view: "methodology" }],
           context: [
             { h: dr.kicker, t: dr.text },
             d.cap ? { h: "Reading the scale", t: d.cap.lead + " " + d.cap.body } : null,
@@ -271,8 +271,7 @@ function SectorCard({ s, onOpen }) {
             sensitivity: s.sensitivity,
             links: [
               { label: "The " + ps.length + " tracked " + s.name + " imports · Dependencies", view: "dependencies", opts: { sector: s.id } },
-              { label: "Responses for " + s.name + " · Response & pre-mortem", view: "act" },
-              { label: "How sector scores roll up · How this works", view: "methodology" },
+              { label: "Responses for " + s.name + " · Response & pre-mortem", view: "act", opts: { sector: s.id } },
             ],
           }} />
         </span>

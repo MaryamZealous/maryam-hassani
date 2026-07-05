@@ -867,7 +867,7 @@ function MethodologyView() {
     { n: "6", t: "Does the system recommend actions?", d: "Yes — the Response & pre-mortem view holds a ranked queue of national responses. Each is a concrete implementation brief — what gets built, where, with which technology and partners — anchored to a real precedent project with its actual cost and timeline. The one decision per response is scope: three tiers, from quick stopgap to full build. Live tiers improve today's score; ceiling tiers raise the structural ceiling. Priority ranks the problem, not the plan you pick — weakness leads, blended with payoff and time-pressure." },
     { n: "7", t: "What is a pre-mortem?", d: "A post-mortem asks why something failed after the fact; a pre-mortem flips the timeline — it assumes a response has already failed and works backwards to explain how, surfacing weak points before you commit. Every recommendation carries one: the named ways it could fail, each with a likelihood, the leading indicator to watch, and a mitigation. A recommendation is only as trustworthy as its failure modes." },
     { n: "8", t: "What happens when a live feed is unreachable?", d: "The system never quietly substitutes invented data for measured data. Each feed is marked ● Live in the status bar while connected; if a source goes down, that one signal falls back to a clearly-marked simulation (○ Sim) anchored to its last known values — and the driver attribution on the Overview keeps showing exactly which inputs are measured and which are modelled." },
-    { n: "9", t: "Why do the scores show a range and a confidence label?", d: "A single fixed number implies precision the model does not have, so every headline and sector score shows a ± range and a confidence label. The range comes from re-running the whole model with each editable assumption nudged to the high and low ends of what's reasonable. Open any score's explainer to see which assumptions move it most — the longest bar is the one to pin down first. A tighter range earns a higher confidence label." },
+    { n: "9", t: "Why do the scores show a ± range?", d: "A single fixed number implies precision the model does not have, so every headline and sector score is shown with a ± range — the band you see on each score track. The range comes from re-running the whole model with each editable assumption pushed to the high and low ends of what's reasonable; the widest swings set its width. Open any score's explainer to see that range broken down — how far it moves, a plain-language confidence read, and which assumptions move it most, longest bar first — so a tighter range is a more settled score." },
     { n: "10", t: "Why is gas modelled as two prices, not one?", d: "Because the UAE lives in two gas-price worlds at once. Contracted Dolphin gas is a fixed ~$1.50/MMBtu floor; its replacement if curtailed is sea-borne LNG at ~12.5% of Brent (~$12 today). Losing Dolphin is a price-basis flip — roughly an 8× reprice — not a volume gap. Henry Hub (US gas, ~$3) is the wrong price basis for the UAE and is not used." },
   ];
   const STEPS = [
@@ -899,7 +899,7 @@ function MethodologyView() {
   return (
     <div className="view fade-in">
       <div className="view-head">
-        <div className="view-title">How this works</div>
+        <div className="view-title">How it works</div>
         <div className="view-sub">The whole model, laid bare — an illustrative, transparent example, not an official or classified assessment. Nothing here is a black box.</div>
       </div>
 
@@ -1053,13 +1053,13 @@ function MethodologyView() {
             {(() => {
               const GROUPS = [
                 ["Scoring the imports & sectors", [
-                  "DRI = 0.67 × structural fragility (Route 0.34 · Concentration / Substitution / Counterpart 0.22 each) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — a thin buffer is itself a fragility",
+                  "DRI = 0.67 × structural fragility (Route 0.34 · Concentration / Substitution / Counterpart 0.22 each) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — a thin buffer is itself a fragility. The 180-day horizon here is the time to re-source a dependency for good (build new supply lines), so a buffer only fully removes fragility once it covers that whole re-sourcing window",
                   "Sector = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean); anchor = highest DRI × consequence — the same weakest-link rule as the national headline",
                   "Buffer days are curated estimates ('est.') or reported policy ('stated') — provenance shown on each import in Dependencies",
                 ]],
                 ["The two headline scores", [
                   "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity (non-compensatory anchor)",
-                  "Capacity = equal-weight Absorb (consequence-weighted buffers vs a 90-day benchmark) · Recover (sovereign firepower + re-sourcing ease) · Adapt (plan depth × speed from the response catalog; 2.5 pts & 24 months = full credit; no play = 0)",
+                  "Capacity = equal-weight Absorb (consequence-weighted buffers vs a 90-day operational-cover benchmark — the days-of-cover that earn full credit, set to match the national 90-day strategic reserve, a different question from DRI's 180-day re-sourcing horizon) · Recover (sovereign firepower + re-sourcing ease) · Adapt (plan depth × speed from the response catalog; 2.5 pts & 24 months = full credit; no play = 0)",
                   "Capacity is compensatory by design (complementary coping modes) and scores stocks, money and plans only — redundancy, workforce and institutions are tracked qualitatively in the Control layer",
                   "Financial firepower = 100 × min(liquidity-weighted deployable sovereign capital / $750bn stress benchmark, 1) — liquidity factors 1.0 / 0.6 / 0.3; the benchmark ≈ 18 months of the national import bill (est.)",
                   "Axis goalposts: 100 = autarky (unreachable); ~72 = realistic frontier — display anchors only, feeding no score",
@@ -1069,19 +1069,18 @@ function MethodologyView() {
                   "Live Resilience = ceiling − active load (throughput + route news + partner news + sea state + market stress + sanctions drift); each term capped, total floored at 25",
                   "Partner-supply news counts adverse-only coverage of single/few-source partners, scaled by the highest-consequence import on that partner — it moves Live, never the structural DRI",
                   "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
-                  "News-lane baselines are hand-set per lane; pressure = (2-day volume / baseline − 1) / 2, capped",
+                  "Each news lane (route-closure, partner-supply, etc.) has a manually set 'normal' article-volume baseline. Pressure = (last 2 days' volume ÷ that baseline − 1) ÷ 2, then capped at 1. In plain terms: coverage has to run at 3× its normal volume to register full pressure (1.0), and it can't read higher than that — so a single noisy lane can't swamp the score",
                   "Trends compare stored score snapshots in this browser (24h / 30d); with no old-enough history the UI shows a dash, never a seed",
                   "OFAC weekly 'new designations' is an illustrative stand-in; only the live total-entity-count drift enters the score",
                   "Gas is a two-state node: ~$1.50/MMBtu contract floor (reported estimate) vs marginal LNG ≈ 12.5% of Brent — a price-basis flip, not a volume gap; Henry Hub is not used",
                 ]],
                 ["Scenarios & validation", [
-                  "Scenario overall = 0.60 × worst-hit sector delta + 0.40 × mean delta — computed from the sector deltas, never hand-set; Combined Maximum's deltas are a hand-authored worst case",
-                  "Episode log: opens when live falls 3+ pts below baseline with ≥3 feeds live, closes on recovery to within 1 pt — rules run centrally on one shared log, so no visitor can invent history",
-                  "Calibration applies measured ÷ anchor to the live drag layer (clamped 0.5–1.5×) — per-browser, revertable, always disclosed",
+                  "A scenario's overall impact is computed from how far each sector's score drops: 0.60 × the worst-hit sector's drop + 0.40 × the average drop across all sectors — so a scenario is judged mostly by its weakest link, partly by its breadth. This figure is always derived from the per-sector drops, never typed in by hand. Only 'Combined Maximum' has hand-authored per-sector drops (a deliberate worst case); its overall is still computed from them the same way",
+                  "The episode log records genuine stress spells. An episode opens when Live drops 3+ points below its baseline with at least 3 feeds live, and closes once Live recovers to within 1 point",
                 ]],
                 ["Response engine", [
                   "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure, each rescaled to its range across the queue",
-                  "Response effects are independent & additive: Live′ = min(Ceiling′, live + staged points)",
+                  "On the Response view you can stage one or more responses to preview their combined effect. Each response contributes a fixed number of points on its own — the model assumes no interaction or diminishing returns between them, so staged points simply add up. The resulting live score = today's live + those staged points, but never above the new ceiling (which the ceiling-raising responses may themselves have lifted): relief now can't push you past the best score the system can structurally reach",
                 ]],
               ];
               let n = 0;

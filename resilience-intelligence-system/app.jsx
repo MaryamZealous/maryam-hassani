@@ -18,13 +18,13 @@ const NAV = [
     { id: "control", label: "Control layer", icon: "shield" },
   ]},
   { group: "Understand", items: [
-    { id: "methodology", label: "How this works", icon: "book" },
+    { id: "methodology", label: "How it works", icon: "book" },
   ]},
 ];
 const TITLES = {
   overview: "Overview", threats: "Live signals", map: "Asset map", cascade: "Cascade",
   scenarios: "Scenarios", dependencies: "Dependencies", act: "Response & pre-mortem", control: "Control layer",
-  methodology: "How this works",
+  methodology: "How it works",
 };
 
 function IntroOverlay({ onEnter, dir }) {
@@ -74,7 +74,7 @@ function App() {
       case "cascade": return <CascadeView />;
       case "scenarios": return <ScenariosView />;
       case "dependencies": return <DependenciesView initial={opts} />;
-      case "act": return <ActView />;
+      case "act": return <ActView initial={opts} />;
       case "control": return <ControlView />;
       case "methodology": return <MethodologyView />;
       default: return <OverviewView go={go} />;

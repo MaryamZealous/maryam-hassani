@@ -360,10 +360,13 @@ function PlayDetail({ p, r, onPickTier, isStaged, onStage }) {
 }
 
 /* ---- Main view --------------------------------------------------------- */
-function ActView() {
+function ActView({ initial = {} }) {
   const [states, setStates] = useState({});            // id → { tier: index }
   const [staged, setStaged] = useState(() => new Set());
-  const [selId, setSelId] = useState(ACT.PLAYS[0].id);
+  const [selId, setSelId] = useState(() => {
+    const m = initial.sector && ACT.PLAYS.find((p) => p.sector === initial.sector);
+    return m ? m.id : ACT.PLAYS[0].id;
+  });
 
   const set = (id, patch) => setStates((s) => ({ ...s, [id]: { ...s[id], ...patch } }));
   const evalById = (id) => ACT.evalPlay(ACT.PLAYS.find((p) => p.id === id), states[id]);

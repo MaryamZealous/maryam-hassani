@@ -427,17 +427,17 @@ window.ACT = (function () {
     /* ---- 6 · DEFENCE/TECH — compute under the open window ------------------ */
     {
       id: "compute-localisation",
-      title: "Computer chips — stock up while the door is open",
+      title: "Computer chips — build a reserve while access holds",
       sector: "defence", window: 0.92,
       addresses: "Advanced chips depend on a US export licence — which policy could revoke",
       sponsor: { name: "Mubadala + AIATC (AI & Advanced Technology Council)", why: "Mubadala owns GlobalFoundries and the realistic build path; AIATC owns the licence relationship the stockpile depends on." },
-      thesis: "The hard limit on advanced chips is not money — it is US export licences: a door that is open today under the UAE–US AI agreement, and which a policy change in Washington could shut faster than any factory can be built. So the honest plan runs two clocks at once: buy chips now while the door is open (months), and build what is realistically buildable here (years) — knowing the most advanced chips will never be made locally.",
+      thesis: "The binding constraint on advanced chips is not capital but US export licences: access is available today under the UAE–US AI agreement, though a change in US policy could withdraw it well before any domestic fab could come online. The plan therefore works on two timelines at once: secure chips now, while access holds (months), and build the capability that is realistically achievable here (years) — recognising that the most advanced chips are unlikely to be manufactured domestically.",
       site: {
         where: "Stockpile: G42/Khazna secure facilities, Abu Dhabi · Build: KEZAD chip campus",
         why: "Khazna's data centres already hold and run top-end chips under the current licences; KEZAD has the industrial base for an assembly-and-test campus near the talent pool. The planned Stargate UAE campus anchors the demand locally.",
       },
       tech: {
-        summary: "Two separate layers. One: a national reserve of top-end AI chips — bought, not built — under today's licences. Two: local chip 'finishing' (assembling, testing and packaging chips), and eventually a factory for older-generation chips. Only three companies on earth can make the most advanced chips — any plan that pretends the UAE will be the fourth will fail.",
+        summary: "Two separate layers. One: a national reserve of top-end AI chips — bought, not built — under today's licences. Two: local chip 'finishing' (assembling, testing and packaging chips), and eventually a factory for older-generation chips. Only a few companies worldwide can manufacture the most advanced chips, so the plan does not assume the UAE will join them; it concentrates on the capabilities that are realistically attainable.",
         inputs: [
           { name: "Top-end AI chips (NVIDIA-class)", status: "imported", note: "by design — depends on US licences and the maker's allocation" },
           { name: "Assembly & test equipment", status: "imported", note: "long waits, but several suppliers exist" },
@@ -455,7 +455,7 @@ window.ACT = (function () {
         title: "Stargate UAE + the US–UAE AI agreement (figures from general knowledge)",
         facts: [
           "May 2025: a US–UAE agreement opened the door, alongside 'Stargate UAE' — a planned giant AI campus in Abu Dhabi (G42 with OpenAI, Oracle, NVIDIA, Cisco, SoftBank), first phase targeted for 2026",
-          "Nov 2025: G42 received approval to import advanced NVIDIA chips — concrete proof the door is open today",
+          "Nov 2025: G42 received approval to import advanced NVIDIA chips — confirming that imports are permitted under current policy",
           "GlobalFoundries: owned by Abu Dhabi's Mubadala, one of the world's top makers of older-generation chips — the UAE already owns the realistic build path",
         ],
       },
@@ -465,9 +465,9 @@ window.ACT = (function () {
           deliverable: "Buy top-end AI chips and spares in advance, under today's licences, into secure storage — a strategic compute reserve purchased while policy allows it.",
           cost: 3.5, vehicle: "SWF liquid capital + G42",
           costBasis: "≈ AED 3.5bn buys roughly 25–30k top-class AI chips at current prices — enough to keep national-priority systems running, not to power the whole AI build-out. Illustrative.",
-          days: 180, timeBasis: "~6 months — the wait is the maker's delivery queue, not the money. The licence risk says: start now.",
+          days: 180, timeBasis: "~6 months — the wait is the maker's delivery queue, not the money. The licence risk argues for starting promptly.",
           livePts: 0.9, ceilPts: 0, local: 0,
-          residual: "Chips lose value fast as new generations arrive, and the licence dependency itself is untouched — this rents time against a policy reversal, nothing more.",
+          residual: "Chips lose value quickly as new generations arrive, and the licence dependency itself remains — this buys time against a policy reversal but does not reduce the underlying reliance.",
           milestones: [["D0", "Allocation secured under today's licences"], ["M3", "First deliveries into secure storage"], ["M6", "Reserve complete · refresh cycle set"]],
         },
         {
@@ -495,8 +495,8 @@ window.ACT = (function () {
         { mode: "Washington changes its mind", likelihood: "Medium",
           indicator: "US export-control rule changes or blacklist actions", tracked: true,
           trackedWhere: "Live signals → trade-policy news lanes & OFAC sanctions feed",
-          mitigation: "Execute the stockpile immediately while the door is open, and qualify chips from allied factories too — today's approval is a policy, not a promise, and can reverse with one election." },
-        { mode: "Chasing a factory that cannot be built", likelihood: "High",
+          mitigation: "Execute the stockpile promptly while access holds, and qualify chips from allied factories too — today's approval is a policy rather than a guarantee, and could be reversed by a change in administration." },
+        { mode: "Pursuing a fab beyond realistic reach", likelihood: "High",
           indicator: "The gap between what the UAE could realistically make and what it needs", tracked: false,
           mitigation: "Aim at the realistic rungs — finishing, testing, and older-generation chips through GlobalFoundries — and cover the cutting edge with the stockpile plus alliances. Only a handful of firms can make the most advanced chips; no plan changes that." },
         { mode: "The factory exists, but the people do not", likelihood: "Medium",
