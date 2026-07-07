@@ -1,1 +1,1 @@
-{"ok":false,"note":"Placeholder — replaced with real GDELT data at deploy time by scripts/prefetch-conflict.js. Until a build runs, the Conflict feed reads SIM."}
+{"ok":true,"byCountry":{"Yemen":2859,"Sudan":1340},"gulf":0,"events":4199,"since":"2026-06-07 (GDELT, 30-day conflict coverage)","generated":"2026-07-07T21:18:05.544Z"}
