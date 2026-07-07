@@ -1,0 +1,50 @@
+name: Refresh conflict data
+
+# Keeps resilience-intelligence-system/conflict.json fresh with real GDELT data.
+# GDELT is too slow to fetch at page-load or in a serverless function, so we
+# fetch it here (GitHub's runners have network + time), commit the result, and
+# let Netlify redeploy the updated file.
+
+on:
+  # Once a day (06:00 UTC). 30-day conflict volume moves slowly, so daily is ample.
+  schedule:
+    - cron: "0 6 * * *"
+  # Lets you run it on demand from the Actions tab ("Run workflow").
+  workflow_dispatch: {}
+  # Runs once as soon as this workflow file is added, to generate the first
+  # real conflict.json. Scoped to this file so the conflict.json commits below
+  # never re-trigger it (no loop).
+  push:
+    paths:
+      - ".github/workflows/refresh-conflict.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Prefetch GDELT conflict coverage
+        run: node scripts/prefetch-conflict.js
+
+      - name: Commit conflict.json if it changed
+        run: |
+          if git diff --quiet -- resilience-intelligence-system/conflict.json; then
+            echo "conflict.json unchanged — nothing to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add resilience-intelligence-system/conflict.json
+            git commit -m "chore: refresh conflict.json from GDELT"
+            git push
+            echo "Committed fresh conflict.json."
+          fi
