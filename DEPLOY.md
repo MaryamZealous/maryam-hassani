@@ -30,12 +30,51 @@ So Conflict is fetched **at build time**, not at request time:
 
 No API key is required — GDELT DOC 2.0 is free and keyless.
 
-## Keeping it fresh
+## Keeping it fresh — automatic (GitHub Action)
 
-The prefetch runs on every deploy. To refresh conflict data automatically
-without a code change, enable a **Netlify Scheduled Build** (Site settings →
-Build & deploy → Build hooks / scheduled builds), e.g. once daily. 30-day
-conflict volume barely moves hour to hour, so daily is plenty.
+`.github/workflows/refresh-conflict.yml` runs `scripts/prefetch-conflict.js`
+on GitHub's runners (which have the network + time GDELT needs), then commits
+the refreshed `conflict.json` back to the repo:
+
+- **Daily** at 06:00 UTC (schedule), and on-demand from the **Actions** tab
+  ("Run workflow"). It also runs once the first time the workflow file lands, to
+  generate the first real file.
+- Each commit it makes triggers Netlify to redeploy with fresh data — **as long
+  as your Netlify site builds from this GitHub repo** (see below).
+
+### One requirement: Netlify must deploy FROM GitHub
+
+For the automation to reach the live site, the Netlify site has to be connected
+to this repo (not a manual drag-drop site):
+
+1. Netlify → **Add new site → Import an existing project → GitHub** →
+   pick `MaryamZealous/maryam-hassani`.
+2. Leave build settings blank — `netlify.toml` already sets the publish dir,
+   functions dir, and the prefetch build command.
+3. Deploy. From now on every push (including the Action's daily commit)
+   auto-deploys, and the build also regenerates `conflict.json`.
+
+If you keep deploying by drag-drop instead, the Action still refreshes the file
+in GitHub, but you'd need to pull it into your upload — so the Git connection is
+what makes it truly hands-off.
+
+### Adding the workflow file
+
+`.github` is a hidden folder, so a Finder drag-upload may skip it. Surest way:
+on GitHub, **Add file → Create new file**, name it
+`.github/workflows/refresh-conflict.yml`, paste the contents from this repo, and
+commit.
+
+## Manual one-off refresh (no GitHub Action)
+
+Run it on your own machine, then upload the folder:
+
+```
+node scripts/prefetch-conflict.js
+```
+
+It prints per-country counts and writes real data into
+`resilience-intelligence-system/conflict.json`.
 
 ## The request-time function (optional)
 

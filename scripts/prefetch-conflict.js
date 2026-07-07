@@ -40,22 +40,24 @@ async function fetchCountry(country, attempt = 1) {
     "&mode=timelinevolraw&format=json&timespan=1m";
 
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 45000); // build can afford to wait
+  const timer = setTimeout(() => ctrl.abort(), 60000); // build can afford to wait
   try {
     const res = await fetch(url, { signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 (ris-conflict-prefetch)" } });
     const text = await res.text();
+    if (res.status === 429) throw new Error("rate-limited (429)");
     if (!res.ok) throw new Error("HTTP " + res.status);
     const sum = sumTimeline(JSON.parse(text));
     if (sum == null) throw new Error("no timeline");
     console.log(`  ${country}: ${Math.round(sum)} articles`);
     return Math.round(sum);
   } catch (e) {
-    if (attempt < 3) {
-      console.log(`  ${country}: ${e.message} — retry ${attempt + 1}/3`);
-      await new Promise((r) => setTimeout(r, 1500));
+    if (attempt < 5) {
+      const wait = 4000 * attempt; // linear backoff: 4s, 8s, 12s, 16s
+      console.log(`  ${country}: ${e.message} — retry ${attempt + 1}/5 in ${wait / 1000}s`);
+      await new Promise((r) => setTimeout(r, wait));
       return fetchCountry(country, attempt + 1);
     }
-    console.log(`  ${country}: FAILED after 3 tries (${e.message})`);
+    console.log(`  ${country}: FAILED after 5 tries (${e.message})`);
     return null;
   } finally {
     clearTimeout(timer);
@@ -68,10 +70,12 @@ async function fetchCountry(country, attempt = 1) {
   const byCountry = {};
   let total = 0, anyLive = false;
 
-  // Sequential — kind to GDELT, and build time is not constrained.
-  for (const c of COUNTRIES) {
-    const n = await fetchCountry(c);
-    if (n != null) { byCountry[c] = n; total += n; anyLive = true; }
+  // Sequential with generous spacing — GDELT rate-limits rapid back-to-back
+  // queries, which is why an unspaced run returned only the first country.
+  for (let i = 0; i < COUNTRIES.length; i++) {
+    const n = await fetchCountry(COUNTRIES[i]);
+    if (n != null) { byCountry[COUNTRIES[i]] = n; total += n; anyLive = true; }
+    if (i < COUNTRIES.length - 1) await new Promise((r) => setTimeout(r, 6000));
   }
 
   let payload;
