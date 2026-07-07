@@ -1,15 +1,8 @@
-# Netlify configuration for maryam-hassani
-# Static site + serverless functions that proxy the real data feeds.
-
+# Publish the whole `site/` folder as the site root.
 [build]
   publish = "."
   functions = "netlify/functions"
 
 [functions]
+  # Node 18+ provides global fetch, which the conflict proxy uses.
   node_bundler = "esbuild"
-
-# Friendly path: the platform also answers at /resilience-intelligence-system
-[[redirects]]
-  from = "/resilience-intelligence-system"
-  to = "/resilience-intelligence-system/index.html"
-  status = 200
