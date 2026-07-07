@@ -75,12 +75,17 @@ async function fetchCountry(country, sd, ed) {
   }
 }
 
+const VERSION = "3";
+
 exports.handler = async function (event) {
-  const headers = {
+  const baseHeaders = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
-    "Cache-Control": "public, max-age=900, s-maxage=900",
   };
+  // Cache only SUCCESS at the edge; never cache a failure (so a redeploy is not
+  // masked by a stale 502 for 15 minutes).
+  const okHeaders = Object.assign({}, baseHeaders, { "Cache-Control": "public, max-age=900, s-maxage=900" });
+  const failHeaders = Object.assign({}, baseHeaders, { "Cache-Control": "no-store" });
   const debug = !!(event && event.queryStringParameters && event.queryStringParameters.debug);
 
   const end = new Date();
@@ -103,8 +108,8 @@ exports.handler = async function (event) {
   if (!anyLive) {
     return {
       statusCode: 502,
-      headers,
-      body: JSON.stringify({ ok: false, error: "gdelt unavailable", diag }),
+      headers: failHeaders,
+      body: JSON.stringify({ ok: false, error: "gdelt unavailable", _v: VERSION, diag }),
     };
   }
 
@@ -114,8 +119,9 @@ exports.handler = async function (event) {
     gulf: byCountry.Iran || 0,
     events: total,
     since: start.toISOString().slice(0, 10) + " (GDELT, 30-day conflict coverage)",
+    _v: VERSION,
   };
   if (debug) payload.diag = diag;
 
-  return { statusCode: 200, headers, body: JSON.stringify(payload) };
+  return { statusCode: 200, headers: okHeaders, body: JSON.stringify(payload) };
 };
