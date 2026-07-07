@@ -75,8 +75,11 @@
      { ok, byCountry:{Iran,Yemen,Sudan,Russia}, events, since }. If unavailable
      the source stays SIM and live.js keeps simulating. */
   async function pullAcled() {
-    // GDELT-backed proxy first, then an ACLED-backed one if present
-    for (const ep of ["/.netlify/functions/gdelt-conflict", "/.netlify/functions/acled"]) {
+    // 1) build-time prefetched static file (conflict.json) — fast, same-origin,
+    //    no CORS, no timeout. GDELT is too slow to fetch at request time, so it
+    //    is fetched during the deploy build instead. 2) fall back to live
+    //    proxies if present. 3) otherwise SIM.
+    for (const ep of ["conflict.json", "/.netlify/functions/gdelt-conflict", "/.netlify/functions/acled"]) {
       try {
         const j = await jget(ep);
         if (!j || !j.ok) continue;

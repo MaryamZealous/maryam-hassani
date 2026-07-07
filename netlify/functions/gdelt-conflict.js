@@ -3,33 +3,25 @@
 
    Browsers cannot call GDELT directly (no CORS headers), so the app requests
    this function at /.netlify/functions/gdelt-conflict. It runs server-to-server
-   (no CORS), queries GDELT DOC 2.0 for the last 30 days of conflict-coded
-   English coverage per tracked country, and returns the shape feeds.js expects:
+   (no CORS), queries GDELT DOC 2.0 for the last ~30 days of conflict-coded
+   coverage per tracked country, and returns the shape feeds.js expects:
 
        { ok, byCountry: { Iran, Yemen, Sudan, Russia }, gulf, events, since }
 
    No API key required — GDELT DOC 2.0 is free and keyless.
 
    Debugging: append ?debug=1 to see per-country diagnostics (HTTP status,
-   response sample, parse result) even on success:
+   round-trip ms, response sample) even on success:
        /.netlify/functions/gdelt-conflict?debug=1
    ========================================================================== */
+
+const VERSION = "4";
 
 // Country names MUST match COUNTRY_ALIASES values in live.js.
 const COUNTRIES = ["Iran", "Yemen", "Sudan", "Russia"];
 
-// Kept deliberately short — long OR chains can trip GDELT's query limits.
+// Kept short — long OR chains can trip GDELT's query limits and slow it down.
 const CONFLICT_TERMS = "(airstrike OR missile OR drone OR shelling OR clashes OR militants OR fighting)";
-
-function stamp(d) {
-  const p = (n) => String(n).padStart(2, "0");
-  return (
-    d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) +
-    p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds())
-  );
-}
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Sum the raw article-count timeline GDELT returns for a timelinevolraw query.
 function sumTimeline(json) {
@@ -42,24 +34,25 @@ function sumTimeline(json) {
   return data.reduce((acc, pt) => acc + (typeof pt.value === "number" ? pt.value : parseFloat(pt.value) || 0), 0);
 }
 
-// One country, with a short timeout. Returns { count|null, dbg }.
-async function fetchCountry(country, sd, ed) {
+// One country. Returns { count|null, dbg }.
+async function fetchCountry(country) {
   const query = `${country} ${CONFLICT_TERMS}`;
   const url =
     "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
     encodeURIComponent(query) +
-    "&mode=timelinevolraw&format=json&startdatetime=" + sd + "&enddatetime=" + ed;
+    "&mode=timelinevolraw&format=json&timespan=1m";
 
   const dbg = { country };
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 6500);
+  const timer = setTimeout(() => ctrl.abort(), 9000);
+  const t0 = Date.now();
   try {
     const res = await fetch(url, { signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 (ris-conflict-proxy)" } });
     dbg.status = res.status;
     const text = await res.text();
+    dbg.ms = Date.now() - t0;
     dbg.len = text.length;
     if (!res.ok) { dbg.sample = text.slice(0, 160); return { count: null, dbg }; }
-    // GDELT sometimes returns a plain-text notice instead of JSON.
     let json;
     try { json = JSON.parse(text); }
     catch (e) { dbg.parse = "non-json"; dbg.sample = text.slice(0, 160); return { count: null, dbg }; }
@@ -68,14 +61,13 @@ async function fetchCountry(country, sd, ed) {
     if (sum == null) dbg.sample = text.slice(0, 160);
     return { count: sum == null ? null : Math.round(sum), dbg };
   } catch (e) {
+    dbg.ms = Date.now() - t0;
     dbg.err = String(e && e.name === "AbortError" ? "timeout" : (e && e.message) || e);
     return { count: null, dbg };
   } finally {
     clearTimeout(timer);
   }
 }
-
-const VERSION = "3";
 
 exports.handler = async function (event) {
   const baseHeaders = {
@@ -88,22 +80,19 @@ exports.handler = async function (event) {
   const failHeaders = Object.assign({}, baseHeaders, { "Cache-Control": "no-store" });
   const debug = !!(event && event.queryStringParameters && event.queryStringParameters.debug);
 
-  const end = new Date();
-  const start = new Date(end.getTime() - 30 * 864e5);
-  const sd = stamp(start), ed = stamp(end);
+  const start = new Date(Date.now() - 30 * 864e5);
 
   const byCountry = {};
   const diag = [];
   let total = 0, anyLive = false;
 
-  // Sequential with light spacing — avoids GDELT throttling parallel bursts
-  // from a shared serverless IP.
-  for (let i = 0; i < COUNTRIES.length; i++) {
-    const { count, dbg } = await fetchCountry(COUNTRIES[i], sd, ed);
-    diag.push(dbg);
-    if (count != null) { byCountry[COUNTRIES[i]] = count; total += count; anyLive = true; }
-    if (i < COUNTRIES.length - 1) await sleep(200);
-  }
+  // Fire all four in PARALLEL, so the function's wall-time is ~one request, not
+  // the sum — this is what keeps it inside Netlify's 10s function limit.
+  const results = await Promise.all(COUNTRIES.map((c) => fetchCountry(c)));
+  results.forEach((r, i) => {
+    diag.push(r.dbg);
+    if (r.count != null) { byCountry[COUNTRIES[i]] = r.count; total += r.count; anyLive = true; }
+  });
 
   if (!anyLive) {
     return {
