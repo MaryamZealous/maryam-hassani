@@ -164,7 +164,7 @@ function ScoreCard({ d }) {
         <span style={{ marginLeft: "auto" }}>
           {d === RD.headline.live ? (
             <span className="src live" role="button" tabIndex={0} style={{ cursor: "pointer" }}
-              title="Live Resilience blends five public feeds — PortWatch, Open-Meteo, Google News, Markets, OFAC; ACLED powers counterpart context on other views"
+              title="Live Resilience blends five public feeds — PortWatch, Open-Meteo, Google News, Markets, OFAC; GDELT conflict coverage powers counterpart context on other views"
               onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
                 kicker: "Live feeds · updating continuously", title: "What feeds the Live Resilience score",
                 text: "Live Resilience is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from five public feeds. Maritime throughput (PortWatch) is typically the largest mover, which is why it often leads — but it is never the only input. The news monitor adds two early-warning lanes: trade-route closure coverage and adverse partner-supply coverage (a Qatar, Taiwan, Kazakhstan, China or India supply shock), so a partner disruption registers here before throughput data would confirm it. A sixth feed, ACLED conflict data, deliberately does not enter this score — it powers the live counterpart-risk context on the Dependencies and Control views.",
@@ -239,7 +239,7 @@ function SectorCard({ s, onOpen }) {
     go: { view: "dependencies", opts: { sector: s.id, import: p.id }, hint: "Open " + p.name + " in Dependencies — sources, buffer, DRI breakdown" },
   }));
   driInputs.push(
-    { k: "Step 1 · Pick the anchor ★", v: s.topRisk + " has the highest DRI × consequence (" + (s.topSel != null ? s.topSel : "—") + " above) — the most fragile import that matters. That product only SELECTS it; its raw DRI (" + s.topDRI + ") is what enters the formula, keeping the score on the 0–100 scale." },
+    { k: "Step 1 · Pick the anchor ★", v: s.topRisk + " — highest DRI × consequence (" + (s.topSel != null ? s.topSel : "—") + " above). Its raw DRI (" + s.topDRI + ") enters the formula." },
     { k: "Step 2 · Weighted mean DRI", v: "Σ(DRI × consequence) ÷ Σ consequence = " + sumSel.toFixed(1) + " ÷ " + cw.toFixed(2) + " = " + (s.wmean != null ? s.wmean : s.wdri) },
     { k: "Step 3 · Anchored fragility", v: (() => { const a = +(0.6 * s.topDRI).toFixed(1); const b = +(s.wdri - a).toFixed(1); return "0.6 × " + s.topDRI + " + 0.4 × " + (s.wmean != null ? s.wmean : s.wdri) + " = " + a.toFixed(1) + " + " + b.toFixed(1) + " = " + s.wdri; })() },
     { k: "Step 4 · Resilience", v: "100 − " + s.wdri + " = " + s.score.toFixed(1) + " / 100" },
@@ -263,10 +263,8 @@ function SectorCard({ s, onOpen }) {
         <span style={{ marginLeft: "auto" }}>
           <Fx payload={{
             kicker: "Sector score · computed", title: s.name + " resilience",
-            text: s.note + " The score is computed, not hand-set — and it is non-compensatory, the same rule the national headline uses: the sector's anchor import (★) carries 60% of the score, so one catastrophic dependency can never hide behind a portfolio of safer ones. The anchor is the import with the highest DRI × consequence — the most fragile import that matters — so a fragile but nationally trivial import can't seize it. The remaining 40% is the consequence-weighted average of all tracked imports, so breadth still counts.",
-            formula: "Sector = 100 − ( 0.6 × anchor DRI + 0.4 × Σ(DRI × consequence) / Σ consequence )   ·   anchor = argmax(DRI × consequence)",
+            text: s.note,
             inputs: driInputs,
-            assumption: "This score is calculated straight from the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. The 0.6 anchor mirrors the national 60/40 rule and is selected by DRI × consequence, so it always lands on the import whose fragility would hurt most; the ★ import's DRI drawer is the first place to look. Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
             range: s.rangeHalf != null ? { lo: slo, hi: shi, half: shalf, confidence: s.confidence } : undefined,
             sensitivity: s.sensitivity,
             links: [
@@ -303,11 +301,11 @@ function Drawer({ payload, onClose }) {
             <div className="drawer-kicker">{payload.kicker || "Explain"}</div>
             <div className="drawer-title">{payload.title}</div>
             {payload.links && payload.links.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 9 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flexWrap: "wrap", gap: 7, marginTop: 9 }}>
                 {payload.links.map((l, i) => (
-                  <button key={i} className="exp" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+                  <button key={i} className="exp" style={{ textAlign: "left", lineHeight: 1.5 }}
                     onClick={() => { onClose(); window.__go && window.__go(l.view, l.opts || {}); }}>
-                    {l.label} →
+                    {l.label}&nbsp;→
                   </button>
                 ))}
               </div>
@@ -408,7 +406,7 @@ function IllusBadge() {
       text: "The UAE National Resilience Intelligence System is an ILLUSTRATIVE decision-support model. It combines live, publicly-available data feeds with hand-curated open-source datasets and a set of transparent, documented assumptions.",
       formula: "Live public data  +  Curated open sources  +  Stated assumptions  →  Explainable estimate",
       inputs: [
-        { k: "Live feeds (6)", v: "Five move the Live score — IMF PortWatch transits, Google News trade-route & partner coverage, Open-Meteo sea state, Brent, OFAC sanctions total — plus ACLED conflict for counterpart context", src: "live" },
+        { k: "Live feeds (6)", v: "Five move the Live score — IMF PortWatch transits, Google News trade-route & partner coverage, Open-Meteo sea state, Brent, OFAC sanctions total — plus GDELT conflict coverage for counterpart context", src: "live" },
         { k: "Curated data", v: RD.precursors.length + " critical imports, " + RD.assets.length + " strategic assets, " + RD.scenarios.length + " scenarios — human-readable CSV", src: "curated" },
         { k: "Assumptions", v: "Goalposts, weights & buffers — all stated and editable", src: "assumption" },
       ],

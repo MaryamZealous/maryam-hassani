@@ -6,7 +6,7 @@ const NAV = [
   { group: "Monitor", items: [
     { id: "overview", label: "Overview", icon: "gauge" },
     { id: "threats", label: "Live signals", icon: "threat" },
-    { id: "map", label: "Asset map", icon: "map" },
+    { id: "map", label: "Supply map", icon: "map" },
   ]},
   { group: "Analyze", items: [
     { id: "dependencies", label: "Dependencies", icon: "chain" },
@@ -22,7 +22,7 @@ const NAV = [
   ]},
 ];
 const TITLES = {
-  overview: "Overview", threats: "Live signals", map: "Asset map", cascade: "Cascade",
+  overview: "Overview", threats: "Live signals", map: "Supply map", cascade: "Cascade",
   scenarios: "Scenarios", dependencies: "Dependencies", act: "Response & pre-mortem", control: "Control layer",
   methodology: "How it works",
 };
@@ -50,10 +50,11 @@ function IntroOverlay({ onEnter, dir }) {
 function App() {
   useLiveTick();
   const dir = "b";                 // Briefing style only
+  const IS_EMBED = typeof location !== "undefined" && /[?&]embed=1\b/.test(location.search);
   const [view, setView] = useState("overview");
   const [opts, setOpts] = useState({});
   const [drawer, setDrawer] = useState(null);
-  const [intro, setIntro] = useState(() => !localStorage.getItem("uae_seen"));
+  const [intro, setIntro] = useState(() => !IS_EMBED && !localStorage.getItem("uae_seen"));
   const scrollRef = useRef(null);
 
   const go = (v, o = {}) => { setView(v); setOpts(o); setDrawer(null); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
@@ -63,7 +64,7 @@ function App() {
   const enter = () => { localStorage.setItem("uae_seen", "1"); setIntro(false); };
 
   const liveChips = [
-    { k: "Ships", src: "ais" }, { k: "News", src: "gdelt" }, { k: "Markets", src: "yfinance" }, { k: "OFAC", src: "ofac" }, { k: "Sea", src: "meteo" }, { k: "ACLED", src: "acled" },
+    { k: "Ships", src: "ais" }, { k: "News", src: "gdelt" }, { k: "Markets", src: "yfinance" }, { k: "OFAC", src: "ofac" }, { k: "Sea", src: "meteo" }, { k: "Conflict", src: "acled" },
   ];
 
   const renderView = () => {
@@ -130,7 +131,7 @@ function App() {
               text: "Combines live public data feeds with curated open-source datasets and transparent assumptions to produce explainable resilience estimates.",
               formula: "Live data  +  Curated sources  +  Stated assumptions  →  Explainable estimate",
               inputs: [
-                { k: "Live feeds (6)", v: "PortWatch · Google News · Open-Meteo · markets · OFAC · ACLED", src: "live" },
+                { k: "Live feeds (6)", v: "PortWatch · Google News · Open-Meteo · markets · OFAC · GDELT conflict", src: "live" },
                 { k: "Curated", v: RD.precursors.length + " imports · " + RD.assets.length + " assets · " + RD.scenarios.length + " scenarios", src: "curated" },
                 { k: "Assumptions", v: "weights, buffers & goalposts — stated", src: "assumption" },
               ],

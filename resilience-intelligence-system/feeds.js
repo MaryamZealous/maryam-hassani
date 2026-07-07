@@ -2,17 +2,17 @@
    feeds.js — real-data adapter. Sits on top of live.js and replaces simulated
    values with genuine live data wherever a real, reachable source exists:
 
-     • Open-Meteo  — REAL now, browser-direct, no key, no setup.
-                     Live sea-state (wave height) + wind at the three chokepoints
-                     and Gulf temperature. CORS-clean, verified.
-     • Markets     — REAL once the Netlify function /.netlify/functions/markets
-                     is deployed (Yahoo, server-side, no key). Browsers can't call
-                     Yahoo directly (no CORS), so it is proxied.
-     • ACLED/OFAC  — REAL via their functions when an API key env-var is set.
+     • Open-Meteo  — Live sea-state (wave height) + wind at the three chokepoints
+                     and Gulf temperature. Browser-direct, no key.
+     • Markets     — Brent oil, proxied server-side (browsers can't call Yahoo
+                     directly). Server-side, no key.
+     • Conflict    — Conflict-event coverage, backed by GDELT DOC 2.0 and served
+                     through a proxy (browsers can't call the conflict APIs
+                     directly). ACLED can back the same proxy where available.
 
-   Every source degrades gracefully: if a real fetch fails (offline, not yet
-   deployed, no key), live.js keeps simulating that one source and the UI marks
-   it SIM instead of LIVE. Nothing ever breaks.
+   Every source degrades gracefully: if a real fetch is unavailable, live.js
+   keeps simulating that one source and the UI marks it SIM instead of LIVE.
+   Nothing ever breaks.
    ========================================================================== */
 (function () {
   if (!window.LIVE) return;
@@ -67,17 +67,27 @@
     }
   }
 
-  /* ---- 3. ACLED conflict via function (real only with a key) ------------ */
+  /* ---- 3. Conflict exposure ---------------------------------------------
+     Conflict-event coverage, served through a proxy (browsers can't call the
+     conflict APIs directly — GDELT and UCDP send no CORS headers, ReliefWeb v2
+     needs a registered appname). Backed by GDELT DOC 2.0 (keyless, ~15-min
+     updates); ACLED can back the same proxy where available. Returns
+     { ok, byCountry:{Iran,Yemen,Sudan,Russia}, events, since }. If unavailable
+     the source stays SIM and live.js keeps simulating. */
   async function pullAcled() {
-    try {
-      const j = await jget("/.netlify/functions/acled");
-      if (!j || !j.ok) throw 0;
-      if (j.events != null) RD.convergence._realEvents = j.events;
-      // per-partner conflict counts back the trade-partner risk + scenario actors
-      REAL.acled = { byCountry: j.byCountry || {}, gulf: j.gulf, events: j.events, since: j.since, ts: Date.now() };
-      RD.sources.acled._ts = Date.now();
-      setStatus("acled", "live");
-    } catch (e) { delete REAL.vals.gpsjam; delete REAL.acled; setStatus("acled", "sim"); }
+    // GDELT-backed proxy first, then an ACLED-backed one if present
+    for (const ep of ["/.netlify/functions/gdelt-conflict", "/.netlify/functions/acled"]) {
+      try {
+        const j = await jget(ep);
+        if (!j || !j.ok) continue;
+        if (j.events != null) RD.convergence._realEvents = j.events;
+        REAL.acled = { byCountry: j.byCountry || {}, gulf: j.gulf, events: j.events, since: j.since, ts: Date.now() };
+        RD.sources.acled._ts = Date.now();
+        setStatus("acled", "live");
+        return;
+      } catch (e) { /* try next */ }
+    }
+    delete REAL.vals.gpsjam; delete REAL.acled; setStatus("acled", "sim");
   }
 
   /* ---- 4. OFAC sanctions via function (real OpenSanctions mirror) ------- */

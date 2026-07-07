@@ -71,19 +71,19 @@ window.RD = (function () {
   // in live.js); with no old-enough history the UI shows a dash.
   const sectors = [
     { id: "energy", name: "Energy",
-      note: "Power and desalination draw on one shared gas envelope, so they move together under load. The acute exposure is gas-side: piped Dolphin gas from Qatar is the highest-consequence input in the model — and because Dolphin is a fixed subsea pipeline (not a maritime chokepoint), and UAE crude exports bypass Hormuz via the Fujairah pipeline, Energy carries no oil-import chokepoint penalty. Its risk is single-counterpart concentration and a contract→oil-linked price-basis flip, not a Strait-of-Hormuz crude story. Grid transformers and LEU fuel round out the established import lines. The clean-energy buildout adds a newer class of dependency — solar PV, battery storage and copper — that swaps some gas-reliance for China-concentrated processing risk." },
+      note: "Power and desalination share one gas envelope, so they move together under load. The acute risk is single-counterpart gas concentration and a contract→oil-linked price flip — not a Hormuz crude story, since crude bypasses via Fujairah and Dolphin is a fixed pipeline. The clean-energy buildout trades some gas-reliance for China-concentrated processing risk." },
     { id: "water", name: "Water",
-      note: "Desalination rests on two specialised imports: RO membranes (a competitive-but-concentrated field) and energy-recovery devices (one dominant US supplier). The binding constraint is reorder lead-time against buffers, not overnight single-source failure." },
+      note: "The binding constraint is reorder lead-time against buffers, not overnight single-source failure — the thin-buffer dosing chemicals bite fastest." },
     { id: "defence", name: "Defence",
-      note: "Guided-systems production leans on advanced silicon. The binding risk is US export-control licensing, not Taiwanese supply — a channel that eased in late 2025." },
+      note: "The binding risk is US export-control licensing on advanced silicon, not Taiwanese supply — a channel that eased in late 2025." },
     { id: "food", name: "Food",
-      note: "Grain reserves are deep and sourcing diversified — but the sector's real anchor is animal feed: domestic eggs, poultry, dairy and farmed fish all run on imported feed with only weeks of stock, so protein self-sufficiency sits one step down the chain from an import." },
+      note: "Grain reserves are deep and diversified; the real anchor is animal feed — domestic eggs, poultry, dairy and fish all run on imported feed with only weeks of stock, so protein self-sufficiency sits one step down the chain from an import." },
     { id: "logistics", name: "Logistics",
-      note: "~60% of imports land at Jebel Ali (est.), inside the strait; crude exports bypass via Fujairah. Hormuz import-exposure — containerised goods into Jebel Ali — is the dominant variable, partly offset by air-cargo prioritisation." },
+      note: "~60% of imports land at Jebel Ali (est.), inside the strait, so Hormuz container-exposure is the dominant variable — partly offset by air-cargo prioritisation and the Fujairah crude bypass." },
     { id: "finance", name: "Finance",
-      note: "Finance's tracked imports are financial rails, not goods: dollar-clearing access and SWIFT messaging — both foreign-controlled and sanctions-exposed — plus gold doré refining feedstock. The UAE's exceptional sovereign-wealth depth is the offsetting strength, and it sits in coping capacity rather than here." },
+      note: "The imports here are financial rails, not goods — foreign-controlled and sanctions-exposed. The UAE's exceptional sovereign-wealth depth is the offsetting strength, but it sits in coping capacity, not here." },
     { id: "health", name: "Health",
-      note: "APIs concentrate ~65% in India (est.); vaccine stock is deep but device supply is thin." },
+      note: "The exposure is concentration, not depth: APIs run ~65% through India (est.), and device buffers stay thin even where vaccine stock is deep." },
   ];
 
   // ---- Critical imports (precursors) --------------------------------------
@@ -421,8 +421,8 @@ window.RD = (function () {
 
   // ---- Data sources / freshness -------------------------------------------
   const sources = {
-    live:     { label: "Live feeds", full: "Six live public feeds — five move the Live score (PortWatch, Open-Meteo, Google News, Markets, OFAC); ACLED powers counterpart-risk context", endpoint: "see individual feeds", url: "https://portwatch.imf.org/", cadence: "continuous", fresh: "live", kind: "live" },
-    acled:    { label: "ACLED", full: "Armed Conflict Location & Event Data", endpoint: "ACLED API · Gulf & Red Sea geofilter", url: "https://acleddata.com/explorer/", cadence: "5 min", fresh: "connecting…", kind: "live" },
+    live:     { label: "Live feeds", full: "Six live public feeds — five move the Live score (PortWatch, Open-Meteo, Google News, Markets, OFAC); GDELT conflict coverage powers counterpart-risk context", endpoint: "see individual feeds", url: "https://portwatch.imf.org/", cadence: "continuous", fresh: "live", kind: "live" },
+    acled:    { label: "GDELT", full: "Conflict-event coverage from GDELT DOC 2.0 — 30-day conflict-coded article volume per tracked country (Iran, Yemen, Sudan, Russia), used as a live conflict-intensity signal behind counterpart risk.", endpoint: "GDELT DOC 2.0 · Iran / Yemen / Sudan / Russia conflict coverage", url: "https://www.gdeltproject.org/", cadence: "5 min", fresh: "connecting…", kind: "live" },
     ais:      { label: "PortWatch", full: "IMF PortWatch · daily chokepoint transit calls (satellite AIS, ~90k ships)", endpoint: "services9.arcgis.com · Daily_Chokepoints_Data · transit calls vs 12-month norm", url: "https://portwatch.imf.org/", cadence: "weekly (Tue)", fresh: "connecting…", kind: "live" },
     yfinance: { label: "Markets", full: "Oil price — Brent (yfinance)", endpoint: "Yahoo Finance · BZ=F", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "connecting…", kind: "live" },
     ofac:     { label: "OFAC", full: "US Treasury SDN sanctions list (OpenSanctions mirror)", endpoint: "data.opensanctions.org · us_ofac_sdn · total entity count (no delta)", url: "https://www.opensanctions.org/datasets/us_ofac_sdn/", cadence: "6 h", fresh: "connecting…", kind: "live" },
@@ -434,13 +434,13 @@ window.RD = (function () {
 
   // ---- Assets (for map) ----------------------------------------------------
   const assets = [
-    { id: "jebelali", name: "Jebel Ali Port", lat: 25.0, lng: 55.06, weight: 1.0, kind: "port", note: "≈60% of national imports (est.)" },
-    { id: "barakah", name: "Barakah Nuclear", lat: 23.97, lng: 52.23, weight: 0.9, kind: "energy", note: "5.6 GW baseload" },
-    { id: "taweelah", name: "Taweelah Desalination", lat: 24.78, lng: 54.7, weight: 0.95, kind: "water", note: "World's largest RO plant" },
-    { id: "fujairah", name: "Fujairah Terminal", lat: 25.17, lng: 56.33, weight: 0.85, kind: "port", note: "Off-Gulf oil export bypass" },
-    { id: "ruwais", name: "Ruwais Refinery", lat: 24.11, lng: 52.73, weight: 0.8, kind: "energy", note: "Downstream hub" },
-    { id: "dubaiwater", name: "Dubai water network", lat: 25.2, lng: 55.27, weight: 0.7, kind: "water", note: "Thin operational surface storage, backed by the 90-day federal strategic reserve" },
-    { id: "portrashid", name: "Port Rashid", lat: 25.32, lng: 55.33, weight: 0.4, kind: "port", note: "Dubai's original port — now cruise & heritage; cargo long since consolidated into Jebel Ali" },
+    { id: "jebelali", name: "Jebel Ali Port", lat: 25.0, lng: 55.06, weight: 1.0, kind: "port", note: "The single gateway most imported goods pass through — roughly 60% (est.) — and the regional re-export hub, so a disruption here reaches nearly every sector." },
+    { id: "barakah", name: "Barakah Nuclear", lat: 23.97, lng: 52.23, weight: 0.9, kind: "energy", note: "Nuclear baseload — about a quarter of national electricity — running on imported low-enriched uranium with a deep fuel buffer." },
+    { id: "taweelah", name: "Taweelah Desalination", lat: 24.78, lng: 54.7, weight: 0.95, kind: "water", note: "One of the world's largest reverse-osmosis plants; its output rides on a continuous supply of imported membranes and dosing chemicals." },
+    { id: "fujairah", name: "Fujairah Terminal", lat: 25.17, lng: 56.33, weight: 0.85, kind: "port", note: "The east-coast crude-export terminal that ships oil to Asia without entering the Strait of Hormuz — the country's strategic chokepoint bypass." },
+    { id: "ruwais", name: "Ruwais Refinery", lat: 24.11, lng: 52.73, weight: 0.8, kind: "energy", note: "The downstream complex that turns crude and gas into fuels, petrochemicals and the fertiliser the UAE exports." },
+    { id: "dubaiwater", name: "Dubai water network", lat: 25.2, lng: 55.27, weight: 0.7, kind: "water", note: "A municipal network with only thin operational storage, cushioned by the 90-day federal strategic reserve behind it." },
+    { id: "portrashid", name: "Port Rashid", lat: 25.32, lng: 55.33, weight: 0.4, kind: "port", note: "Dubai's original port, now cruise and heritage — its cargo role long since consolidated into Jebel Ali, so its resilience weight is low." },
   ];
 
   // ---- Computed score spine ------------------------------------------------
@@ -602,8 +602,8 @@ window.RD = (function () {
     // 6 · UNCERTAINTY — how sensitive each score is to its editable
     //     assumptions. We re-evaluate the whole spine with each key assumption
     //     nudged to the high and low ends of a plausible range, take how far the
-    //     score moves, and turn the largest swings into a ±range and a
-    //     confidence label. Makes the model's uncertainty explicit instead of
+    //     score moves, and turn the largest swings into a ± range. Makes the
+    //     model's uncertainty explicit instead of
     //     implying false precision in a single value.
     const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     function evalModel(o) {

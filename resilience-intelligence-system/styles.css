@@ -35,6 +35,8 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--ink);
   transition:background .4s ease,color .4s ease}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 a{color:inherit}
+.src-link{color:var(--accent);text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;text-decoration-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.src-link:hover{text-decoration-color:var(--accent)}
 .mono{font-family:var(--font-mono);font-feature-settings:"tnum" 1,"zero" 1}
 .label{font-size:10.5px;letter-spacing:var(--label-ls);text-transform:var(--label-tf);
   font-weight:var(--label-w);color:var(--muted)}

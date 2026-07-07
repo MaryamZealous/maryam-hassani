@@ -3,8 +3,8 @@
    ========================================================================== */
 const { useState } = React;
 
-/* ---------- Asset Map (real world geography + directional flows) -------- */
-const MAP_W = 1200, MAP_H = 468, LAT_T = 78, LAT_B = -56, LON0 = 58;
+/* ---------- Supply map (real world geography + directional flows) -------- */
+const MAP_W = 1200, MAP_H = 468, LAT_T = 78, LAT_B = -56, LON0 = 20;
 const GULF = { lonMin: 46, lonMax: 60.5, latMin: 20.5, latMax: 31, w: 270, h: 198 };
 const GULF_NAMES = new Set(["Saudi Arabia", "Iran", "Oman", "United Arab Emirates", "Qatar", "Kuwait", "Iraq"]);
 function proj(lng, lat) {
@@ -32,19 +32,21 @@ function geoPath(geom, P, wrap) {
 const UAE_LL = [54.4, 24.5];
 const CHOKE = { hormuz: [56.4, 26.6], redsea: [43.3, 12.6], suez: [32.5, 30.2] };
 const GEO_SRC = {
-  "United States of America": { label: "United States", who: "RO · ERD · turbines · water chems · GNSS · USD", pre: ["ro","erd","turbines","waterchem","gps","usdclearing"], cons: 0.88, lng: -98, lat: 39, tip: "Leading source of reverse-osmosis membranes and energy-recovery devices within a concentrated US/Japan/Korea supplier set — the spine of UAE desalination — plus GE gas-turbine hot-section parts, specialty desalination chemicals (antiscalants), precision-timing modules and correspondent-bank USD clearing." },
-  "Taiwan": { label: "Taiwan", who: "Leading-edge chips", pre: ["chips"], cons: 0.72, lng: 121, lat: 23.6, tip: "Fabrication of advanced silicon for EDGE guided-systems concentrates here, but the binding risk is US export-control licensing, not a Taiwan supply halt — a channel that eased in late 2025." },
-  "India": { label: "India", who: "APIs · devices · labour", pre: ["api"], cons: 0.78, lng: 79, lat: 22.5, dy: 17, tip: "~65% of active pharma ingredients (est.) and the largest share of critical-infrastructure workers." },
-  "Kazakhstan": { label: "Kazakhstan", who: "Uranium — LEU fuel chain", pre: ["leu"], cons: 0.72, lng: 67, lat: 48, tip: "Uranium feedstock for Barakah's fuel chain — conversion, enrichment and fabrication (KEPCO NF, Korea) happen downstream. A 540-day buffer with no near-term alternative chain." },
-  "Qatar": { label: "Qatar", who: "Piped gas (Dolphin)", pre: ["gas"], cons: 1.00, lng: 51.2, lat: 25.3, dx: -10, dy: -10, anchor: "end", tip: "25% of gas for power and water via the Dolphin pipeline — piped, not Hormuz-routed. Contract runs to 2032. The exposure is counterpart + price-basis: losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8×)." },
-  "Canada": { label: "Canada", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.55, lng: -109, lat: 57, tip: "Fertiliser and grain feedstock — diversified, lower-risk food inputs." },
-  "Russia": { label: "Russia", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.60, lng: 62, lat: 61, tip: "Alternate potash and wheat supply; counterpart risk elevated by sanctions exposure." },
-  "China": { label: "China", who: "Solar PV · batteries · devices", pre: ["solarpv","libattery","devices"], cons: 0.70, lng: 103, lat: 35, tip: "Concentrates the clean-energy transition inputs — ~80%+ of solar polysilicon/modules and the bulk of lithium-ion cell supply — plus 40% of medical devices (est.) on a thin 45-day buffer. China as the processing chokepoint, with rising counterpart risk." },
-  "Australia": { label: "Australia", who: "Wheat", pre: ["wheat"], cons: 0.60, lng: 134, lat: -25, tip: "Diversified grain supply that deepens national food reserves." },
-  "Chile": { label: "Chile", who: "Copper (cathode / rod)", pre: ["copper"], cons: 0.60, lng: -71, lat: -33, tip: "The UAE mines no copper; refined cathode & rod — from Chile, Zambia and the global market — feed Ducab's cabling and the grid build-out. Material World's bottleneck metal of electrification: diversified today, structurally tight over the decade ahead." },
-  "Japan": { label: "Japan", who: "Turbines (Mitsubishi) · RO membranes", pre: ["turbines","ro"], cons: 0.82, lng: 138, lat: 37.5, tip: "Mitsubishi gas-turbine hot-section parts plus Toray / Nitto reverse-osmosis membranes — Japan sits inside both the turbine-OEM and the desalination-membrane supplier sets, two single-digit-supplier fields for the power-and-water fleet." },
-  "Germany": { label: "Germany", who: "Turbines (Siemens) · water chemicals", pre: ["turbines","waterchem"], cons: 0.82, lng: 10.4, lat: 51.2, tip: "Siemens gas-turbine hot-section components and BASF-class specialty water-treatment chemicals (antiscalants) — part of the single-digit qualified-OEM field the generation and desalination fleet runs on." },
-  "United Arab Emirates": { label: "UAE", hub: true, lng: 54.4, lat: 24.5, who: "Jebel Ali · Barakah · Taweelah", tip: "The hub. ~60% of imports land at Jebel Ali (est.), then re-export across the region — dependency runs both ways." },
+  "United States of America": { label: "United States", who: "RO · ERD · turbines · water chems · GNSS · USD", pre: ["ro","erd","turbines","waterchem","gps","usdclearing"], cons: 0.88, lng: -98, lat: 39, hov: "The backbone of desalination hardware and dollar-clearing access", tip: "Leading source of reverse-osmosis membranes and energy-recovery devices within a concentrated US/Japan/Korea supplier set — the spine of UAE desalination — plus GE gas-turbine hot-section parts, specialty desalination chemicals (antiscalants), precision-timing modules and correspondent-bank USD clearing." },
+  "Taiwan": { label: "Taiwan", who: "Leading-edge chips", pre: ["chips"], cons: 0.72, lng: 121, lat: 23.6, hov: "A US-licensing risk, not a supply halt", tip: "Fabrication of advanced silicon for EDGE guided-systems concentrates here, but the binding risk is US export-control licensing, not a Taiwan supply halt — a channel that eased in late 2025." },
+  "India": { label: "India", who: "APIs · workers", pre: ["api"], cons: 0.78, lng: 79, lat: 22.5, dy: 17, hov: "~65% concentration in one country (est.)", tip: "~65% of active pharma ingredients (est.), plus the largest share of critical-infrastructure workers." },
+  "Kazakhstan": { label: "Kazakhstan", who: "Uranium — LEU fuel chain", pre: ["leu"], cons: 0.72, lng: 67, lat: 48, hov: "Feeds Barakah — a 540-day buffer, no near-term alternative", tip: "Uranium feedstock for Barakah's fuel chain — conversion, enrichment and fabrication (KEPCO NF, Korea) happen downstream. A 540-day buffer with no near-term alternative chain." },
+  "Qatar": { label: "Qatar", who: "Piped gas (Dolphin)", pre: ["gas"], cons: 1.00, lng: 51.2, lat: 25.3, dx: -10, dy: -10, anchor: "end", hov: "25% of power & water — the highest-consequence input", tip: "25% of gas for power and water via the Dolphin pipeline — piped, not Hormuz-routed. Contract runs to 2032. The exposure is counterpart + price-basis: losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8×)." },
+  "Canada": { label: "Canada", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.55, lng: -109, lat: 57, hov: "Diversified, lower-risk food inputs", tip: "Fertiliser and grain feedstock — diversified, lower-risk food inputs." },
+  "Russia": { label: "Russia", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.60, lng: 62, lat: 61, hov: "Alternate food supply, with elevated sanctions risk", tip: "Alternate potash and wheat supply; counterpart risk elevated by sanctions exposure." },
+  "China": { label: "China", who: "Solar PV · batteries · devices", pre: ["solarpv","libattery","devices"], cons: 0.70, lng: 103, lat: 35, hov: "The processing chokepoint for the clean-energy transition", tip: "Concentrates the clean-energy transition inputs — ~80%+ of solar polysilicon/modules and the bulk of lithium-ion cell supply — plus 40% of medical devices (est.) on a thin 45-day buffer. China as the processing chokepoint, with rising counterpart risk." },
+  "Australia": { label: "Australia", who: "Wheat", pre: ["wheat"], cons: 0.60, lng: 134, lat: -25, hov: "Deepens national food reserves", tip: "Diversified grain supply that deepens national food reserves." },
+  "Chile": { label: "Chile", who: "Copper (cathode / rod)", pre: ["copper"], cons: 0.60, lng: -71, lat: -33, hov: "The bottleneck metal of electrification", tip: "The UAE mines no copper; refined cathode & rod — from Chile, Zambia and the global market — feed Ducab's cabling and the grid build-out. Material World's bottleneck metal of electrification: diversified today, structurally tight over the decade ahead." },
+  "Brazil": { label: "Brazil", who: "Animal feed & fodder", pre: ["feed"], cons: 0.55, lng: -51, lat: -12, hov: "The hidden import beneath domestic protein", tip: "Soybean meal, corn and fodder for poultry, dairy and aquaculture (sourced with Argentina, the US and Spain) — the continuous feed flow beneath the UAE's domestic protein. Feed mills hold only weeks of stock, so a disruption reaches domestic eggs, chicken and milk faster than a wheat shock reaches bread." },
+  "Japan": { label: "Japan", who: "Turbines (Mitsubishi) · RO membranes", pre: ["turbines","ro"], cons: 0.82, lng: 138, lat: 37.5, hov: "Inside two single-digit-supplier fields for power & water", tip: "Mitsubishi gas-turbine hot-section parts plus Toray / Nitto reverse-osmosis membranes — Japan sits inside both the turbine-OEM and the desalination-membrane supplier sets, two single-digit-supplier fields for the power-and-water fleet." },
+  "South Korea": { label: "South Korea", who: "Grid transformers", pre: ["transformers"], cons: 0.70, lng: 127.8, lat: 36.2, dy: 16, hov: "Long-lead power hardware; a failure cascades into water too", tip: "Long-lead high-voltage grid transformers (with EU suppliers) — 12–24 month lead times, and a failure cascades into desalination as well as power. Held spares cushion a single loss; a fleet-wide or export-control cut-off does not." },
+  "Germany": { label: "Germany", who: "Turbines (Siemens) · water chemicals", pre: ["turbines","waterchem"], cons: 0.82, lng: 10.4, lat: 51.2, hov: "Part of the qualified-OEM field behind power & desalination", tip: "Siemens gas-turbine hot-section components and BASF-class specialty water-treatment chemicals (antiscalants) — part of the single-digit qualified-OEM field the generation and desalination fleet runs on." },
+  "United Arab Emirates": { label: "UAE", hub: true, lng: 54.4, lat: 24.5, who: "Jebel Ali · Barakah · Taweelah", hov: "Imports land here, then re-export across the region", tip: "The hub. ~60% of imports land at Jebel Ali (est.), then re-export across the region — dependency runs both ways." },
 };
 const PRE_BY_ID = Object.fromEntries((window.RD ? RD.precursors : []).map((p) => [p.id, p]));
 const consOf = (s) => (s.pre && s.pre.length) ? Math.max(...s.pre.map((id) => (PRE_BY_ID[id] ? PRE_BY_ID[id].consequence : 0))) : (s.cons || 0);
@@ -52,8 +54,8 @@ const FLOWS = [
   { from: "United States of America", via: "suez" }, { from: "Taiwan", via: null },
   { from: "India", via: "hormuz" }, { from: "Kazakhstan", via: null }, { from: "Qatar", via: null },
   { from: "Canada", via: "suez" }, { from: "Russia", via: null }, { from: "China", via: "hormuz" },
-  { from: "Australia", via: null }, { from: "Chile", via: null },
-  { from: "Japan", via: null }, { from: "Germany", via: "suez" },
+  { from: "Australia", via: null }, { from: "Chile", via: null }, { from: "Brazil", via: null },
+  { from: "Japan", via: null }, { from: "South Korea", via: "hormuz" }, { from: "Germany", via: "suez" },
 ];
 const OUTFLOWS = [
   { label: "Crude → East Asia (via Hormuz)", tag: "Crude → Asia", lp: [129, 14], to: [114, 27], via: "hormuz", type: "export", w: 3.8, tip: "The bulk of energy exports still transit the Strait of Hormuz to East-Asian buyers — the UAE's largest, and most exposed, outbound flow." },
@@ -72,7 +74,7 @@ function routeD(from, to, via, lift) {
   return arcD(from, v, lift * 0.8) + arcD(v, to, lift * 0.8).replace("M", "L");
 }
 
-const Z_MIN = 1, Z_MAX = 64, ASSET_ZOOM = 3;
+const Z_MIN = 0.5, Z_MAX = 64, ASSET_ZOOM = 3;
 const ASSET_FILL = { port: "var(--accent)", energy: "var(--high)", water: "var(--good)" };
 const ASSET_IO = {
   jebelali: "Imports ≈60% of national goods (est.) · regional re-export hub",
@@ -95,14 +97,18 @@ const ASSET_LABEL = {
 };
 function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
 function clampView(k, x, y) {
-  return { k, x: clamp(x, MAP_W - MAP_W * k, 0), y: clamp(y, MAP_H - MAP_H * k, 0) };
+  const spanX = MAP_W * k, spanY = MAP_H * k;
+  // when zoomed out past fit, centre the map (letterbox); otherwise clamp to edges
+  const cx = spanX <= MAP_W ? (MAP_W - spanX) / 2 : clamp(x, MAP_W - spanX, 0);
+  const cy = spanY <= MAP_H ? (MAP_H - spanY) / 2 : clamp(y, MAP_H - spanY, 0);
+  return { k, x: cx, y: cy };
 }
 
 const LandLayer = React.memo(function LandLayer({ paths, onTip, onPick }) {
   return paths.map((p) => {
     const s = GEO_SRC[p.name];
     return <path key={p.name} className={"geo-land" + (s ? " src" : "")} d={p.d} style={{ vectorEffect: "non-scaling-stroke" }}
-      onMouseEnter={s ? () => onTip({ b: s.hub ? "National hub" : "Source country", text: s.label + " — " + s.tip, who: s.who }) : undefined}
+      onMouseEnter={s ? () => onTip({ b: s.hub ? "National hub" : "Source country", text: s.label + " — " + (s.hov || s.tip), who: s.who }) : undefined}
       onMouseLeave={s ? () => onTip(null) : undefined}
       onClick={s && !s.hub ? () => onPick(p.name) : undefined} />;
   });
@@ -183,7 +189,7 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
       {layers.imports && FLOWS.map((fl) => {
         const s = GEO_SRC[fl.from]; const cons = consOf(s); const d = routeS(P(s.lng, s.lat), hubS, fl.via, 0.16); const w = 0.8 + cons * 3;
         return (
-          <g key={fl.from} className="flow-grp" onMouseEnter={() => onTip({ b: "Import → UAE", text: s.label + " — " + s.tip, who: s.who + " · import weight " + cons.toFixed(2) })} onMouseLeave={() => onTip(null)}>
+          <g key={fl.from} className="flow-grp" onMouseEnter={() => onTip({ b: "Import → UAE", text: s.label + " — " + (s.hov || s.tip), who: s.who + " · import weight " + cons.toFixed(2) })} onMouseLeave={() => onTip(null)}>
             <path className="flow-arc import" d={d} markerEnd="url(#mk-import)" strokeWidth={w} />
             <path className="flow-pulse import casc-pulse" d={d} strokeWidth={w} />
           </g>
@@ -218,7 +224,7 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
         const p = P(s.lng, s.lat);
         return (
           <g key={name} className="map-node" onClick={() => onPick(name)}
-            onMouseEnter={() => onTip({ b: "Source country", text: s.label + " — " + s.tip, who: s.who })} onMouseLeave={() => onTip(null)}>
+            onMouseEnter={() => onTip({ b: "Source country", text: s.label + " — " + (s.hov || s.tip), who: s.who })} onMouseLeave={() => onTip(null)}>
             <circle cx={p[0]} cy={p[1]} r="3.5" fill="var(--accent)" />
             <text x={p[0] + (s.dx || 0)} y={p[1] + (s.dy || -7)} textAnchor={s.anchor || "middle"}>{s.label}</text>
           </g>
@@ -236,7 +242,7 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
         );
       })}
       {/* hub */}
-      <g className="map-node" onMouseEnter={() => onTip({ b: "National hub", text: GEO_SRC["United Arab Emirates"].tip, who: GEO_SRC["United Arab Emirates"].who })} onMouseLeave={() => onTip(null)}>
+      <g className="map-node" onMouseEnter={() => onTip({ b: "National hub", text: GEO_SRC["United Arab Emirates"].hov, who: GEO_SRC["United Arab Emirates"].who })} onMouseLeave={() => onTip(null)}>
         <circle cx={hubS[0]} cy={hubS[1]} r="16" className="ring" stroke="var(--accent)" opacity="0.4">
           <animate attributeName="r" values="13;26;13" dur="3s" repeatCount="indefinite" />
           <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite" />
@@ -260,13 +266,13 @@ function uaeProj(lng, lat) {
   return [(lng - UAE_BB.lonMin) / (UAE_BB.lonMax - UAE_BB.lonMin) * UAE_BB.w, (UAE_BB.latMax - lat) / (UAE_BB.latMax - UAE_BB.latMin) * UAE_BB.h];
 }
 const UAE_DLABEL = {
-  jebelali: { short: "Jebel Ali Port", dx: 0, dy: -11, anchor: "middle" },
-  dubaiwater: { short: "Dubai network", dx: 12, dy: 4, anchor: "start" },
+  jebelali: { short: "Jebel Ali Port", dx: -11, dy: 4, anchor: "end" },
+  dubaiwater: { short: "Dubai network", dx: 12, dy: 15, anchor: "start" },
   taweelah: { short: "Taweelah desal.", dx: -12, dy: -2, anchor: "end" },
   barakah: { short: "Barakah nuclear", dx: 0, dy: 20, anchor: "middle" },
   ruwais: { short: "Ruwais refinery", dx: -12, dy: 2, anchor: "end" },
   fujairah: { short: "Fujairah terminal", dx: 0, dy: -12, anchor: "middle" },
-  portrashid: { short: "Port Rashid", dx: 12, dy: -6, anchor: "start" },
+  portrashid: { short: "Port Rashid", dx: 12, dy: -8, anchor: "start" },
 };
 const UAEDetail = React.memo(function UAEDetail({ onTip, onPick }) {
   const [geo, setGeo] = useState(null);
@@ -289,7 +295,7 @@ const UAEDetail = React.memo(function UAEDetail({ onTip, onPick }) {
     <svg className="uae-detail" viewBox={`0 0 ${UAE_BB.w} ${UAE_BB.h}`} style={{ width: "100%", display: "block" }} onMouseLeave={() => onTip(null)}>
       <defs><marker id="mk-uae" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,3 L0,6 Z" fill="var(--accent)" /></marker>
       <marker id="mk-uae-out" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,3 L0,6 Z" fill="var(--gold)" /></marker></defs>
-      <rect width={UAE_BB.w} height={UAE_BB.h} fill="var(--panel-2)" />
+      <rect width={UAE_BB.w} height={UAE_BB.h} fill="color-mix(in srgb, var(--accent) 7%, var(--panel-2))" />
       {paths.map((p) => <path key={p.name} className={"geo-land" + (p.name === "United Arab Emirates" ? " src" : "")} d={p.d}
         onMouseEnter={p.name !== "United Arab Emirates" ? () => onTip({ b: "Neighbour", text: p.name }) : undefined} onMouseLeave={() => onTip(null)} />)}
       {/* inbound flows for context */}
@@ -343,8 +349,8 @@ function MapView() {
     }
     if (id.startsWith("asset:")) {
       const a = RD.assets.find((x) => x.id === id.slice(6));
-      return explain({ kicker: "UAE strategic asset", title: a.name, text: a.note + (ASSET_IO[a.id] ? ".  " + ASSET_IO[a.id] : ""),
-        inputs: [{ k: "Type", v: a.kind }, { k: "Criticality", v: Math.round(a.weight * 100) + " / 100" }, { k: "Location", v: a.lat.toFixed(2) + "°N, " + a.lng.toFixed(2) + "°E" }],
+      return explain({ kicker: "UAE strategic asset", title: a.name, text: a.note,
+        inputs: [{ k: "Type", v: a.kind }, { k: "Criticality", v: Math.round(a.weight * 100) + " / 100" }],
         assumption: "Asset criticality weights are curated from public capacity data, not operational throughput." });
     }
     const s = GEO_SRC[id]; if (!s) return;
@@ -355,10 +361,10 @@ function MapView() {
   return (
     <div className="view fade-in">
       <div className="view-head">
-        <div className="view-title">Global dependency map</div>
+        <div className="view-title">Supply map</div>
         <div className="view-sub">Where the UAE sits in the world's supply web. Each line is a dependency — <b>blue flows in</b> (imports, line thickness ~ relative import weight), <b>gold &amp; green flow out</b> (export &amp; transit) — because the UAE is a hub, not an endpoint. Hover anything for why it matters, click for the full logic, and <b>zoom into the UAE to reveal its strategic assets and ports</b>.</div>
       </div>
-      <Panel title="Global dependency map" icon="map" label="LIVE FLOWS · ZOOM · HOVER TO EXPLAIN"
+      <Panel title="Supply map" icon="map" label="LIVE FLOWS · ZOOM · HOVER TO EXPLAIN"
         right={<div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
           {[["imports", "Imports"], ["exports", "Export · transit"], ["countries", "Countries"], ["chokes", "Chokepoints"]].map(([k, l]) => (
             <button key={k} className={`dir-btn ${layers[k] ? "active" : ""}`} onClick={() => t(k)}>{l}</button>
@@ -556,7 +562,7 @@ function DependenciesView({ initial }) {
                 <div className={`band-${c.band}`} style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 9, padding: "10px 12px", border: "1px solid var(--line)", borderLeft: "3px solid var(--bc)", borderRadius: "var(--radius)", background: "var(--panel-2)" }}>
                   <span className="live-dot"></span>
                   <span style={{ fontSize: 12.5, lineHeight: 1.5 }}>
-                    <b>Live counterpart signal</b> — {c.events} battle / remote-violence events in {c.country} over the last 30 days. Real conflict in this source's territory is raising counterpart risk now, above the curated baseline.
+                    <b>Live counterpart signal</b> — {c.events} conflict-coded news reports on {c.country} over the last 30 days. Real conflict in this source's territory is raising counterpart risk now, above the curated baseline.
                   </span>
                   <span style={{ marginLeft: "auto" }}><SourceTag src="acled" /></span>
                 </div>
@@ -656,7 +662,7 @@ function ControlView() {
         )}
         {tab === "agreements" && (
           <React.Fragment>
-          <table className="tbl"><thead><tr><th>Agreement</th><th>Partner</th><th>Expiry</th><th>Status</th><th>Partner conflict · ACLED</th></tr></thead>
+          <table className="tbl"><thead><tr><th>Agreement</th><th>Partner</th><th>Expiry</th><th>Status</th><th>Partner conflict · GDELT</th></tr></thead>
             <tbody>{RD.agreements.map((v) => {
               const c = LIVE.conflictFor(v.partner);
               return (
@@ -666,10 +672,10 @@ function ControlView() {
                 <td><span className="mono" style={{ color: v.urgent ? "var(--high)" : "var(--ink)" }}>{v.expiry}{v.urgent && " ⚠"}</span></td>
                 <td><span className={`tag-band band-${v.status === "Active" ? "good" : "high"}`}><span></span>{v.status}</span></td>
                 <td>{!c.live
-                  ? <span className="helper" title="ACLED not connected — set credentials to make partner conflict risk live.">sim</span>
+                  ? <span className="helper" title="This partner uses the curated counterpart baseline.">sim</span>
                   : c.tracked
-                    ? <span className={`tag-band band-${c.band}`} title={`${c.events} battle / remote-violence events in ${c.country} over the last 30 days (ACLED).`}><span></span>{c.events} events / 30d</span>
-                    : <span className="tag-band band-good" title="No tracked conflict events in this partner's territory (ACLED)."><span></span>calm</span>}</td></tr>
+                    ? <span className={`tag-band band-${c.band}`} title={`${c.events} conflict-coded news reports on ${c.country} over the last 30 days (GDELT).`}><span></span>{c.events} reports / 30d</span>
+                    : <span className="tag-band band-good" title="No tracked conflict coverage in this partner's territory (GDELT)."><span></span>calm</span>}</td></tr>
               );
             })}</tbody></table>
           <div className="helper" style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6 }}>
@@ -955,34 +961,37 @@ function MethodologyView() {
         <Panel title="Methodology lineage — what this model is built on" icon="book" label="NO SINGLE GLOBAL STANDARD">
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6, margin: "0 0 20px", maxWidth: 980 }}>
             <span style={{ fontStyle: "italic", color: "var(--faint)" }}>Not essential reading — this section is here to show the model's academic roots.</span> There is <b>no single binding international standard</b> for measuring national resilience — the field is a
-            fragmented ecosystem of competing frameworks, and published reviews have catalogued <b>18+ distinct measures</b>. So this model can't borrow authority by conforming to one
+            fragmented ecosystem of competing frameworks: NIST's Resilience Indicator Inventory alone systematically catalogued <b>56 distinct resilience frameworks</b> (<a href="https://nvlpubs.nist.gov/nistpubs/jres/126/jres.126.031.pdf" target="_blank" rel="noopener" className="src-link">Loerzel &amp; Dillard, 2021</a>). So this model can't borrow authority by conforming to one
             standard. Instead its design deliberately follows the logic of the recognised frameworks below — and where it
             invents (the anchored 0–100 scale, the band thresholds) it says so.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 22, marginBottom: 22 }}>
             {[
               ["Institutional guidance", [
-                ["OECD", "Resilience systems analysis (2014); review of national risk assessments across 20 countries (2017)"],
-                ["NIST", "Inventory of community-resilience indicators & assessment frameworks"],
-                ["UK Cabinet Office", "National Risk Register & Resilience Action Plan — dynamic risk assessment"],
-                ["ISO 22316 / 22301", "Organizational resilience & business continuity (adjacent, org-level — not a national standard)"],
+                ["OECD", "Resilience systems analysis (2014); review of national risk assessments across 20 countries (2017)", "https://www.oecd.org/en/publications/guidelines-for-resilience-systems-analysis-how-to-analyse-risk-and-build-a-roadmap-to-resilience_3b1d3efe-en.html"],
+                ["NIST", "Inventory of community-resilience indicators & assessment frameworks", "https://www.nist.gov/community-resilience/assessment-products"],
+                ["UK Cabinet Office", "National Risk Register & Resilience Action Plan — dynamic risk assessment", "https://www.gov.uk/government/publications/national-risk-register-2025"],
+                ["ISO 22316 / 22301", "Organizational resilience & business continuity (adjacent, org-level — not a national standard)", "https://www.iso.org/standard/75106.html"],
               ]],
               ["National-resilience indices", [
-                ["State Resilience Index", "Fund for Peace — capacities & capabilities across 154 countries"],
-                ["MVLRI", "Multidimensional Vulnerability & Lack of Resilience — 26 indicators, econ/env/social"],
-                ["Index of Future Readiness", "2025 — splits resilience (“bounce back”) from adaptive capacity (“bounce forward”)"],
+                ["State Resilience Index", "Fund for Peace — capacities & capabilities across 154 countries", "https://fundforpeace.org/SRI/about.html"],
+                ["MVLRI", "Multidimensional Vulnerability & Lack of Resilience — 26 indicators, econ/env/social", "https://ideas.repec.org/p/zbw/glodps/1558.html"],
+                ["Index of Future Readiness", "2025 — splits resilience (“bounce back”) from adaptive capacity (“bounce forward”)", "https://arxiv.org/abs/2509.00755"],
               ]],
               ["Domain models", [
-                ["FAO RIMA", "Resilience Index Measurement & Analysis — food-security resilience"],
-                ["Resilient Economies Index", "2025 — trade resilience for food/water/energy; import dependence weighted by partner diversity, HDI-adjusted"],
+                ["Bruneau et al. (4 R's)", "Earthquake Spectra 19(4), 2003 — the seminal resilience-engineering frame: robustness, redundancy, resourcefulness, rapidity", "https://doi.org/10.1193/1.1623497"],
+                ["FAO RIMA", "Resilience Index Measurement & Analysis — food-security resilience", "https://www.fao.org/agrifood-economics/areas-of-work/rima/en/"],
+                ["Resilient Economies Index", "2025 — trade resilience for food/water/energy; import dependence weighted by partner diversity, HDI-adjusted", "https://gca.org/reports/resilient-economies-index/"],
               ]],
             ].map(([group, items]) => (
               <div key={group}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--line)" }}>{group}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-                  {items.map(([n, d]) => (
+                  {items.map(([n, d, url]) => (
                     <div key={n}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 2 }}>{n}</div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 2 }}>
+                        <a href={url} target="_blank" rel="noopener" className="src-link">{n}</a>
+                      </div>
                       <div className="helper" style={{ lineHeight: 1.45 }}>{d}</div>
                     </div>
                   ))}
@@ -996,8 +1005,9 @@ function MethodologyView() {
               {[
                 ["Resilience vs. adaptive capacity", "→ our Structural ceiling vs. Live deviation (per the IFR split)"],
                 ["Import dependence weighted by partner diversity", "→ our DRI (source concentration + substitution difficulty) (per the Resilient Economies Index)"],
-                ["Non-compensatory aggregation", "→ weakest-pillar anchoring, so one critical sector stays visible"],
-                ["Buffers-and-flows propagation", "→ the cascade engine: each import carries a stated buffer in days"],
+                ["Recover = rapidity + resourcefulness", "→ our Recover blend (financial firepower + re-sourcing ease) (per Bruneau's 4 R's)"],
+                ["Non-compensatory aggregation", "→ weakest-pillar anchoring, so one critical sector stays visible (per OECD/JRC composite-indicator guidance)"],
+                ["Buffers-and-flows propagation", "→ the cascade engine: each import carries a stated buffer in days (per FAO RIMA's buffer logic)"],
               ].map(([a, b]) => (
                 <div key={a} style={{ fontSize: 12.5, lineHeight: 1.5 }}>
                   <b style={{ fontWeight: 600 }}>{a}</b> <span className="muted">{b}</span>
@@ -1006,7 +1016,7 @@ function MethodologyView() {
             </div>
           </div>
           <div className="helper" style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-            Sources: OECD (2014, 2017) · NIST · UK Cabinet Office (2025) · Fund for Peace SRI · FAO RIMA · Global Center on Adaptation, Resilient Economies Index (2025) · Jawad &amp; Sala-i-Martin, Index of Future Readiness (2025). Public frameworks named for lineage; this model is an independent illustrative synthesis, not an implementation of any one of them.
+            Sources: OECD (2014, 2017) · NIST Resilience Indicator Inventory (<a href="https://nvlpubs.nist.gov/nistpubs/jres/126/jres.126.031.pdf" target="_blank" rel="noopener" className="src-link">Loerzel &amp; Dillard, 2021</a>) · UK Cabinet Office (2025) · Fund for Peace SRI · FAO RIMA · Bruneau et al., Earthquake Spectra 19(4) (2003) · Global Center on Adaptation, Resilient Economies Index (2025) · Jawad &amp; Sala-i-Martin, Index of Future Readiness (2025). Public frameworks named for lineage; this model is an independent illustrative synthesis, not an implementation of any one of them.
           </div>
         </Panel>
       </div>
@@ -1063,7 +1073,7 @@ function MethodologyView() {
                   "Capacity is compensatory by design (complementary coping modes) and scores stocks, money and plans only — redundancy, workforce and institutions are tracked qualitatively in the Control layer",
                   "Financial firepower = 100 × min(liquidity-weighted deployable sovereign capital / $750bn stress benchmark, 1) — liquidity factors 1.0 / 0.6 / 0.3; the benchmark ≈ 18 months of the national import bill (est.)",
                   "Axis goalposts: 100 = autarky (unreachable); ~72 = realistic frontier — display anchors only, feeding no score",
-                  "Score uncertainty = each editable assumption nudged to its high and low ends; the wider the swing, the lower the confidence label",
+                  "Score uncertainty = each editable assumption nudged to its high and low ends; the wider the swing, the wider the ± range shown on the score",
                 ]],
                 ["Live load & feeds", [
                   "Live Resilience = ceiling − active load (throughput + route news + partner news + sea state + market stress + sanctions drift); each term capped, total floored at 25",

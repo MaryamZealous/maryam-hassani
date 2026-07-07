@@ -55,10 +55,16 @@ function LiveGap() {
   const brent = RD.indicators.find((i) => i.id === "brent");
   const gasb = RD.indicators.find((i) => i.id === "gasbasis");
   const lsd = RD.trends ? RD.trends.live : null;
+  const ofacTotal = RD.sources.ofac && RD.sources.ofac._total;
+  const ofacLive = ofacTotal != null;
+  const sancDrag = (RD._drags && RD._drags.sanction) || 0;
+  const sancRising = sancDrag > 0.05;
   const items = [
     { label: "Live Resilience", v: lsd == null ? "—" : (lsd > 0 ? "+" : "") + lsd, dir: lsd == null ? "flat" : lsd >= 0 ? "up" : "down", note: "change vs 24h ago", src: "ais" },
     { label: "Hormuz", v: "−" + hz.drop + "%", dir: "down", note: hz.vessels + " of " + hz.baseline + " transit calls/day", src: "ais" },
-    { label: "OFAC", v: sanc.value, dir: "flat", note: "new designations (illustrative)", src: "assumption" },
+    ofacLive
+      ? { label: "OFAC", v: sancRising ? "Rising" : "Stable", dir: sancRising ? "down" : "flat", note: Number(ofacTotal).toLocaleString() + " SDN entities · " + (sancRising ? "new listings adding load" : "no new listings, no load"), src: "ofac" }
+      : { label: "OFAC", v: sanc.value, dir: "flat", note: "new designations (illustrative)", src: "assumption" },
     { label: "Brent", v: (brent.delta > 0 ? "+" : "") + brent.delta + "%", dir: brent.delta >= 0 ? "up" : "down", note: brent.value + " / barrel", src: "yfinance" },
     { label: "Gas basis", v: gasb.value, dir: "flat", note: "marginal LNG vs $" + (RD.gasNode ? RD.gasNode.floor.toFixed(2) : "1.50") + " floor", src: "curated" },
   ];
@@ -96,7 +102,7 @@ function DriverTrace() {
   const stateOf = (d) => d.real ? "live" : "sim";
   const META = {
     live:  { badge: "LIVE",  cls: "on",    sub: "live feed" },
-    sim:   { badge: "SIM",   cls: "",      sub: "simulated until its feed connects" },
+    sim:   { badge: "SIM",   cls: "",      sub: "modelled · not on a live feed" },
   };
   return (
     <Panel title="What's moving the score right now" icon="book"
@@ -125,7 +131,7 @@ function DriverTrace() {
         })}
       </div>
       <div className="helper" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent · OFAC/OpenSanctions. {liveN} of {drivers.length} drivers are on a connected live feed right now{liveN < drivers.length ? " — the rest are badged SIM until theirs connects" : ""}. A live driver reading near zero is quiet, not missing.
+        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent · OFAC/OpenSanctions. {liveN} of {drivers.length} drivers are on a connected live feed right now{liveN < drivers.length ? " — the rest are clearly badged SIM and run on the model" : ""}. A live driver reading near zero is quiet, not missing.
       </div>
     </Panel>
   );
@@ -173,7 +179,7 @@ function Capacities() {
           { k: "Re-sourcing ease", v: "100 − consequence-weighted substitution-difficulty (" + subPenalty + ") = " + resourcing },
           { k: "Blend (0.5 / 0.5)", v: recover + " / 100" },
         ],
-        assumption: "Equal 0.5/0.5 weighting is an editable judgement. Maps to 'rapidity / resourcefulness' in the resilience-engineering 4 R's.",
+        assumption: "Equal 0.5/0.5 weighting is an editable judgement. Maps to 'rapidity / resourcefulness' in the resilience-engineering 4 R's (Bruneau et al., 2003, Earthquake Spectra 19(4) — robustness, redundancy, resourcefulness, rapidity).",
         links: [{ label: "The sovereign table behind the firepower score · Control layer", view: "control" }],
       } },
     { key: "Adapt", n: adapt, q: "Are we cutting future risk?",
@@ -265,15 +271,15 @@ function OverviewView({ go }) {
       <Panel title="Sector resilience" icon="gauge"
         right={<span className="helper" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
           Most-exposed sector sets the floor <Fx payload={{
-            kicker: "Aggregation rule", title: "Non-compensatory: the weak link anchors the score",
-            text: "Strong sectors can't average away a more-exposed one. Structural Resilience anchors to the most-exposed sector (its 'floor'), blended with overall capacity — so a single concentrated dependency stays visible without producing an impossibly low score.",
-            formula: "Structural Resilience  =  0.60 × most-exposed sector  +  0.40 × capacity",
+            kicker: "How sector scores work", title: "How each sector score is built",
+            text: "Each sector scores 100 minus its anchored fragility. Its ★ anchor import — the one with the highest DRI × consequence — carries 60%; the consequence-weighted average of all its imports carries the other 40%. The same weakest-link rule runs one level up: the most-exposed sector anchors 60% of national Structural Resilience, blended with capacity, so one concentrated dependency always stays visible. Open any card for its own imports and math.",
+            formula: "Sector = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean)     ·     Structural = 0.60 × most-exposed sector + 0.40 × capacity",
             inputs: [
               { k: "Most-exposed sector", v: RD.headline.structural.exposedSector.name + " · " + RD.headline.structural.exposedSector.score.toFixed(1) },
               { k: "Capacity (Absorb·Recover·Adapt)", v: "" + RD.capacity.blend },
               { k: "Anchored result", v: "= " + RD.headline.structural.value.toFixed(1) },
             ],
-            assumption: "The 0.60 exposure-anchor weight is editable — it sets how strongly the weak link anchors the score versus overall capacity.",
+            assumption: "The 0.60 anchor weights are editable. Change any import's DRI or consequence on Dependencies and every sector score — and the national headline — recompute.",
           }} />
         </span>}>
         <div className="sector-grid">
@@ -332,7 +338,7 @@ function ProvenanceLedger() {
     ref: `${c.baseline}/day · 12-month norm`,
     transform: `1 − ${c.vessels}/${c.baseline} → −${c.drop}%`,
     feeds: "Maritime throughput (typically the largest driver)",
-    assume: "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm, never an absolute count. Chokepoint pressure feeds the acute-drag term only — it never moves the structural baseline.",
+    assume: "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm, never an absolute count. Chokepoint pressure feeds the acute-drag term only — it never moves the structural baseline. Concurrent maritime shocks (Hormuz, Red Sea) are counted once here, through the measured throughput drop — never stacked or added a second time.",
   }));
   // Non-maritime shocks feed the ledger when active; none are live today.
   const shk = RD.shocks.filter((s) => s.id !== "hormuz" && s.id !== "redsea").map((s) => ({
@@ -560,84 +566,6 @@ function ThreatsView() {
       </Panel>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <Panel title="Shock convergence" icon="alert" label="LAST 30 DAYS">
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {RD.shocks.map((s) => {
-              const modelled = s.src === "assumption";
-              const isMaritime = RD.chokepoints.some((c) => c.id === s.id);
-              return (
-              <div key={s.id} className={`band-${s.band}`} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 13px", border: "1px solid var(--line)", borderLeft: "3px solid var(--bc)", borderRadius: "var(--radius)", background: "var(--panel-2)", opacity: modelled ? 0.92 : 1, borderStyle: modelled ? "dashed" : "solid" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    {s.name}
-                    {modelled && <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)", border: "1px solid var(--line)", borderRadius: 4, padding: "1px 5px" }}>What-if · not observed</span>}
-                    {isMaritime && <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--muted)", border: "1px solid var(--line)", borderRadius: 4, padding: "1px 5px" }}>Cause of the drop above</span>}
-                  </div>
-                  <div className="helper" style={{ marginTop: 2 }}>{s.note}</div>
-                  {s.track && (
-                    <div className="trk-row">
-                      <span className="trk-dot"></span>
-                      <span className="trk-txt">{s.track}</span>
-                    </div>
-                  )}
-                  {s.evidence && (
-                    <div className="evi-row">
-                      <button className="prov-raw-btn" onClick={(ev) => { ev.stopPropagation(); window.__explain && window.__explain({
-                        kicker: "Observed raw & assumptions",
-                        title: s.name,
-                        text: isMaritime
-                          ? `Observed event signal · source ${RD.sources[s.src].full}. This is the CAUSE of the chokepoint throughput drop shown above — carriers reroute because of it — so the model counts it once, through that measured drop. The magnitude below is context, not a second deduction from the score.`
-                          : `Observed event signal · source ${RD.sources[s.src].full}. The severity below is a curated judgement applied as the one non-maritime residual term of the Live Resilience active load.`,
-                        inputs: [
-                          { k: "Observed", v: `event · ${s.when}`, src: s.src },
-                          { k: "Event note", v: s.note },
-                          { k: isMaritime ? "Event magnitude (context)" : "Severity applied", v: `${s.impact} pts` },
-                          { k: "Feeds into", v: isMaritime ? "Already embedded in the measured chokepoint throughput above — not added again" : "The one non-maritime residual term of the active load" },
-                          { k: "Public sources", v: (<span style={{ display: "inline-flex", flexWrap: "wrap", gap: "6px 12px" }}>{s.evidence.map((e, i) => (<a key={i} className="drawer-link" href={e.url} target="_blank" rel="noopener noreferrer">{e.label} ↗</a>))}</span>) },
-                        ],
-                        assumption: isMaritime ? "Counted once, via the measured vessel-throughput drop shown above — its magnitude here is context, never added to the score a second time." : "Severity is a curated, editable judgement, not a measured quantity.",
-                      }); }}>Raw data &amp; assumptions ›</button>
-                    </div>
-                  )}
-                </div>
-                <SourceTag src={s.src} />
-                {isMaritime
-                  ? <span className="mono" style={{ fontSize: 10.5, color: "var(--faint)", minWidth: 38, textAlign: "right", lineHeight: 1.2 }} title="Counted once, via the measured throughput drop above — not added to the score">via<br />throughput ↑</span>
-                  : <span className="mono down" style={{ fontSize: 15, fontWeight: 600, minWidth: 38, textAlign: "right", opacity: modelled ? 0.55 : 1 }}>{s.impact}</span>}
-              </div>
-              );
-            })}
-            {(() => {
-              const drivers = RD.headline.live.drivers || [];
-              const dv = (k) => { const d = drivers.find((x) => x.k === k); return d ? d.v : 0; };
-              const maritimeLoad = +dv("Maritime throughput").toFixed(1);
-              const convLoad = maritimeLoad;
-              return (
-            <div className={`band-${RD.convergence.band}`} style={{ marginTop: 4, padding: "13px 15px", borderRadius: "var(--radius)", background: "color-mix(in srgb,var(--bc) 12%,transparent)", border: "1px solid var(--bc)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Icon name="alert" size={17} style={{ color: "var(--bc)" }} />
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{RD.convergence.concurrent} concurrent shocks</span>
-                <span className="mono" style={{ marginLeft: "auto", fontSize: 18, fontWeight: 700, color: "var(--bc)" }}>−{convLoad.toFixed(1)}</span>
-                <Fx payload={{
-                  kicker: "Convergence", title: "What these shocks actually cost the score",
-                  text: "The two concurrent maritime events put −" + convLoad.toFixed(1) + " points of live load on the score — no larger 'combined severity' on top. Both reach the score through the measured throughput drop they cause, so the load is that single drop in vessel transits.",
-                  formula: "Live load  =  measured maritime throughput drop (Hormuz + Red Sea)",
-                  inputs: [
-                    { k: "Maritime throughput (Hormuz + Red Sea)", v: "−" + maritimeLoad.toFixed(1) + " pts", src: "ais" },
-                    { k: "Combined live load", v: "−" + convLoad.toFixed(1) + " pts" },
-                  ],
-                  assumption: "Overlapping maritime events do not add a second time — their escalation is already embedded in the vessel-throughput drop. Per-event event magnitudes are context, not additive inputs to the score.",
-                }} />
-              </div>
-              <div className="helper" style={{ marginTop: 7 }}>
-                The real cost to Live Resilience, traceable to the driver panel on the Overview: the measured maritime throughput drop (−{maritimeLoad.toFixed(1)}). Individual event severity figures are context, not a running total.
-              </div>
-            </div>
-              );
-            })()}
-          </div>
-        </Panel>
-
         <Panel title="Leading indicators" icon="spark">
           {RD.indicators.map((ind) => ind.twoState ? <GasBasisRow key={ind.id} ind={ind} /> : (
             <div className={`indi band-${ind.status}`} key={ind.id}>

@@ -61,9 +61,12 @@ window.LIVE = (function () {
   RD.chokepoints.forEach((c) => { ckState[c.id] = c.vessels; });
 
   // leading-indicator anchors. fmt turns the number into the displayed value.
+  // NOTE: only Brent is animated here — it eases toward its real market feed.
+  // The OFAC "new designations" stat is an illustrative ASSUMPTION with no live
+  // delta feed, so it is deliberately NOT animated: a value badged "Assumption"
+  // must not jitter like live data. It holds at its stated value.
   const IND = {
     brent:      { anchor: 93.0, vol: 0.32, pull: 0.05, dp: 2, pre: "$", lo: 70,  hi: 130, pct: true, ref: 89.5 },
-    sanctions:  { anchor: 2.4,  vol: 0.45, pull: 0.10, dp: 0, pre: "",  lo: 0,   hi: 6,   pct: false, int: true, ref: 2.4 },
   };
   const indState = {};
   RD.indicators.forEach((i) => {
@@ -246,7 +249,7 @@ window.LIVE = (function () {
       const tv = vols.reduce((a, b) => a + b, 0);
       reads.gdelt = tv + " articles/2d \u00b7 " + (newsDrag > 0.05 ? "above-normal coverage" : "coverage at/below normal");
     }
-    reads.partner = REAL.news ? (partnerHot.length ? "above-normal: " + partnerHot.join(" \u00b7 ") : "partner coverage at/below normal") : "feed connecting\u2026";
+    reads.partner = REAL.news ? (partnerHot.length ? "above-normal: " + partnerHot.join(" \u00b7 ") : "partner coverage at/below normal") : "modelled baseline";
     if (REAL.meteo && REAL.meteo.sea) {
       let mx = 0;
       for (const id in REAL.meteo.sea) { const sv = REAL.meteo.sea[id]; if (sv && sv.wave != null) mx = Math.max(mx, sv.wave); }
