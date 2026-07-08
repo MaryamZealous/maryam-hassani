@@ -316,6 +316,11 @@ window.LIVE = (function () {
   const CONFLICT_BAND = (p) => p >= 0.66 ? "critical" : p >= 0.40 ? "high" : p > 0.15 ? "moderate" : "good";
   // free-text source strings ("Canada / Russia") → ACLED country names we track
   const COUNTRY_ALIASES = { "russia": "Russia", "sudan": "Sudan", "yemen": "Yemen", "iran": "Iran" };
+  // Hand-set 30-day "normal" conflict-coverage baselines per country (GDELT article
+  // volume). Absolute volume isn't comparable across countries — Iran draws ~20×
+  // the ambient coverage of Sudan — so conflict pressure is measured against each
+  // country's OWN baseline, the same way the news lanes work. Editable estimates.
+  const CONFLICT_BASELINE = { Iran: 40000, Russia: 30000, Yemen: 1800, Sudan: 1400 };
   // partner-supply news lanes (GDELT) keyed by a substring of the import's source
   const NEWS_PARTNER_ALIASES = { "qatar": "qatar", "taiwan": "taiwan", "kazakhstan": "kazakhstan", "china": "china", "india": "india" };
   // live news-pressure on a supply partner, for the Dependencies drawer. Returns
@@ -347,10 +352,14 @@ window.LIVE = (function () {
       }
     }
     if (!matched.length) return { live: !!live, tracked: false, events: null, pressure: 0, band: "good", country: null };
-    // a precursor with several sources takes the most conflict-exposed one
-    matched.sort((a, b) => b.events - a.events);
+    // a precursor with several sources takes the most conflict-exposed one,
+    // ranked by how far each runs above its own baseline (not raw volume)
+    matched.forEach((m) => { m.ratio = m.events / (CONFLICT_BASELINE[m.country] || m.events || 1); });
+    matched.sort((a, b) => b.ratio - a.ratio);
     const top = matched[0];
-    const pressure = Math.max(0, Math.min(1, Math.log10(top.events + 1) / Math.log10(3000)));
+    // pressure = deviation above this country's normal coverage. At baseline
+    // (ratio 1) ≈ 0.25 (moderate); 1.5× ≈ high; 2×+ ≈ critical; below half ≈ calm.
+    const pressure = Math.max(0, Math.min(1, (top.ratio - 0.5) / 2));
     return { live: true, tracked: true, events: top.events, pressure, band: CONFLICT_BAND(pressure), country: top.country, since: acled.since };
   }
 

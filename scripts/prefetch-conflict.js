@@ -67,16 +67,31 @@ async function fetchCountry(country, attempt = 1) {
 (async function main() {
   console.log("Prefetching GDELT conflict coverage (30-day, per country)…");
   const start = new Date(Date.now() - 30 * 864e5);
+
+  // Load the previous file: GDELT often returns only a subset of countries on a
+  // given run (rate-limiting), so any country that fails THIS run keeps its
+  // last-known value instead of dropping out. Partial runs accumulate.
+  let prevByCountry = {};
+  try { prevByCountry = (JSON.parse(fs.readFileSync(OUT, "utf8")).byCountry) || {}; } catch (e) {}
+
   const byCountry = {};
-  let total = 0, anyLive = false;
+  let total = 0, anyFresh = false, carried = [];
 
   // Sequential with generous spacing — GDELT rate-limits rapid back-to-back
   // queries, which is why an unspaced run returned only the first country.
   for (let i = 0; i < COUNTRIES.length; i++) {
-    const n = await fetchCountry(COUNTRIES[i]);
-    if (n != null) { byCountry[COUNTRIES[i]] = n; total += n; anyLive = true; }
+    const c = COUNTRIES[i];
+    const n = await fetchCountry(c);
+    if (n != null) {
+      byCountry[c] = n; anyFresh = true;
+    } else if (prevByCountry[c] != null) {
+      byCountry[c] = prevByCountry[c]; carried.push(c);
+    }
     if (i < COUNTRIES.length - 1) await new Promise((r) => setTimeout(r, 6000));
   }
+  total = Object.values(byCountry).reduce((a, b) => a + b, 0);
+  const anyLive = Object.keys(byCountry).length > 0;
+  if (carried.length) console.log(`  carried previous values for: ${carried.join(", ")}`);
 
   let payload;
   if (anyLive) {
@@ -88,7 +103,7 @@ async function fetchCountry(country, attempt = 1) {
       since: start.toISOString().slice(0, 10) + " (GDELT, 30-day conflict coverage)",
       generated: new Date().toISOString(),
     };
-    console.log(`Done: ${total} total articles across ${Object.keys(byCountry).length} countries.`);
+    console.log(`Done: ${total} total articles across ${Object.keys(byCountry).length} countries${anyFresh ? "" : " (all carried from previous run)"}.`);
   } else {
     payload = { ok: false, error: "gdelt unavailable at build", generated: new Date().toISOString() };
     console.log("GDELT unavailable — app will stay in SIM for conflict. Build continues.");
