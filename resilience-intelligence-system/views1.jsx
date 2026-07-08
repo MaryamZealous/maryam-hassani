@@ -3,6 +3,26 @@
    ========================================================================== */
 const { useState } = React;
 
+/* Per-state conflict bars — a static-friendly viz for the daily conflict feed
+   (a time sparkline can't move within a session). Bar height = coverage vs that
+   state's own baseline; colour = band. */
+function StateBars({ states, w }) {
+  const list = (states && states.length) ? states.slice(0, 4) : [];
+  if (!list.length) return <span style={{ width: w, display: "inline-block" }}></span>;
+  const max = Math.max(1.3, ...list.map((s) => s.ratio));
+  return (
+    <span style={{ width: w, display: "inline-flex", alignItems: "flex-end", justifyContent: "center", gap: 5, height: 30 }}
+      title="Conflict coverage vs each state's own baseline">
+      {list.map((s) => (
+        <span key={s.c} style={{ flex: "0 0 auto", width: 12, display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+          <span className={`band-${s.band}`} style={{ width: "100%", height: Math.max(3, Math.round((s.ratio / max) * 22)), background: "var(--bc)", borderRadius: 1, display: "block" }}></span>
+          <span style={{ fontSize: 8, letterSpacing: ".02em", color: "var(--faint)", fontFamily: "var(--font-mono)" }}>{s.c.slice(0, 2).toUpperCase()}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 /* helper: band by magnitude of a delta */
 function magBand(d) {
   const a = Math.abs(d);
@@ -38,7 +58,7 @@ function GasBasisRow({ ind }) {
         <span className="pill band-high"><span className="sq"></span>marginal {ind.value} · ≈{g.multiple.toFixed(1)}×</span>
       </div>
       <Fx payload={gasBasisFx()} />
-      <SourceTag src="curated" />
+      <SourceTag src={ind.src || "curated"} />
     </div>
   );
 }
@@ -51,7 +71,6 @@ function LiveGap() {
   const gap = +(s - l).toFixed(1);
   const live = RD.headline.live;
   const hz = RD.chokepoints.find((c) => c.id === "hormuz");
-  const sanc = RD.indicators.find((i) => i.id === "sanctions");
   const brent = RD.indicators.find((i) => i.id === "brent");
   const gasb = RD.indicators.find((i) => i.id === "gasbasis");
   const lsd = RD.trends ? RD.trends.live : null;
@@ -64,7 +83,7 @@ function LiveGap() {
     { label: "Hormuz", v: "−" + hz.drop + "%", dir: "down", note: hz.vessels + " of " + hz.baseline + " transit calls/day", src: "ais" },
     ofacLive
       ? { label: "OFAC", v: sancRising ? "Rising" : "Stable", dir: sancRising ? "down" : "flat", note: Number(ofacTotal).toLocaleString() + " SDN entities · " + (sancRising ? "new listings adding load" : "no new listings, no load"), src: "ofac" }
-      : { label: "OFAC", v: sanc.value, dir: "flat", note: "new designations (illustrative)", src: "assumption" },
+      : { label: "OFAC", v: "—", dir: "flat", note: "SDN entity count · feed offline", src: "ofac" },
     { label: "Brent", v: (brent.delta > 0 ? "+" : "") + brent.delta + "%", dir: brent.delta >= 0 ? "up" : "down", note: brent.value + " / barrel", src: "yfinance" },
     { label: "Gas basis", v: gasb.value, dir: "flat", note: "marginal LNG vs $" + (RD.gasNode ? RD.gasNode.floor.toFixed(2) : "1.50") + " floor", src: "curated" },
   ];
@@ -314,12 +333,12 @@ function OverviewView({ go }) {
         {/* top signals */}
         <Panel title="Live signals" icon="threat"
           right={<button className="exp" style={{ marginLeft: "auto" }} onClick={() => go("threats")}>All signals →</button>}>
-          {RD.indicators.slice(0, 4).map((ind) => (
-            <div className={`indi compact band-${ind.status}`} key={ind.id}>
+          {RD.chokepoints.map((c) => (
+            <div className={`indi compact band-${c.band}`} key={c.id}>
               <span className="indi-led"></span>
-              <div className="indi-name">{ind.name} <span className="u">{ind.unit}</span></div>
-              <Sparkline data={ind.spark} band={ind.status} w={70} />
-              <div className="indi-val mono">{ind.valueText || ind.value}</div>
+              <div className="indi-name">{c.name} <span className="u">transit calls/day</span></div>
+              <Sparkline data={c.spark || []} band={c.band} w={70} />
+              <div className="indi-val mono">−{c.drop}%</div>
             </div>
           ))}
         </Panel>
@@ -355,7 +374,7 @@ function ProvenanceLedger() {
     "Trade-route news": { ref: "coverage vs each route's normal volume", feeds: "Trade-route news drag", assume: "Above-normal closure / conflict coverage on Hormuz, Red Sea and Suez (Google News, GDELT fallback). A surge over baseline, not a single headline." },
     "Partner-supply news": { ref: "adverse coverage vs each partner's normal", feeds: "Partner-supply drag", assume: "Adverse-only coverage of single/few-source partners (Qatar, Taiwan, Kazakhstan, China, India, Brazil/Argentina feed grain), scaled by the highest-consequence import riding on each partner and capped." },
     "Energy-market stress": { ref: "Brent > $96 / marginal LNG > $14", feeds: "Energy-market drag", assume: "Brent crude and the Brent-linked marginal LNG replacement cost; adds drag only above the stress marks." },
-    "Counterpart / sanctions": { ref: "new SDN designations vs baseline", feeds: "Counterpart / sanctions drag", assume: "OFAC SDN delta — a rise in designations touching UAE counterparties adds counterpart drag." },
+    "Counterpart / sanctions": { ref: "total SDN entities vs session baseline", feeds: "Counterpart / sanctions drag", assume: "OFAC SDN total entity count (OpenSanctions mirror). A rise since the session's first reading adds counterpart drag (÷200, capped at 0.5). It does not filter to UAE-specific designations — that finer signal isn't wired." },
   };
   const extra = (live.drivers || []).filter((d) => DMETA[d.k]).map((d) => ({
     signal: d.k, src: d.src,
@@ -365,7 +384,17 @@ function ProvenanceLedger() {
     feeds: DMETA[d.k].feeds,
     assume: DMETA[d.k].assume,
   }));
-  const rows = [...choke, ...extra, ...shk];
+  const cf = RD.indicators.find((i) => i.id === "conflict");
+  const conflictRow = (RD.sources.acled && RD.sources.acled._ts && cf && cf.states && cf.states.length) ? [{
+    signal: "Conflict coverage", src: "acled",
+    observed: cf.states.map((s) => s.c + " " + Math.round(s.ratio * 100) + "% of norm").join(" · "),
+    series: null,
+    ref: "each state's own 30-day baseline",
+    transform: "context only — not a Live-score driver",
+    feeds: "Counterpart-risk context (Dependencies)",
+    assume: "GDELT 30-day conflict-coded coverage on the states behind exposed dependencies (Iran, Yemen, Sudan, Russia), each judged against its own baseline. It informs counterpart risk on Dependencies and the Conflict-intensity indicator; it does not enter the Live Resilience score.",
+  }] : [];
+  const rows = [...choke, ...extra, ...conflictRow, ...shk];
   const openRow = (r) => {
     const sm = RD.sources[r.src];
     window.__explain && window.__explain({
@@ -393,7 +422,7 @@ function ProvenanceLedger() {
         The integrity of the live score rests on traceability. <b>Click any row</b> to open its observed raw series and the
         exact assumptions applied before it reaches the score — the public source URL is listed inside each panel. This is
         the complete audit trail behind <b>Live Resilience {live.value.toFixed(1)}</b> — every live driver that moves the score, with its
-        raw value and the transform applied before it lands. Drivers contributing ~0 today are listed too: a quiet input is still part of the calculation.
+        raw value and the transform applied before it lands. Drivers contributing ~0 today are listed too: a quiet input is still part of the calculation. The GDELT conflict feed is listed as well — it informs counterpart risk rather than the live score, so it carries no point transform.
       </p>
       <div className="prov-table-wrap">
         <table className="prov-table">
@@ -513,7 +542,7 @@ function ThreatsView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Live signals</div>
-        <div className="view-sub">Chokepoint activity, converging signals and leading indicators — the fast-moving inputs to the Live Resilience score.</div>
+        <div className="view-sub">Chokepoint transit activity, trade-route news pressure, and the full audit trail behind the Live Resilience score.</div>
       </div>
 
       <Panel title="Maritime chokepoints" icon="globe" label="TRANSIT CALLS/DAY vs. 12-MONTH NORM" style={{ marginBottom: 16 }}>
@@ -564,26 +593,6 @@ function ThreatsView() {
           })}
         </div>
       </Panel>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <Panel title="Leading indicators" icon="spark">
-          {RD.indicators.map((ind) => ind.twoState ? <GasBasisRow key={ind.id} ind={ind} /> : (
-            <div className={`indi band-${ind.status}`} key={ind.id}>
-              <span className="indi-led"></span>
-              <div className="indi-name" style={{ flex: "0 0 38%" }}>{ind.name}<br /><span className="u">{ind.unit}</span></div>
-              <Sparkline data={ind.spark} band={ind.status} fluid w={220} />
-              <div className="indi-val mono">{ind.valueText || ind.value}</div>
-              {ind.statusText ? (
-                <div className={`indi-delta ${ind.status === "high" ? "down" : ind.status === "moderate" ? "warnup" : "flat"}`} style={{ fontSize: 11 }}>{ind.statusText}</div>
-              ) : (
-                <span></span>
-              )}
-              {ind.fx ? <Fx payload={ind.fx} /> : <span></span>}
-              <SourceTag src={ind.src} />
-            </div>
-          ))}
-        </Panel>
-      </div>
 
       <TradeRouteNews />
 
@@ -649,8 +658,13 @@ function resolveWatch(w) {
   }
   if (w.k === "acled") {
     const a = LIVE.conflictFor(w.c);
-    if (!a || !a.tracked) return { label: w.c + " — conflict activity", value: a && a.live ? "0/30d" : "connecting…", ref: "ACLED · battle / remote-violence events", band: "good", src: "acled", live: !!(a && a.live) };
-    return { label: a.country + " — conflict activity", value: a.events + "/30d events", ref: "ACLED · battle / remote-violence, last 30 days", band: a.band, src: "acled", live: true };
+    if (!a || !a.tracked) return { label: w.c + " — conflict coverage", value: a && a.live ? "at baseline" : "connecting…", ref: "GDELT · conflict-coded news, 30 days · vs this state's norm", band: "good", src: "acled", live: !!(a && a.live) };
+    return { label: a.country + " — conflict coverage", value: a.events.toLocaleString() + " articles/30d", ref: "GDELT · conflict-coded news vs this state's baseline", band: a.band, src: "acled", live: true };
+  }
+  if (w.k === "ofac") {
+    const total = RD.sources.ofac && RD.sources.ofac._total;
+    const liveOk = total != null;
+    return { label: "OFAC SDN list", value: liveOk ? Number(total).toLocaleString() + " entities" : "connecting…", ref: "US Treasury sanctions list · a rise since the session baseline adds counterpart drag", band: "good", src: "ofac", live: liveOk };
   }
   if (w.k === "market") {
     const m = RD.indicators.find((x) => x.id === w.id);

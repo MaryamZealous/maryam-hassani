@@ -148,6 +148,32 @@ window.LIVE = (function () {
       }
     })();
 
+    // 2c) conflict intensity — leading indicator from the live GDELT feed.
+    // NOT a Live-score driver (the six drags are); this is forward-looking
+    // counterpart-risk context. Each state is judged against its OWN 30-day
+    // baseline so spikes are comparable across high- and low-volume states.
+    (function () {
+      const ind = RD.indicators.find((x) => x.id === "conflict");
+      if (!ind) return;
+      const acled = REAL.acled;
+      const isLive = REAL.status.acled === "live" && acled && acled.byCountry;
+      if (!isLive) { ind.status = "moderate"; ind.valueText = "—"; ind.statusText = "feed offline"; ind.states = []; return; }
+      const BASE = { Iran: 40000, Russia: 30000, Yemen: 1800, Sudan: 1400 };
+      const bandOf = (p) => p >= 0.66 ? "critical" : p >= 0.40 ? "high" : p > 0.15 ? "moderate" : "good";
+      const states = Object.keys(acled.byCountry).map((c) => {
+        const ratio = acled.byCountry[c] / (BASE[c] || acled.byCountry[c] || 1);
+        return { c: c, ratio: ratio, band: bandOf(clamp((ratio - 0.5) / 2, 0, 1)) };
+      }).sort((a, b) => b.ratio - a.ratio);
+      if (!states.length) return;
+      ind.states = states;
+      const top = states[0];
+      const pressure = clamp((top.ratio - 0.5) / 2, 0, 1);
+      ind.status = bandOf(pressure);
+      const pct = Math.round((top.ratio - 1) * 100);
+      ind.valueText = (pct >= 0 ? "+" : "") + pct + "%";
+      ind.statusText = top.c + " · vs normal";
+    })();
+
     // 3) Live Stress — decomposed into named drivers, real feeds add live drag
     const ck = {};
     RD.chokepoints.forEach((c) => { ck[c.id] = c.drop; });
