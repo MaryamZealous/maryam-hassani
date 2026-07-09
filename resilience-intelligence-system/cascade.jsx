@@ -3,7 +3,7 @@
    Trigger → Precursor → Asset → Sector → National score, on a 0–90 day timeline.
    ========================================================================== */
 const { useState, useEffect } = React;
-const W = 1180, H = 440, NW = 152, NH = 46;
+const W = 1180, H = 380, NW = 152, NH = 44;
 const LAYER_X = [100, 345, 590, 835, 1080];
 const LAYER_NAME = ["Trigger", "Critical imports", "Assets", "Sectors", "National"];
 
@@ -13,7 +13,7 @@ function buildLayout() {
   const pos = {};
   Object.keys(byLayer).forEach((L) => {
     const arr = byLayer[L]; const n = arr.length;
-    const top = 64, bot = 376, span = bot - top;
+    const top = 54, bot = 322, span = bot - top;
     arr.forEach((node, i) => {
       const y = n === 1 ? (top + bot) / 2 : top + (span * i) / (n - 1);
       pos[node.id] = { x: LAYER_X[+L], y };
@@ -74,11 +74,11 @@ function CascadeDiagram() {
   // caption: nodes that activated at this day (using the active mode's timing)
   const justNow = RD.cascade.nodes.filter((n) => dayFor(n) === day);
   const caption = day === 0
-    ? (mitigated ? "Shock fires. Responses are already staged — reroutes and reserves start absorbing the load immediately." : "Shock fires. Buffers begin drawing down across every sea-routed dependency.")
+    ? (mitigated ? "Shock fires. Responses are already staged, reroutes and reserves start absorbing the load immediately." : "Shock fires. Buffers begin drawing down across every sea-routed dependency.")
     : day === todayDay
       ? (mitigated
-          ? "Day " + todayDay + " — today. This is the mitigated path: the one that matches an actual closure this long producing little visible effect."
-          : "Day " + todayDay + " — today. This is the unmitigated path: what the model projects if no response is ever staged. Toggle mitigation to see why reality looks different.")
+          ? "Day " + todayDay + ", today. This is the mitigated path: the one that matches an actual closure this long producing little visible effect."
+          : "Day " + todayDay + ", today. This is the unmitigated path: what the model projects if no response is ever staged. Toggle mitigation to see why reality looks different.")
       : justNow.length
         ? justNow.map((n) => (mitigated && n.mitigationNote ? n.mitigationNote : n.detail)).join("  ")
         : "Buffers continue depleting; no new node crosses its threshold this step.";
@@ -100,24 +100,30 @@ function CascadeDiagram() {
             : "Trigger removes the shipping route that feeds downstream buffers",
       inputs: [
         { k: "Propagation layer", v: layerName },
-        { k: "Mode", v: mitigated ? "With responses staged" : "Unmitigated exposure" },
+        { k: "Mode", v: mitigated ? "Responses staged" : "Unmitigated exposure" },
         { k: "Activates at", v: eDay === 0 ? "Day 0 (immediate)" : "Day " + eDay },
         { k: "Severity", v: RD.band(eBand === "critical" ? 30 : eBand === "high" ? 50 : eBand === "moderate" ? 67 : 85).label },
       ],
-      assumption: "Propagation timing is driven by each import's stated buffer days (curated estimates). The mitigated path applies the Response & pre-mortem playbook already available for this exposure. Treat day markers as illustrative order-of-magnitude, not precise forecasts.",
+      assumption: "Propagation timing is driven by each import's stated buffer days (curated estimates). The mitigated path applies the Sector responses playbook already available for this exposure. Treat day markers as illustrative order-of-magnitude, not precise forecasts.",
     });
   };
 
   return (
     <div className="cascade-wrap">
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
         <button className="btn primary" onClick={() => { if (dayIdx >= days.length - 1) setDayIdx(0); setPlaying((p) => !p); }}>
           <Icon name={playing ? "flat" : "play"} size={15} />{playing ? "Pause" : dayIdx >= days.length - 1 ? "Replay cascade" : "Play cascade"}
         </button>
         <button className="btn ghost" onClick={() => { setPlaying(false); setDayIdx(0); setSel(null); }}>
           <Icon name="reset" size={14} />Reset
         </button>
-        <div className="flow-legend" style={{ marginLeft: "auto" }}>
+        <div className="seg-control" style={{ marginLeft: "auto" }}>
+          <button className={!mitigated ? "on" : ""} onClick={() => setMitigated(false)}>Unmitigated</button>
+          <button className={`stage-opt ${mitigated ? "on" : ""}`} onClick={() => setMitigated(true)}>Stage responses</button>
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        <div className="flow-legend">
           <span className="legend-i"><span className="sw" style={{ background: "var(--crit)" }}></span>Critical</span>
           <span className="legend-i"><span className="sw" style={{ background: "var(--high)" }}></span>High</span>
           <span className="legend-i"><span className="sw" style={{ background: "var(--mod)" }}></span>Moderate</span>
@@ -155,7 +161,6 @@ function CascadeDiagram() {
               <rect className="accent" width="4" height={NH} rx="2" fill="var(--bc)" opacity={act ? 1 : 0.4} />
               <text className="nlabel" x="16" y={NH / 2 - 2} dominantBaseline="middle">{n.label}</text>
               <text className="nday" x="16" y={NH - 11}>{dayFor(n) === 0 ? "immediate" : "day " + dayFor(n)}</text>
-              {act && <circle cx={NW - 14} cy={NH / 2} r="3.4" fill="var(--bc)" />}
             </g>
           );
         })}
@@ -173,33 +178,21 @@ function CascadeDiagram() {
         ))}
       </div>
 
-      {/* readout */}
+      {/* readout, day / caption / projected score, plus a prominent CTA to
+          go stage the actual responses. No color change on mitigation, the
+          legend only ever uses Critical/High/Moderate, so the panel border
+          stays neutral regardless of mode. */}
       <div className="casc-readout">
-        <div>
-          <div className="casc-day">Day {day}</div>
-        </div>
+        <div className="casc-day">Day {day}</div>
         <div className="casc-cap">{caption}</div>
         <div className="casc-proj">
           <div className="v mono">{proj}</div>
-          <div className="l">Projected national score</div>
+          <div className="l">Projected Live Resilience</div>
         </div>
       </div>
-
-      {/* mode switch — the one clear place to flip from the default worst-case
-          trace to the mitigated path a real, ongoing closure actually follows */}
-      <div className={`casc-mode-band ${mitigated ? "is-mitigated" : ""}`}>
-        <div className="casc-mode-txt">
-          {mitigated ? (
-            <><b>Viewing: with responses staged.</b> Reroutes via Fujairah and the strategic reserve are absorbing the shock — this is the path that matches an actual closure running for months with little visible effect.</>
-          ) : (
-            <><b>Viewing: unmitigated exposure (default).</b> This traces the worst case — as if no response is ever staged. Real conditions rarely stay unmitigated for long.</>
-          )}
-        </div>
-        <button className="btn primary" onClick={() => setMitigated((m) => !m)}>
-          {mitigated ? <><Icon name="reset" size={14} />Back to unmitigated</> : <>See it with responses staged →</>}
-        </button>
-        <button className="exp" onClick={() => window.__go && window.__go("act", { sector: "water" })}>Explore the responses →</button>
-      </div>
+      <button className="btn gold cta-stage" onClick={() => window.__go && window.__go("act", { sector: "water" })}>
+        Explore sector responses <Icon name="arrowRight" size={15} />
+      </button>
     </div>
   );
 }

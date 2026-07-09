@@ -34,16 +34,16 @@ function gasBasisFx() {
   const g = RD.gasNode || { floor: 1.5, marginal: 12, multiple: 8, brent: 93, shipConst: 0.4 };
   return {
     kicker: "Two-state gas node",
-    title: "Gas — contracted floor vs marginal replacement",
-    text: "The UAE lives in two gas-price worlds at once. Contracted Dolphin gas is a fixed ~$" + g.floor.toFixed(2) + "/MMBtu floor. The molecule that replaces it if Dolphin is curtailed is sea-borne LNG, priced off oil at ~12.5% of Brent. Losing Dolphin is therefore a price-BASIS flip from contract to oil-linked — a reprice of roughly ≈" + g.multiple.toFixed(1) + "× — not a volume gap against a buffer.",
+    title: "Gas: contracted floor vs marginal replacement",
+    text: "The UAE lives in two gas-price worlds at once. Contracted Dolphin gas is a fixed ~$" + g.floor.toFixed(2) + "/MMBtu floor. The molecule that replaces it if Dolphin is curtailed is sea-borne LNG, priced off oil at ~12.5% of Brent. Losing Dolphin is therefore a price-BASIS flip from contract to oil-linked, a reprice of roughly ≈" + g.multiple.toFixed(1) + "×, not a volume gap against a buffer.",
     formula: "Marginal replacement  =  slope × Brent  +  shipping/regas  =  0.125 × $" + g.brent.toFixed(0) + "  +  $" + g.shipConst.toFixed(2) + "  =  $" + g.marginal.toFixed(2) + " / MMBtu",
     inputs: [
-      { k: "Contracted floor (Dolphin)", v: "$" + g.floor.toFixed(2) + " / MMBtu — fixed long-term contract", src: "assumption" },
+      { k: "Contracted floor (Dolphin)", v: "$" + g.floor.toFixed(2) + " / MMBtu, fixed long-term contract", src: "assumption" },
       { k: "Oil-indexed slope", v: "~12.5% of Brent (plausible 10–15%)", src: "curated" },
       { k: "Brent (live)", v: "$" + g.brent.toFixed(2) + " / bbl", src: "yfinance" },
       { k: "Marginal replacement cost", v: "$" + g.marginal.toFixed(2) + " / MMBtu  ·  ≈" + g.multiple.toFixed(1) + "× the floor" },
     ],
-    assumption: "Dolphin's ~$1.30–1.50/MMBtu price is a widely-reported estimate (MEES, MEED, Energy Intelligence) — the parties have never published it, so it is tagged as an assumption, not a live feed. The ~12.5% Brent slope is the documented market convention for Qatari oil-indexed LNG. Henry Hub (US gas, ~$3) is deliberately NOT used — it is the wrong price basis for the UAE.",
+    assumption: "Dolphin's ~$1.30–1.50/MMBtu price is a widely-reported estimate (MEES, MEED, Energy Intelligence); the parties have never published it, so it is tagged as an assumption, not a live feed. The ~12.5% Brent slope is the documented market convention for Qatari oil-indexed LNG. Henry Hub (US gas, ~$3) is deliberately NOT used: it is the wrong price basis for the UAE.",
   };
 }
 function GasBasisRow({ ind }) {
@@ -89,7 +89,7 @@ function LiveGap() {
   ];
   return (
     <Panel title="Today's gap" icon="spark"
-      right={<span className="helper" style={{ marginLeft: "auto" }}>{gap} pts of live load below the {s} ceiling — clears as it eases</span>}>
+      right={<span className="helper" style={{ marginLeft: "auto" }}>{gap} pts of live load below the {s} ceiling, clears as it eases</span>}>
       <div className="gapbar-track" style={{ marginTop: 30, marginBottom: 46 }}>
         <div className="gapbar-live" style={{ width: l + "%" }}></div>
         <div className="gapbar-gap" style={{ left: l + "%", width: (s - l) + "%" }}></div>
@@ -150,7 +150,7 @@ function DriverTrace() {
         })}
       </div>
       <div className="helper" style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent · OFAC/OpenSanctions. {liveN} of {drivers.length} drivers are on a connected live feed right now{liveN < drivers.length ? " — the rest are clearly badged SIM and run on the model" : ""}. A live driver reading near zero is quiet, not missing.
+        Feeds: PortWatch (AIS) · Open-Meteo · Google News · Brent · OFAC/OpenSanctions. {liveN} of {drivers.length} drivers are on a connected live feed right now{liveN < drivers.length ? ", the rest are clearly badged SIM and run on the model" : ""}. A live driver reading near zero is quiet, not missing.
       </div>
     </Panel>
   );
@@ -169,7 +169,7 @@ function Capacities() {
   const tiles = [
     { key: "Absorb", n: absorb, q: "How big a hit can we take?",
       sub: "Reserves & buffers vs a 90-day benchmark, weighted by how much each import matters",
-      fx: { kicker: "Capacity · Absorb", title: "Absorb — shock-absorbing buffers",
+      fx: { kicker: "Capacity · Absorb", title: "Absorb: shock-absorbing buffers",
         text: "How much disruption the system soaks up before function degrades: the depth of reserves across the " + RD.precursors.length + " critical imports, weighted by national consequence. Maps to the 'absorptive capacity' shared by the OECD and IPCC resilience frameworks.",
         formula: "Absorb  =  Σ(consequence × min(buffer / 90, 1))  /  Σ consequence",
         inputs: (() => {
@@ -188,30 +188,30 @@ function Capacities() {
       } },
     { key: "Recover", n: recover, q: "How fast can we bounce back?",
       sub: "Sovereign firepower to fund recovery + how easily critical inputs can be re-sourced",
-      fx: { kicker: "Capacity · Recover", title: "Recover — bounce-back speed",
-        text: "How quickly function is restored after a hit: a blend of financial firepower (sovereign capital that can be redeployed fast) and how substitutable the critical imports are. Deep pockets help, but money cannot compress a 120-day reorder lead time — which is why recovery, not absorption, is the binding capacity here.",
+      fx: { kicker: "Capacity · Recover", title: "Recover: bounce-back speed",
+        text: "How quickly function is restored after a hit: a blend of financial firepower (sovereign capital that can be redeployed fast) and how substitutable the critical imports are. Deep pockets help, but money cannot compress a 120-day reorder lead time, which is why recovery, not absorption, is the binding capacity here.",
         formula: "Recover  =  0.5 × financial firepower  +  0.5 × re-sourcing ease",
         inputs: [
           { k: "Financial firepower", v: "100 × min($" + cap.finDeployW + "bn liquidity-weighted deployable / $" + cap.finBench + "bn stress benchmark, 1) = " + cap.financial, src: "curated" },
           { k: "— deployable capital", v: "per-fund deployable from the Control layer's sovereign table (~$2.1T total AUM), × liquidity factor High 1.0 / Medium 0.6 / Low 0.3" },
-          { k: "— stress benchmark", v: "$" + cap.finBench + "bn ≈ 18 months of the national import bill (est.) — an editable goalpost" },
+          { k: "— stress benchmark", v: "$" + cap.finBench + "bn ≈ 18 months of the national import bill (est.), an editable goalpost" },
           { k: "Re-sourcing ease", v: "100 − consequence-weighted substitution-difficulty (" + subPenalty + ") = " + resourcing },
           { k: "Blend (0.5 / 0.5)", v: recover + " / 100" },
         ],
-        assumption: "Equal 0.5/0.5 weighting is an editable judgement. Maps to 'rapidity / resourcefulness' in the resilience-engineering 4 R's (Bruneau et al., 2003, Earthquake Spectra 19(4) — robustness, redundancy, resourcefulness, rapidity).",
+        assumption: "Equal 0.5/0.5 weighting is an editable judgement. Maps to 'rapidity / resourcefulness' in the resilience-engineering 4 R's (Bruneau et al., 2003, Earthquake Spectra 19(4), robustness, redundancy, resourcefulness, rapidity).",
         links: [{ label: "The sovereign table behind the firepower score · Control layer", view: "control" }],
       } },
     { key: "Adapt", n: adapt, q: "Are we cutting future risk?",
-      sub: "Depth × speed of each sector's structural plan, weighted by how much the sector matters — commit plans in Response & pre-mortem",
-      fx: { kicker: "Capacity · Adapt", title: "Adapt — bounce-forward capacity",
-        text: "Whether the system can structurally reduce its exposure for next time — 'bounce forward', not just back. Having a plan is not enough: each sector's play is scored on DEPTH (how many structural ceiling points its deepest tier would add — 2.5 pts = full credit) and SPEED (how fast the first structural effect lands — 24 months or less = full credit), blended 0.6/0.4 and weighted by the sector's total import consequence. A sector with no structural play scores zero. This is adaptive CAPACITY; realized adaptation tracks what you actually commit in the Response & pre-mortem view.",
+      sub: "Depth × speed of each sector's structural plan, weighted by how much the sector matters; commit plans in Sector responses",
+      fx: { kicker: "Capacity · Adapt", title: "Adapt: bounce-forward capacity",
+        text: "Whether the system can structurally reduce its exposure for next time (‘bounce forward’, not just back). Having a plan is not enough: each sector's play is scored on DEPTH (how many structural ceiling points its deepest tier would add, 2.5 pts = full credit) and SPEED (how fast the first structural effect lands, 24 months or less = full credit), blended 0.6/0.4 and weighted by the sector's total import consequence. A sector with no structural play scores zero. This is adaptive CAPACITY; realized adaptation tracks what you actually commit in the Response & pre-mortem view.",
         formula: "Adapt  =  Σ( sector weight × (0.6 × depth + 0.4 × speed) )  /  Σ weight",
         inputs: [
           ...RD.capacity.adaptDetail.map((d) => ({ k: d.name, v: d.score === 0 ? "no structural play → 0" : "depth " + d.depth + " · speed " + d.speed + " → " + d.score + " · weight " + d.w })),
           { k: "Weighted result", v: adapt + " / 100" },
         ],
-        assumption: "Depth and speed come from the response catalog's own tiers (deepest-tier ceiling points; days to the first ceiling-raising tier). The 2.5-pt depth and 24-month speed goalposts are editable judgements. Counts capacity (credible plans), not realized change — maps to the 'bounce forward' / transformative-capacity split of the Index of Future Readiness.",
-        links: [{ label: "The plans being scored · Response & pre-mortem", view: "act" }],
+        assumption: "Depth and speed come from the response catalog's own tiers (deepest-tier ceiling points; days to the first ceiling-raising tier). The 2.5-pt depth and 24-month speed goalposts are editable judgements. Counts capacity (credible plans), not realized change, maps to the 'bounce forward' / transformative-capacity split of the Index of Future Readiness.",
+        links: [{ label: "The plans being scored · Sector responses", view: "act" }],
       } },
   ];
 
@@ -246,8 +246,8 @@ function Capacities() {
         </span>
         <span style={{ marginLeft: "auto" }}>
           <Fx payload={{
-            kicker: "Putting it together", title: "Capacity, measured against exposure",
-            text: "Following the vulnerability-vs-resilience logic used for small open economies (Briguglio): CAPACITY — what you can Absorb, how fast you Recover, your ability to Adapt — is set against EXPOSURE, the most-exposed sector. The result is non-compensatory: strong capacity can't fully paper over a concentrated weak point, so the most-exposed sector anchors the score.",
+            kicker: "Putting it together", title: "Capacity: measured against exposure",
+            text: "Following the vulnerability-vs-resilience logic used for small open economies (Briguglio): CAPACITY (what you can Absorb, how fast you Recover, your ability to Adapt) is set against EXPOSURE, the most-exposed sector. The result is non-compensatory: strong capacity can't fully paper over a concentrated weak point, so the most-exposed sector anchors the score.",
             formula: "Structural Resilience  =  0.60 × most-exposed sector  +  0.40 × capacity blend",
             inputs: [
               { k: "Exposure (weak link)", v: exposed.name + " sector · " + exposed.score.toFixed(1) },
@@ -267,7 +267,7 @@ function OverviewView({ go }) {
   return (
     <div className="view fade-in">
       <div className="view-head">
-        <div className="view-title">The gap is the signal</div>
+        <div className="view-title">Gap is the signal</div>
         <div className="view-sub">
           Two readings of one system: <b>Structural Resilience</b> is the ceiling; <b>Live Resilience</b> is that ceiling minus today's active load. The <b>gap</b> between them is the signal.
         </div>
@@ -291,14 +291,14 @@ function OverviewView({ go }) {
         right={<span className="helper" style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
           Most-exposed sector sets the floor <Fx payload={{
             kicker: "How sector scores work", title: "How each sector score is built",
-            text: "Each sector scores 100 minus its anchored fragility. Its ★ anchor import — the one with the highest DRI × consequence — carries 60%; the consequence-weighted average of all its imports carries the other 40%. The same weakest-link rule runs one level up: the most-exposed sector anchors 60% of national Structural Resilience, blended with capacity, so one concentrated dependency always stays visible. Open any card for its own imports and math.",
+            text: "Each sector scores 100 minus its anchored fragility. Its ★ anchor import, the one with the highest DRI × consequence, carries 60%; the consequence-weighted average of all its imports carries the other 40%. The same weakest-link rule runs one level up: the most-exposed sector anchors 60% of national Structural Resilience, blended with capacity, so one concentrated dependency always stays visible. Open any card for its own imports and math.",
             formula: "Sector = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean)     ·     Structural = 0.60 × most-exposed sector + 0.40 × capacity",
             inputs: [
               { k: "Most-exposed sector", v: RD.headline.structural.exposedSector.name + " · " + RD.headline.structural.exposedSector.score.toFixed(1) },
               { k: "Capacity (Absorb·Recover·Adapt)", v: "" + RD.capacity.blend },
               { k: "Anchored result", v: "= " + RD.headline.structural.value.toFixed(1) },
             ],
-            assumption: "The 0.60 anchor weights are editable. Change any import's DRI or consequence on Dependencies and every sector score — and the national headline — recompute.",
+            assumption: "The 0.60 anchor weights are editable. Change any import's DRI or consequence on Dependencies and every sector score, and the national headline, recompute.",
           }} />
         </span>}>
         <div className="sector-grid">
@@ -314,7 +314,7 @@ function OverviewView({ go }) {
           <div className="panel-b" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
             <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
               The model's core idea: a single disruption doesn't stay put. Watch a Hormuz closure travel from
-              chokepoint to critical import to asset to sector to the national score — day by day, every step explained.
+              chokepoint to critical import to asset to sector to the national score, day by day, every step explained.
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               {["Trigger", "Import", "Asset", "Sector", "National"].map((t, i) => (
@@ -357,7 +357,7 @@ function ProvenanceLedger() {
     ref: `${c.baseline}/day · 12-month norm`,
     transform: `1 − ${c.vessels}/${c.baseline} → −${c.drop}%`,
     feeds: "Maritime throughput (typically the largest driver)",
-    assume: "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm, never an absolute count. Chokepoint pressure feeds the acute-drag term only — it never moves the structural baseline. Concurrent maritime shocks (Hormuz, Red Sea) are counted once here, through the measured throughput drop — never stacked or added a second time.",
+    assume: "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm, never an absolute count. Chokepoint pressure feeds the acute-drag term only, it never moves the structural baseline. Concurrent maritime shocks (Hormuz, Red Sea) are counted once here, through the measured throughput drop, never stacked or added a second time.",
   }));
   // Non-maritime shocks feed the ledger when active; none are live today.
   const shk = RD.shocks.filter((s) => s.id !== "hormuz" && s.id !== "redsea").map((s) => ({
@@ -367,14 +367,14 @@ function ProvenanceLedger() {
     ref: "severity rubric (0 to −35)",
     transform: `${s.impact} pts`,
     feeds: "Non-maritime shock severity",
-    assume: "Severity is a curated, editable judgement from the observed event — not a measured quantity.",
+    assume: "Severity is a curated, editable judgement from the observed event, not a measured quantity.",
   }));
   const DMETA = {
     "Sea state": { ref: "drag begins above 1.2 m wave", feeds: "Sea-state drag", assume: "Open-Meteo wave height & wind on the chokepoint approaches; adds live drag only above the 1.2 m threshold." },
     "Trade-route news": { ref: "coverage vs each route's normal volume", feeds: "Trade-route news drag", assume: "Above-normal closure / conflict coverage on Hormuz, Red Sea and Suez (Google News, GDELT fallback). A surge over baseline, not a single headline." },
     "Partner-supply news": { ref: "adverse coverage vs each partner's normal", feeds: "Partner-supply drag", assume: "Adverse-only coverage of single/few-source partners (Qatar, Taiwan, Kazakhstan, China, India, Brazil/Argentina feed grain), scaled by the highest-consequence import riding on each partner and capped." },
     "Energy-market stress": { ref: "Brent > $96 / marginal LNG > $14", feeds: "Energy-market drag", assume: "Brent crude and the Brent-linked marginal LNG replacement cost; adds drag only above the stress marks." },
-    "Counterpart / sanctions": { ref: "total SDN entities vs session baseline", feeds: "Counterpart / sanctions drag", assume: "OFAC SDN total entity count (OpenSanctions mirror). A rise since the session's first reading adds counterpart drag (÷200, capped at 0.5). It does not filter to UAE-specific designations — that finer signal isn't wired." },
+    "Counterpart / sanctions": { ref: "total SDN entities vs session baseline", feeds: "Counterpart / sanctions drag", assume: "OFAC SDN total entity count (OpenSanctions mirror). A rise since the session's first reading adds counterpart drag (÷200, capped at 0.5). It does not filter to UAE-specific designations, that finer signal isn't wired." },
   };
   const extra = (live.drivers || []).filter((d) => DMETA[d.k]).map((d) => ({
     signal: d.k, src: d.src,
@@ -390,7 +390,7 @@ function ProvenanceLedger() {
     observed: cf.states.map((s) => s.c + " " + Math.round(s.ratio * 100) + "% of norm").join(" · "),
     series: null,
     ref: "each state's own 30-day baseline",
-    transform: "context only — not a Live-score driver",
+    transform: "context only, not a Live-score driver",
     feeds: "Counterpart-risk context (Dependencies)",
     assume: "GDELT 30-day conflict-coded coverage on the states behind exposed dependencies (Iran, Yemen, Sudan, Russia), each judged against its own baseline. It informs counterpart risk on Dependencies and the Conflict-intensity indicator; it does not enter the Live Resilience score.",
   }] : [];
@@ -420,9 +420,9 @@ function ProvenanceLedger() {
     <Panel title="Source & provenance ledger" icon="book" label="EVERY NUMBER, TRACEABLE" style={{ marginTop: 16 }}>
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
         The integrity of the live score rests on traceability. <b>Click any row</b> to open its observed raw series and the
-        exact assumptions applied before it reaches the score — the public source URL is listed inside each panel. This is
-        the complete audit trail behind <b>Live Resilience {live.value.toFixed(1)}</b> — every live driver that moves the score, with its
-        raw value and the transform applied before it lands. Drivers contributing ~0 today are listed too: a quiet input is still part of the calculation. The GDELT conflict feed is listed as well — it informs counterpart risk rather than the live score, so it carries no point transform.
+        exact assumptions applied before it reaches the score, the public source URL is listed inside each panel. This is
+        the complete audit trail behind <b>Live Resilience {live.value.toFixed(1)}</b>, every live driver that moves the score, with its
+        raw value and the transform applied before it lands. Drivers contributing ~0 today are listed too: a quiet input is still part of the calculation. The GDELT conflict feed is listed as well, it informs counterpart risk rather than the live score, so it carries no point transform.
       </p>
       <div className="prov-table-wrap">
         <table className="prov-table">
@@ -458,12 +458,12 @@ function TradeRouteNews() {
   const news = (LIVE.real && LIVE.real.news) || RD.convergence._news || null;
   const live = LIVE.real && LIVE.real.status && LIVE.real.status.gdelt === "live";
   const AREAS = [
-    { id: "qatar", label: "Qatar — piped gas" },
-    { id: "taiwan", label: "Taiwan — chips" },
-    { id: "kazakhstan", label: "Kazakhstan — uranium (fuel chain)" },
-    { id: "china", label: "China — solar / battery / devices" },
-    { id: "india", label: "India — pharma APIs" },
-    { id: "feedgrain", label: "Brazil / Argentina — feed grain" },
+    { id: "qatar", label: "Qatar, piped gas" },
+    { id: "taiwan", label: "Taiwan, chips" },
+    { id: "kazakhstan", label: "Kazakhstan, uranium (fuel chain)" },
+    { id: "china", label: "China, solar / battery / devices" },
+    { id: "india", label: "India, pharma APIs" },
+    { id: "feedgrain", label: "Brazil / Argentina, feed grain" },
     { id: "hormuz", label: "Strait of Hormuz" },
     { id: "redsea", label: "Bab-el-Mandeb / Red Sea" },
     { id: "suez", label: "Suez Canal" },
@@ -489,9 +489,9 @@ function TradeRouteNews() {
       right={<span style={{ marginLeft: "auto" }}><SourceTag src="gdelt" /></span>}>
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
         Vessel data (PortWatch) updates weekly, so <b>news is the early detector between updates</b>. We scan world
-        media every few minutes across two fronts — <b>trade-route closures</b> (Hormuz, Red Sea, Suez) and <b>partner-supply
+        media every few minutes across two fronts: <b>trade-route closures</b> (Hormuz, Red Sea, Suez) and <b>partner-supply
         shocks</b>, led by the single- and few-source dependencies (Qatar gas, Taiwan chips, Kazakhstan fuel), then China,
-        India and the Brazil/Argentina feed-grain belt. Partner lanes count <b>only adverse coverage</b> — a "deal signed" doesn't add pressure, a halt or export ban does.
+        India and the Brazil/Argentina feed-grain belt. Partner lanes count <b>only adverse coverage</b>: a "deal signed" doesn't add pressure, a halt or export ban does.
         A surge above a lane's normal volume registers as <b>news pressure</b> and adds live drag before throughput or trade data would confirm it.
       </p>
       {!news ? (
@@ -512,7 +512,7 @@ function TradeRouteNews() {
                   <span style={{ fontSize: 12.5, fontWeight: 600, minWidth: 150 }}>{a.label}</span>
                   <div className="bar-track" style={{ flex: 1, height: 6 }}><div className="bar-fill" style={{ width: pct + "%" }}></div></div>
                   <span className="mono" style={{ fontSize: 11.5, minWidth: 76, textAlign: "right", color: noData ? "var(--faint)" : "var(--muted)" }}
-                    title={noData ? "This query could not be fetched on the last pull — shown as no data, never as a fake zero." : undefined}>
+                    title={noData ? "This query could not be fetched on the last pull, shown as no data, never as a fake zero." : undefined}>
                     {noData ? "no data" : d.vol + " articles"}</span>
                 </div>
               );
@@ -522,14 +522,14 @@ function TradeRouteNews() {
           </div>
           {/* featured headlines */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <span className="label">Latest — {featured ? featured.label : ""}</span>
+            <span className="label">Latest, {featured ? featured.label : ""}</span>
             {featured && featured.d.headlines && featured.d.headlines.length ? featured.d.headlines.map((h, i) => (
               <a key={i} href={h.url} target="_blank" rel="noopener noreferrer" className="news-row">
                 <span className="news-dot"></span>
                 <span className="news-title">{h.title}</span>
                 <span className="news-meta">{h.domain}{fmtDate(h.seendate) ? " · " + fmtDate(h.seendate) : ""}</span>
               </a>
-            )) : <div className="helper" style={{ padding: "10px 0" }}>No above-normal coverage on the featured route right now — a quiet feed is itself a signal.</div>}
+            )) : <div className="helper" style={{ padding: "10px 0" }}>No above-normal coverage on the featured route right now, a quiet feed is itself a signal.</div>}
           </div>
         </div>
       )}
@@ -585,7 +585,7 @@ function ThreatsView() {
                     ],
                     assumption: c.real
                       ? "Real IMF PortWatch transit calls (satellite AIS on ~90,000 ships), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm (90th percentile). A sustained collapse still reads as a real drop rather than quietly becoming the new normal."
-                      : "A quiet strait and a busy one are judged on their own normal — absolute counts are never compared across chokepoints.",
+                      : "A quiet strait and a busy one are judged on their own normal. Absolute counts are never compared across chokepoints.",
                   }} />
                 </div>
               </div>
@@ -606,15 +606,13 @@ function CascadeView() {
   return (
     <div className="view fade-in">
       <div className="view-head">
-        <div className="view-title">The cascade engine</div>
+        <div className="view-title">Cascade engine</div>
         <div className="view-sub">
-          This traces unmitigated exposure — what would happen if a shock at a chokepoint drew down buffers with no
-          response ever staged. Toggle to "With responses staged" to see the same shock absorbed by the reroutes and
-          reserves the Response & pre-mortem playbook already has ready. That's the honest reason a real closure can run
-          for months with little visible effect: not that the exposure isn't real, but that it's being actively managed.
+          Unmitigated exposure by default, no response staged. Toggle to see the same shock absorbed by the
+          reroutes and reserves staged in the Sector responses section.
         </div>
       </div>
-      <Panel title="Hormuz closure — unmitigated exposure vs. responses staged" icon="cascade" label="ILLUSTRATIVE TRACE · 150-DAY WINDOW">
+      <Panel title="Hormuz closure, unmitigated exposure vs. responses staged" icon="cascade" label="ILLUSTRATIVE TRACE · 150-DAY WINDOW">
         <CascadeDiagram />
       </Panel>
 
@@ -622,8 +620,8 @@ function CascadeView() {
         {[
           { n: "1", t: "Buffers, not bangs", d: "Nothing fails instantly. Each import carries a stated buffer in days; the shock simply starts the clock." },
           { n: "2", t: "Consequence-weighted", d: (() => { const c = (id) => { const p = RD.precursors.find((x) => x.id === id); return p ? p.consequence.toFixed(2) : "?"; }; return `RO membranes (${c("ro")}) and the gas balancing input (${c("gas")}) propagate hard; gold doré (${c("golddore")}) barely moves the system.`; })() },
-          { n: "3", t: "Non-compensatory end", d: "Once Water turns critical, Live Resilience is capped — strong Finance and Food cannot buy it back." },
-          { n: "4", t: "Unmitigated vs. staged", d: "The default trace assumes nothing is done. Toggle 'With responses staged' to see the same shock absorbed by reroutes and reserves — the mechanism behind a real closure producing limited visible effect." },
+          { n: "3", t: "Non-compensatory end", d: "Once Water turns critical, Live Resilience is capped, strong Finance and Food cannot buy it back." },
+          { n: "4", t: "Unmitigated vs. staged", d: "The default trace assumes nothing is done. Toggle 'Stage responses' to see the same shock absorbed by reroutes and reserves, the mechanism behind a real closure producing limited visible effect." },
         ].map((c) => (
           <div className="method-q" key={c.n} style={{ marginBottom: 0 }}>
             <h3><span className="badge-n">{c.n}</span>{c.t}</h3>
@@ -641,7 +639,7 @@ function resolveWatch(w) {
   if (w.k === "choke") {
     const c = RD.chokepoints.find((x) => x.id === w.id);
     if (!c) return null;
-    return { label: c.name + " — transit calls", value: c.vessels + "/day", ref: "vs " + c.baseline + " norm · −" + c.drop + "%", band: c.band, src: "ais", live: true };
+    return { label: c.name + ", transit calls", value: c.vessels + "/day", ref: "vs " + c.baseline + " norm · −" + c.drop + "%", band: c.band, src: "ais", live: true };
   }
   if (w.k === "news") {
     const labelMap = { hormuz: "Hormuz news pressure", redsea: "Red Sea news pressure", suez: "Suez news pressure", general: "Global trade-disruption news" };
@@ -660,8 +658,8 @@ function resolveWatch(w) {
   }
   if (w.k === "acled") {
     const a = LIVE.conflictFor(w.c);
-    if (!a || !a.tracked) return { label: w.c + " — conflict coverage", value: a && a.live ? "at baseline" : "connecting…", ref: "GDELT · conflict-coded news, 30 days · vs this state's norm", band: "good", src: "acled", live: !!(a && a.live) };
-    return { label: a.country + " — conflict coverage", value: a.events.toLocaleString() + " articles/30d", ref: "GDELT · conflict-coded news vs this state's baseline", band: a.band, src: "acled", live: true };
+    if (!a || !a.tracked) return { label: w.c + ", conflict coverage", value: a && a.live ? "at baseline" : "connecting…", ref: "GDELT · conflict-coded news, 30 days · vs this state's norm", band: "good", src: "acled", live: !!(a && a.live) };
+    return { label: a.country + ", conflict coverage", value: a.events.toLocaleString() + " articles/30d", ref: "GDELT · conflict-coded news vs this state's baseline", band: a.band, src: "acled", live: true };
   }
   if (w.k === "ofac") {
     const total = RD.sources.ofac && RD.sources.ofac._total;
@@ -697,7 +695,7 @@ function ScenariosView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Scenario simulator</div>
-        <div className="view-sub">Pre-built stress tests. Select one to see how each sector and the national score respond — and what would warn you first.</div>
+        <div className="view-sub">Pre-built stress tests. Select one to see how each sector and the national score respond, and what would warn you first.</div>
       </div>
 
       <div className="grid cols-2" style={{ gridTemplateColumns: "0.9fr 1.3fr", alignItems: "start" }}>
@@ -740,7 +738,7 @@ function ScenariosView() {
                       assumption: "Sector deltas are curated stress judgements per scenario (Combined compounds its two parents element-wise: the worse shock + 0.6 × the lesser; Combined Maximum is a hand-authored worst-case vector). The 0.60 anchor mirrors the structural formula.",
                       links: [
                         { label: "Watch this unfold day by day · Cascade", view: "cascade" },
-                        { label: "Responses that blunt it · Response & pre-mortem", view: "act" },
+                        { label: "Responses that blunt it · Sector responses", view: "act" },
                       ],
                     }} />; })()}
                 </div>
@@ -748,7 +746,7 @@ function ScenariosView() {
             </div>
             {floored && (
               <div className="helper" style={{ margin: "-6px 0 16px", padding: "9px 12px", borderRadius: "var(--radius)", background: "color-mix(in srgb,var(--crit) 8%,transparent)", border: "1px solid color-mix(in srgb,var(--crit) 22%,transparent)", lineHeight: 1.5 }}>
-                <b>Why 0.0?</b> This stress test applies {scn.overall} points — more than the {baseLive.toFixed(1)} of live score remaining — so the index bottoms out at 0. A 0–100 resilience score can&#8217;t go negative; reaching 0 represents systemic failure across every sector at once, not a precise value.
+                <b>Why 0.0?</b> This stress test applies {scn.overall} points, more than the {baseLive.toFixed(1)} of live score remaining, so the index bottoms out at 0. A 0–100 resilience score can&#8217;t go negative; reaching 0 represents systemic failure across every sector at once, not a precise value.
               </div>
             )}
             <div className="delta-bars">
@@ -796,7 +794,7 @@ function ScenariosView() {
                   })}
                 </div>
                 <div className="helper" style={{ marginTop: 10 }}>
-                  These are the live, sourced signals that move <i>before</i> the score does. The system does not assign a probability to the scenario itself — it shows what to monitor and how hot each signal is right now.
+                  These are the live, sourced signals that move <i>before</i> the score does. The system does not assign a probability to the scenario itself, it shows what to monitor and how hot each signal is right now.
                 </div>
               </>
             ) : (

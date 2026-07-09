@@ -14,7 +14,7 @@ const NAV = [
     { id: "scenarios", label: "Scenarios", icon: "layers" },
   ]},
   { group: "Respond", items: [
-    { id: "act", label: "Response & pre-mortem", icon: "target" },
+    { id: "act", label: "Sector responses", icon: "target" },
     { id: "control", label: "Control layer", icon: "shield" },
   ]},
   { group: "Understand", items: [
@@ -23,7 +23,7 @@ const NAV = [
 ];
 const TITLES = {
   overview: "Overview", threats: "Live signals", map: "Supply map", cascade: "Cascade",
-  scenarios: "Scenarios", dependencies: "Dependencies", act: "Response & pre-mortem", control: "Control layer",
+  scenarios: "Scenarios", dependencies: "Dependencies", act: "Sector responses", control: "Control layer",
   methodology: "How it works",
 };
 

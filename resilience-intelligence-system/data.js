@@ -26,18 +26,18 @@ window.RD = (function () {
       tag: "Baseline · the ceiling",
       horizon: "30d",
       formula: "0.60 × most-exposed sector (exposure)  +  0.40 × capacity (Absorb · Recover · Adapt)",
-      cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "— no trade economy reaches it. The marked ≈72 frontier is a stated goalpost (an assumption, not a computed value): the realistic ceiling for an open, import-dependent economy. It anchors the axis only — no score is derived from it. This is also the ceiling Live Resilience recovers toward." },
-      explain: "Structural Resilience: how well the system copes on a calm day, before today's events. Following the vulnerability-vs-resilience logic used for small, open, import-dependent economies, it sets the country's capacity — what it can absorb, how fast it recovers, and its ability to adapt — against its exposure, the most-exposed sector. It moves over months as buffers, sovereign depth and structural builds change, and is independent of today's events. It is also the ceiling the live score recovers toward. On the 0–100 axis, 100 = total self-sufficiency (no trade economy reaches it); ≈72 marks a realistic frontier.",
+      cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "— no trade economy reaches it. The marked ≈72 frontier is a stated goalpost (an assumption, not a computed value): the realistic ceiling for an open, import-dependent economy. It anchors the axis only, no score is derived from it. This is also the ceiling Live Resilience recovers toward." },
+      explain: "Structural Resilience: how well the system copes on a calm day, before today's events. Following the vulnerability-vs-resilience logic used for small, open, import-dependent economies, it sets the country's capacity (what it can absorb, how fast it recovers, its ability to adapt) against its exposure (the most-exposed sector). It moves over months as buffers, sovereign depth and structural builds change, and is independent of today's events. It is also the ceiling the live score recovers toward. On the 0–100 axis, 100 = total self-sufficiency (no trade economy reaches it); ≈72 marks a realistic frontier.",
       // NOTE: value/prev are seeds only — computeSpine() overwrites value (and
       // recomputes prev to preserve the displayed 30-day delta) from the
       // dependency data, and replaces `inputs` with the computed decomposition.
       // The literals below are illustrative of the shape, not the live numbers.
       inputs: [
-        { k: "Exposure — most-exposed sector", v: "most-exposed sector score (weak link)", src: "curated" },
+        { k: "Exposure, most-exposed sector", v: "most-exposed sector score (weak link)", src: "curated" },
         { k: "Capacity", v: "Absorb · Recover · Adapt → blend", src: "curated" },
         { k: "Anchored result", v: "0.60 × most-exposed + 0.40 × capacity" },
       ],
-      assumption: "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity blend — non-compensatory, so a concentrated weak point can't be fully averaged away by strong capacity. Capacity is equal-weighted across Absorb (consequence-weighted buffers vs a 90-day benchmark), Recover (sovereign firepower + how easily inputs re-source) and Adapt (sectors with a credible structural plan). The 0.60 anchor weight and 90-day benchmark are editable assumptions. The ≈72 frontier marked on the axis is a separate display goalpost, not an input to any score.",
+      assumption: "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity blend, non-compensatory, so a concentrated weak point can't be fully averaged away by strong capacity. Capacity is equal-weighted across Absorb (consequence-weighted buffers vs a 90-day benchmark), Recover (sovereign firepower + how easily inputs re-source) and Adapt (sectors with a credible structural plan). The 0.60 anchor weight and 90-day benchmark are editable assumptions. The ≈72 frontier marked on the axis is a separate display goalpost, not an input to any score.",
     },
     live: {
       value: 47.0, prev: 44.5,
@@ -48,18 +48,18 @@ window.RD = (function () {
       // cap + inputs[0] below are seeds; computeSpine() overwrites them with the
       // computed ceiling so the displayed ceiling always equals Structural.
       cap: { at: 55, label: "ceiling = baseline", lead: "Tracking toward your baseline", body: "— live sits below the structural ceiling by the size of today's active load. As that load clears, it climbs back to full strength." },
-      explain: "How resilient the system is to today's conditions — the structural ceiling minus the active load from what's happening now, not a free-floating number. On a calm day it sits at the ceiling; live pressure lowers it. The gap between this and the ceiling is the headline signal: a wide gap shows where to focus today, a narrow gap means the country is operating close to its fundamentals.",
+      explain: "How resilient the system is to today's conditions, the structural ceiling minus the active load from what's happening now, not a free-floating number. On a calm day it sits at the ceiling; live pressure lowers it. The gap between this and the ceiling is the headline signal: a wide gap shows where to focus today, a narrow gap means the country is operating close to its fundamentals.",
       inputs: [
         { k: "Structural ceiling", v: "the day's maximum", src: "curated" },
         { k: "Maritime throughput", v: "Hormuz / Red Sea / Suez transit calls vs each strait's 12-month norm (IMF PortWatch)", src: "ais" },
         { k: "Trade-route news", v: "above-normal closure / conflict coverage on the sea routes", src: "gdelt" },
-        { k: "Partner-supply news", v: "adverse coverage of a single- or few-source partner (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India, Brazil/Argentina feed grain) — negative-sentiment gated", src: "gdelt" },
+        { k: "Partner-supply news", v: "adverse coverage of a single- or few-source partner (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India, Brazil/Argentina feed grain), negative-sentiment gated", src: "gdelt" },
         { k: "Energy-market stress", v: "Brent and the Brent-linked LNG replacement cost above their stress marks", src: "yfinance" },
         { k: "Sea state", v: "wave height above 1.2 m on the chokepoint approaches impairs transit", src: "meteo" },
         { k: "Counterpart / sanctions", v: "rise in total SDN entities since session baseline (OpenSanctions mirror)", src: "ofac" },
         { k: "Live = ceiling − active load", v: "recomputed every refresh from the live drivers", src: "curated" },
       ],
-      assumption: "Live Resilience = structural ceiling − today's active load. Each drag term is capped so no single feed can swamp the score, and the total is floored at 25 — day-to-day pressure alone can't read as systemic failure (stress-test scenarios can, and floor at 0). Maritime disruption enters through measured vessel throughput, which already reflects how carriers reroute as tension rises — so the Hormuz and Red Sea events shown elsewhere are the causes of that measured drop, presented for context, and are not added to the score a second time.",
+      assumption: "Live Resilience = structural ceiling − today's active load. Each drag term is capped so no single feed can swamp the score, and the total is floored at 25: day-to-day pressure alone can't read as systemic failure (stress-test scenarios can, and floor at 0). Maritime disruption enters through measured vessel throughput, which already reflects how carriers reroute as tension rises. So the Hormuz and Red Sea events shown elsewhere are the causes of that measured drop, presented for context, and are not added to the score a second time.",
     },
   };
 
@@ -71,17 +71,17 @@ window.RD = (function () {
   // in live.js); with no old-enough history the UI shows a dash.
   const sectors = [
     { id: "energy", name: "Energy",
-      note: "Power and desalination share one gas envelope, so they move together under load. The acute risk is single-counterpart gas concentration and a contract→oil-linked price flip — not a Hormuz crude story, since crude bypasses via Fujairah and Dolphin is a fixed pipeline. The clean-energy buildout trades some gas-reliance for China-concentrated processing risk." },
+      note: "Power and desalination share one gas envelope, so they move together under load. The acute risk is single-counterpart gas concentration and a contract→oil-linked price flip, not a Hormuz crude story, since crude bypasses via Fujairah and Dolphin is a fixed pipeline. The clean-energy buildout trades some gas-reliance for China-concentrated processing risk." },
     { id: "water", name: "Water",
-      note: "The binding constraint is reorder lead-time against buffers, not overnight single-source failure — the thin-buffer dosing chemicals bite fastest." },
+      note: "The binding constraint is reorder lead-time against buffers, not overnight single-source failure. The thin-buffer dosing chemicals bite fastest." },
     { id: "defence", name: "Defence",
-      note: "The binding risk is US export-control licensing on advanced silicon, not Taiwanese supply — a channel that eased in late 2025." },
+      note: "The binding risk is US export-control licensing on advanced silicon, not Taiwanese supply: a channel that eased in late 2025." },
     { id: "food", name: "Food",
-      note: "Grain reserves are deep and diversified; the real anchor is animal feed — domestic eggs, poultry, dairy and fish all run on imported feed with only weeks of stock, so protein self-sufficiency sits one step down the chain from an import." },
+      note: "Grain reserves are deep and diversified; the real anchor is animal feed. Domestic eggs, poultry, dairy and fish all run on imported feed with only weeks of stock, so protein self-sufficiency sits one step down the chain from an import." },
     { id: "logistics", name: "Logistics",
-      note: "~60% of imports land at Jebel Ali (est.), inside the strait, so Hormuz container-exposure is the dominant variable — partly offset by air-cargo prioritisation and the Fujairah crude bypass." },
+      note: "~60% of imports land at Jebel Ali (est.), inside the strait, so Hormuz container-exposure is the dominant variable, partly offset by air-cargo prioritisation and the Fujairah crude bypass." },
     { id: "finance", name: "Finance",
-      note: "The imports here are financial rails, not goods — foreign-controlled and sanctions-exposed. The UAE's exceptional sovereign-wealth depth is the offsetting strength, but it sits in coping capacity, not here." },
+      note: "The imports here are financial rails, not goods: foreign-controlled and sanctions-exposed. The UAE's exceptional sovereign-wealth depth is the offsetting strength, but it sits in coping capacity, not here." },
     { id: "health", name: "Health",
       note: "The exposure is concentration, not depth: APIs run ~65% through India (est.), and device buffers stay thin even where vaccine stock is deep." },
   ];
@@ -90,22 +90,22 @@ window.RD = (function () {
   const precursors = [
     { id: "leu", name: "LEU fuel", sector: "energy", source: "Kazakhstan (uranium) → KEPCO NF, Korea", buffer: 540, cfac: { ess: 0.90, svc: 0.85, imm: 0.30, brd: 0.55 },
       dims: { concentration: 88, substitutability: 48, route: 24, counterpart: 16 }, hormuz: false, dolphin: false,
-      note: "Long-lead nuclear fuel for Barakah. Kazakh uranium is only the first link in the chain — conversion and enrichment happen abroad, and KEPCO NF (Korea) fabricates the finished assemblies. No near-term alternative chain, but an enormous buffer." },
+      note: "Long-lead nuclear fuel for Barakah. Kazakh uranium is only the first link in the chain, conversion and enrichment happen abroad, and KEPCO NF (Korea) fabricates the finished assemblies. No near-term alternative chain, but an enormous buffer." },
     { id: "chips", name: "Leading-edge chips", sector: "defence", source: "Taiwan", buffer: 90, cfac: { ess: 0.80, svc: 0.80, imm: 0.60, brd: 0.50 },
       dims: { concentration: 92, substitutability: 88, route: 24, counterpart: 60 }, hormuz: false, dolphin: false,
-      note: "Fabrication concentrates in Taiwan, but the access risk is US export-control licensing, not a supply halt — a channel that eased in Nov 2025 when the US approved G42 to import advanced Nvidia silicon. Feeds EDGE Group guided-systems lines." },
+      note: "Fabrication concentrates in Taiwan, but the access risk is US export-control licensing, not a supply halt, a channel that eased in Nov 2025 when the US approved G42 to import advanced Nvidia silicon. Feeds EDGE Group guided-systems lines." },
     { id: "ro", name: "RO membranes", sector: "water", source: "Japan / US / Korea", buffer: 75, cfac: { ess: 1.00, svc: 0.90, imm: 0.60, brd: 0.85 },
       dims: { concentration: 64, substitutability: 64, route: 52, counterpart: 40 }, hormuz: false, dolphin: false,
-      note: "Competitive but concentrated field — DuPont (US), Toray & Nitto (Japan), LG (Korea) hold ~58% between the top three. Gulf desalination already runs largely on Toray membranes, and regional production is localising (LG Chem–Alkhorayef, Saudi, 2026). The binding risk is the ~120-day reorder lead-time vs a 75-day buffer — not single-source failure." },
+      note: "Competitive but concentrated field: DuPont (US), Toray & Nitto (Japan), LG (Korea) hold ~58% between the top three. Gulf desalination already runs largely on Toray membranes, and regional production is localising (LG Chem–Alkhorayef, Saudi, 2026). The binding risk is the ~120-day reorder lead-time vs a 75-day buffer, not single-source failure." },
     { id: "erd", name: "Energy-recovery devices", sector: "water", source: "US (Energy Recovery Inc.)", buffer: 270, cfac: { ess: 0.90, svc: 0.70, imm: 0.30, brd: 0.80 },
       dims: { concentration: 80, substitutability: 68, route: 16, counterpart: 32 }, hormuz: false, dolphin: false,
-      note: "The isobaric pressure-exchangers that recover energy from reject brine and cut SWRO power use by up to ~60% — without them desalination still runs, but at a far higher energy cost. The market is dominated by one US supplier (Energy Recovery Inc.); Flowserve and Danfoss are partial alternatives. Concentration is high, but the units are durable installed capital — a supply cut bites slowly (new builds and major repairs), not overnight, which is why immediacy is low." },
+      note: "The isobaric pressure-exchangers that recover energy from reject brine and cut SWRO power use by up to ~60%. Without them desalination still runs, but at a far higher energy cost. The market is dominated by one US supplier (Energy Recovery Inc.); Flowserve and Danfoss are partial alternatives. Concentration is high, but the units are durable installed capital: a supply cut bites slowly (new builds and major repairs), not overnight, which is why immediacy is low." },
     { id: "waterchem", name: "Desalination dosing chemicals", sector: "water", source: "US / EU / regional", buffer: 30, cfac: { ess: 0.95, svc: 0.85, imm: 0.90, brd: 0.70 },
       dims: { concentration: 72, substitutability: 64, route: 44, counterpart: 28 }, hormuz: true, dolphin: false,
-      note: "The continuous chemical feed every desalination train depends on: antiscalants injected into RO feed-water to stop membrane scaling, chlorine / sodium hypochlorite for disinfection, coagulants (ferric chloride) and pH adjusters (sulphuric acid, caustic soda). Specialty antiscalants come from a handful of qualified suppliers (Nalco/Ecolab, BASF, Avista) and can't be swapped without re-validation. Short shelf lives cap how much can be stockpiled, so the buffer is genuinely thin — and without dosing, RO membranes foul and scale within days, not months. A high-consequence, thin-buffer water input that is easy to overlook next to the hardware." },
+      note: "The continuous chemical feed every desalination train depends on: antiscalants injected into RO feed-water to stop membrane scaling, chlorine / sodium hypochlorite for disinfection, coagulants (ferric chloride) and pH adjusters (sulphuric acid, caustic soda). Specialty antiscalants come from a handful of qualified suppliers (Nalco/Ecolab, BASF, Avista) and can't be swapped without re-validation. Short shelf lives cap how much can be stockpiled, so the buffer is genuinely thin, and without dosing, RO membranes foul and scale within days, not months. A high-consequence, thin-buffer water input that is easy to overlook next to the hardware." },
     { id: "gas", name: "Piped gas (Dolphin)", sector: "energy", source: "Qatar", buffer: 30, cfac: { ess: 1.00, svc: 1.00, imm: 1.00, brd: 1.00 },
       dims: { concentration: 92, substitutability: 72, route: 8, counterpart: 72 }, hormuz: false, dolphin: true,
-      note: "25% of gas for power + water; contract runs to 2032. The genuine exposure is gas-side and counterpart-driven, not a maritime chokepoint: Dolphin is a fixed subsea pipeline from Qatar, so route/chokepoint exposure is low (it does not transit Hormuz). What carries the risk is single-counterpart concentration (one neighbour, one corridor) and the price BASIS — losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8× the floor). Highest consequence weight in the model. UAE crude exports bypass Hormuz via Fujairah, so the energy line carries no oil-import chokepoint penalty — its acute exposure is gas feedstock." },
+      note: "25% of gas for power + water; contract runs to 2032. The genuine exposure is gas-side and counterpart-driven, not a maritime chokepoint: Dolphin is a fixed subsea pipeline from Qatar, so route/chokepoint exposure is low (it does not transit Hormuz). What carries the risk is single-counterpart concentration (one neighbour, one corridor) and the price BASIS: losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8× the floor). Highest consequence weight in the model. UAE crude exports bypass Hormuz via Fujairah, so the energy line carries no oil-import chokepoint penalty. Its acute exposure is gas feedstock." },
     { id: "api", name: "Active pharma ingredients", sector: "health", source: "India", buffer: 60, cfac: { ess: 0.90, svc: 0.75, imm: 0.70, brd: 0.60 },
       dims: { concentration: 84, substitutability: 64, route: 40, counterpart: 32 }, hormuz: true, dolphin: false,
       note: "~65% sourced from India (analyst est.). Hospital pharmacology depends on uninterrupted flow." },
@@ -123,22 +123,22 @@ window.RD = (function () {
       note: "Long-lead high-voltage transformers. Failure cascades to desalination." },
     { id: "turbines", name: "Turbine hot-section & large pumps", sector: "energy", source: "US / EU / Japan (GE · Siemens · Mitsubishi)", buffer: 120, cfac: { ess: 0.95, svc: 0.85, imm: 0.55, brd: 0.80 },
       dims: { concentration: 88, substitutability: 88, route: 32, counterpart: 40 }, hormuz: false, dolphin: false,
-      note: "The rotating equipment the power-and-water fleet actually runs on: gas-turbine hot-section components (blades, vanes, combustors) and the large SWRO / cooling pumps. Three OEMs — GE, Siemens, Mitsubishi — hold almost the entire qualified field, parts are proprietary and can't be cross-fitted, and lead times run 12–24 months. N+1 redundancy and held spares cushion a single failure, so immediacy is moderate — but a fleet-wide hot-section campaign or an OEM / export-control cut-off takes generation AND desalination capacity offline, not merely up in cost. For a power-and-water utility this is a structural exposure, arguably deeper than several better-known items on the list." },
+      note: "The rotating equipment the power-and-water fleet actually runs on: gas-turbine hot-section components (blades, vanes, combustors) and the large SWRO / cooling pumps. Three OEMs (GE, Siemens, Mitsubishi) hold almost the entire qualified field; parts are proprietary and can't be cross-fitted, and lead times run 12–24 months. N+1 redundancy and held spares cushion a single failure, so immediacy is moderate, but a fleet-wide hot-section campaign or an OEM / export-control cut-off takes generation AND desalination capacity offline, not merely up in cost. For a power-and-water utility this is a structural exposure, arguably deeper than several better-known items on the list." },
     { id: "solarpv", name: "Solar PV modules", sector: "energy", source: "China (polysilicon → module)", buffer: 180, cfac: { ess: 0.55, svc: 0.45, imm: 0.20, brd: 0.55 },
       dims: { concentration: 88, substitutability: 56, route: 32, counterpart: 32 }, hormuz: true, dolphin: false,
-      note: "The UAE's clean-energy pivot (Mohammed bin Rashid & Al Dhafra solar parks, Masdar, Net Zero 2050) runs on PV modules whose upstream — polysilicon, wafers, cells — concentrates ~80%+ in China. A sun-rich desert state, yet the panels that harvest the sun are a China-processing dependency. Low immediacy — modules are durable installed capital, so a supply cut delays NEW capacity rather than darkening existing plants — making this a forward-looking buildout risk, not an acute one." },
+      note: "The UAE's clean-energy pivot (Mohammed bin Rashid & Al Dhafra solar parks, Masdar, Net Zero 2050) runs on PV modules whose upstream (polysilicon, wafers, cells) concentrates ~80%+ in China. A sun-rich desert state, yet the panels that harvest the sun are a China-processing dependency. Low immediacy: modules are durable installed capital, so a supply cut delays new capacity rather than darkening existing plants, making this a forward-looking buildout risk, not an acute one." },
     { id: "libattery", name: "Battery storage cells", sector: "energy", source: "China (Li-ion cells)", buffer: 150, cfac: { ess: 0.50, svc: 0.40, imm: 0.25, brd: 0.50 },
       dims: { concentration: 96, substitutability: 60, route: 32, counterpart: 44 }, hormuz: true, dolphin: false,
-      note: "Grid-scale storage is what lets the solar buildout keep supplying after dark — Masdar's record 24/7 solar-plus-storage projects are gigawatt-hour scale. Lithium-ion cells and their refined lithium / graphite / cathode inputs concentrate heavily in China. As it decarbonises, the UAE swaps some gas-dependence for battery-supply dependence. Installed-capital dynamics keep immediacy low; the exposure grows with every GWh added." },
+      note: "Grid-scale storage is what lets the solar buildout keep supplying after dark. Masdar's record 24/7 solar-plus-storage projects are gigawatt-hour scale. Lithium-ion cells and their refined lithium / graphite / cathode inputs concentrate heavily in China. As it decarbonises, the UAE swaps some gas-dependence for battery-supply dependence. Installed-capital dynamics keep immediacy low; the exposure grows with every GWh added." },
     { id: "copper", name: "Copper (cathode / rod)", sector: "energy", source: "Chile / Zambia → traded", buffer: 90, cfac: { ess: 0.70, svc: 0.55, imm: 0.40, brd: 0.65 },
       dims: { concentration: 56, substitutability: 48, route: 36, counterpart: 20 }, hormuz: false, dolphin: false,
-      note: "The bottleneck metal of electrification — every solar farm, battery, EV charger and grid upgrade is copper-hungry. The UAE mines none; refined cathode and rod feed Ducab's cabling and the federal grid expansion. More diversified than the China-processed inputs (globally traded, multiple sources), so route and counterpart risk are lower — but the structural warning stands: demand outruns new supply over the decade ahead." },
+      note: "The bottleneck metal of electrification: every solar farm, battery, EV charger and grid upgrade is copper-hungry. The UAE mines none; refined cathode and rod feed Ducab's cabling and the federal grid expansion. More diversified than the China-processed inputs (globally traded, multiple sources), so route and counterpart risk are lower, but the structural warning stands: demand outruns new supply over the decade ahead." },
     { id: "wheat", name: "Wheat", sector: "food", source: "Russia / Australia", buffer: 150, cfac: { ess: 0.70, svc: 0.50, imm: 0.30, brd: 0.60 },
       dims: { concentration: 52, substitutability: 28, route: 36, counterpart: 20 }, hormuz: false, dolphin: false,
       note: "Strategic reserves plus diversified sourcing keep this comfortable." },
     { id: "feed", name: "Animal feed & fodder", sector: "food", source: "Brazil / Argentina / US / Spain", buffer: 45, cfac: { ess: 0.65, svc: 0.75, imm: 0.65, brd: 0.50 },
       dims: { concentration: 60, substitutability: 40, route: 36, counterpart: 20 }, hormuz: false, dolphin: false,
-      note: "The hidden import under every domestic protein line: soybean meal and corn for poultry and aquaculture, alfalfa and hay for dairy. The UAE's real self-sufficiency in eggs, chicken, milk and farmed fish rides on this continuous feed flow — local production that looks like independence but sits one step down the chain from an import. Feed mills hold weeks of working stock, not months, so a feed disruption reaches domestic protein output faster than a wheat shock reaches bread." },
+      note: "The hidden import under every domestic protein line: soybean meal and corn for poultry and aquaculture, alfalfa and hay for dairy. The UAE's real self-sufficiency in eggs, chicken, milk and farmed fish rides on this continuous feed flow, local production that looks like independence but sits one step down the chain from an import. Feed mills hold weeks of working stock, not months, so a feed disruption reaches domestic protein output faster than a wheat shock reaches bread." },
     { id: "gps", name: "Timing / GNSS modules", sector: "defence", source: "United States", buffer: 90, cfac: { ess: 0.75, svc: 0.70, imm: 0.80, brd: 0.50 },
       dims: { concentration: 68, substitutability: 52, route: 44, counterpart: 24 }, hormuz: false, dolphin: false,
       note: "Precision-timing modules. Vulnerable to GPS-jamming spikes in the Gulf." },
@@ -147,16 +147,16 @@ window.RD = (function () {
       note: "Keeps air-bridge capacity alive when sea routes degrade." },
     { id: "container", name: "Containerised imports (Hormuz)", sector: "logistics", source: "Asia via Hormuz", buffer: 45, cfac: { ess: 0.80, svc: 0.80, imm: 0.70, brd: 0.85 },
       dims: { concentration: 44, substitutability: 52, route: 72, counterpart: 12 }, hormuz: true, dolphin: false,
-      note: "The bulk of containerised consumer & industrial goods arrive at Jebel Ali, which sits inside the Gulf — so they are Hormuz-locked. Fujairah (on the Gulf of Oman, outside the strait) is a partial bypass but a fraction of Jebel Ali's box capacity, which is why route exposure dominates this line." },
+      note: "The bulk of containerised consumer & industrial goods arrive at Jebel Ali, which sits inside the Gulf, so they are Hormuz-locked. Fujairah (on the Gulf of Oman, outside the strait) is a partial bypass but a fraction of Jebel Ali's box capacity, which is why route exposure dominates this line." },
     { id: "golddore", name: "Gold doré", sector: "finance", source: "Africa (various)", buffer: 30, cfac: { ess: 0.20, svc: 0.30, imm: 0.25, brd: 0.15 },
       dims: { concentration: 32, substitutability: 24, route: 20, counterpart: 12 }, hormuz: false, dolphin: false,
-      note: "Refining feedstock for Dubai's gold trade. Low national-consequence weight — the bottom of the scale." },
+      note: "Refining feedstock for Dubai's gold trade. Low national-consequence weight, the bottom of the scale." },
     { id: "usdclearing", name: "USD clearing access", sector: "finance", source: "US correspondent banks", buffer: 21, cfac: { ess: 0.90, svc: 0.85, imm: 0.85, brd: 0.90 },
       dims: { concentration: 56, substitutability: 60, route: 4, counterpart: 40 }, hormuz: false, dolphin: false,
-      note: "Correspondent-banking access to dollar settlement — the rail under most cross-border trade. Counterpart-driven: the UAE sat on the FATF 'grey list' Feb 2022–Feb 2024, a documented reminder that this access is a live permission, not a stockpile. The dirham's USD peg deepens the dependence; CIPS/euro rails are only partial substitutes, hence high substitution difficulty." },
+      note: "Correspondent-banking access to dollar settlement, the rail under most cross-border trade. Counterpart-driven: the UAE sat on the FATF 'grey list' Feb 2022–Feb 2024, a documented reminder that this access is a live permission, not a stockpile. The dirham's USD peg deepens the dependence; CIPS/euro rails are only partial substitutes, hence high substitution difficulty." },
     { id: "swift", name: "Cross-border messaging (SWIFT)", sector: "finance", source: "SWIFT (Belgium)", buffer: 30, cfac: { ess: 0.65, svc: 0.60, imm: 0.70, brd: 0.65 },
       dims: { concentration: 48, substitutability: 44, route: 4, counterpart: 36 }, hormuz: false, dolphin: false,
-      note: "Foreign-controlled financial messaging that instructs the settlement above. Distinct mechanism from clearing — messaging, not money — and sanctions-exposed, as 2022 SWIFT disconnections elsewhere showed. Domestic and regional alternatives exist but at reduced reach." },
+      note: "Foreign-controlled financial messaging that instructs the settlement above. Distinct mechanism from clearing, messaging, not money, and sanctions-exposed, as 2022 SWIFT disconnections elsewhere showed. Domestic and regional alternatives exist but at reduced reach." },
   ];
 
   // ---- Chokepoints ---------------------------------------------------------
@@ -166,20 +166,20 @@ window.RD = (function () {
     { id: "redsea", name: "Red Sea / Bab-el-Mandeb", vessels: 35, baseline: 42, band: "moderate",
       drop: 17, lat: 12.6, lng: 43.3, spark: [44,43,41,39,38,36,35,35], note: "The Houthi missile/drone threat keeps transits below their 12-month norm; many carriers still route the long way around the Cape of Good Hope." },
     { id: "suez", name: "Suez Canal", vessels: 40, baseline: 47, band: "moderate",
-      drop: 15, lat: 30.0, lng: 32.55, spark: [47,46,44,43,42,41,40,40], note: "Tracks the Red Sea situation closely — diverted traffic and any recovery both show up here first." },
+      drop: 15, lat: 30.0, lng: 32.55, spark: [47,46,44,43,42,41,40,40], note: "Tracks the Red Sea situation closely, diverted traffic and any recovery both show up here first." },
   ];
 
   // ---- Active shocks -------------------------------------------------------
   const shocks = [
     { id: "hormuz", name: "Hormuz tension", short: "Hormuz", sector: "logistics", impact: -20, band: "high",
-      src: "acled", when: "ongoing", note: "Gulf naval tension is the most-cited driver behind the strait's depressed transits. Because it is the cause of the throughput drop shown on the chokepoint card, its effect reaches the score through that measured IMF PortWatch vessel data — the severity figure here is context, not a second deduction. The Fujairah pipeline and air cargo blunt the crude-export hit.",
+      src: "acled", when: "ongoing", note: "Gulf naval tension is the most-cited driver behind the strait's depressed transits. Because it is the cause of the throughput drop shown on the chokepoint card, its effect reaches the score through that measured IMF PortWatch vessel data, the severity figure here is context, not a second deduction. The Fujairah pipeline and air cargo blunt the crude-export hit.",
       evidence: [{ label: "IMF PortWatch", url: "https://portwatch.imf.org/datasets/42132aa4e2fc4d41bdaf9a445f688931_0/about" }, { label: "EIA chokepoints", url: "https://www.eia.gov/international/analysis/special-topics/World_Oil_Transit_Chokepoints" }, { label: "Live vessel traffic", url: "https://www.marinetraffic.com/en/ais/home/centerx:56.5/centery:26.5/zoom:8" }] },
     { id: "redsea", name: "Red Sea Houthi activity", short: "Red Sea", sector: "logistics", impact: -8, band: "moderate",
-      src: "acled", when: "ongoing", note: "The Houthi drone and missile threat that pushed carriers off the route — the cause of the Red Sea transit drop. Its effect reaches the score through the measured throughput data; the severity figure here is shown for context.",
+      src: "acled", when: "ongoing", note: "The Houthi drone and missile threat that pushed carriers off the route, the cause of the Red Sea transit drop. Its effect reaches the score through the measured throughput data; the severity figure here is shown for context.",
       evidence: [{ label: "IMF PortWatch", url: "https://portwatch.imf.org/datasets/42132aa4e2fc4d41bdaf9a445f688931_0/about" }, { label: "ReliefWeb: Yemen", url: "https://reliefweb.int/country/yem" }] },
   ];
   const convergence = { concurrent: 2, band: "high",
-    note: "Two concurrent maritime events — Hormuz and the Red Sea. Both reach the score through the measured throughput drop they cause, so the load is the drop in vessel transits, nothing added on top. Per-event severity figures are shown for context only." };
+    note: "Two concurrent maritime events, Hormuz and the Red Sea. Both reach the score through the measured throughput drop they cause, so the load is the drop in vessel transits, nothing added on top. Per-event severity figures are shown for context only." };
 
   // ---- Buffer-day provenance ----------------------------------------------
   // The buffer figures are CURATED estimates, not a live inventory feed. Tag
@@ -187,53 +187,53 @@ window.RD = (function () {
   // order-of-magnitude judgement. Surfaced in the Critical imports list and the
   // dependency drawer so a hardcoded day-count never implies false precision.
   const BUFFER_PROV = {
-    leu:       { t: "stated", n: "ENEC holds multiple Barakah fuel reloads — long-lead nuclear fuel stockpile (reported)." },
-    wheat:     { t: "stated", n: "UAE strategic grain reserve — reported national-stockpile policy." },
-    feed:      { t: "est", n: "Feed mills hold weeks of working stock — bulk silo capacity, not a strategic reserve." },
-    waterchem: { t: "est", n: "Plant dosing-chemical stock is only weeks of continuous use — short shelf lives cap how much can be held." },
+    leu:       { t: "stated", n: "ENEC holds multiple Barakah fuel reloads, long-lead nuclear fuel stockpile (reported)." },
+    wheat:     { t: "stated", n: "UAE strategic grain reserve, reported national-stockpile policy." },
+    feed:      { t: "est", n: "Feed mills hold weeks of working stock, bulk silo capacity, not a strategic reserve." },
+    waterchem: { t: "est", n: "Plant dosing-chemical stock is only weeks of continuous use, short shelf lives cap how much can be held." },
     turbines:  { t: "est", n: "Critical-spares inventory plus N+1 fleet redundancy; high-value hot-section parts are stocked sparingly against 12–24-month lead times." },
-    chips:     { t: "est", n: "Estimate — access is export-licence-gated, not a physical stock; the buffer stands in for licensing latency." },
+    chips:     { t: "est", n: "Estimate, access is export-licence-gated, not a physical stock; the buffer stands in for licensing latency." },
     ro:        { t: "est", n: "Estimate set against the ~120-day reorder lead-time, not a measured warehouse count." },
-    erd:       { t: "est", n: "Estimate — durable installed capital; a supply cut bites over rebuild cycles, not days." },
-    gas:       { t: "est", n: "Nominal — Dolphin is piped, not stored; the figure stands in for switchover latency to LNG, not a tank level." },
+    erd:       { t: "est", n: "Estimate, durable installed capital; a supply cut bites over rebuild cycles, not days." },
+    gas:       { t: "est", n: "Nominal, Dolphin is piped, not stored; the figure stands in for switchover latency to LNG, not a tank level." },
     api:       { t: "est", n: "Analyst estimate of hospital/distributor working stock." },
-    potash:    { t: "est", n: "Analyst estimate — diversified sourcing, seasonal." },
+    potash:    { t: "est", n: "Analyst estimate, diversified sourcing, seasonal." },
     vaccines:  { t: "est", n: "Cold-chain reserve estimate from diversified Western suppliers." },
-    devices:   { t: "est", n: "Analyst estimate — thin working stock." },
+    devices:   { t: "est", n: "Analyst estimate, thin working stock." },
     transformers: { t: "est", n: "Estimate reflecting long-lead spares, not a measured count." },
-    solarpv:   { t: "est", n: "Buildout estimate — affects new capacity, not running plants." },
-    libattery: { t: "est", n: "Buildout estimate — installed-capital dynamics." },
-    copper:    { t: "est", n: "Analyst estimate — globally traded, multiple sources." },
+    solarpv:   { t: "est", n: "Buildout estimate, affects new capacity, not running plants." },
+    libattery: { t: "est", n: "Buildout estimate, installed-capital dynamics." },
+    copper:    { t: "est", n: "Analyst estimate, globally traded, multiple sources." },
     gps:       { t: "est", n: "Analyst estimate of module working stock." },
     avparts:   { t: "est", n: "Analyst estimate of aviation-spares pipeline." },
-    container: { t: "est", n: "Analyst estimate — flow-through goods, little standing buffer." },
-    golddore:  { t: "est", n: "Analyst estimate — refining feedstock, low national consequence." },
-    usdclearing: { t: "est", n: "Nominal — dollar-clearing is a live permission, not a stockpile; the day-count is a notional grace period." },
-    swift:     { t: "est", n: "Nominal — messaging access is a permission, not a stockpile." },
+    container: { t: "est", n: "Analyst estimate, flow-through goods, little standing buffer." },
+    golddore:  { t: "est", n: "Analyst estimate, refining feedstock, low national consequence." },
+    usdclearing: { t: "est", n: "Nominal, dollar-clearing is a live permission, not a stockpile; the day-count is a notional grace period." },
+    swift:     { t: "est", n: "Nominal, messaging access is a permission, not a stockpile." },
   };
   precursors.forEach((p) => { p.bufferProv = BUFFER_PROV[p.id] || { t: "est", n: "Analyst estimate." }; });
 
   // ---- Leading indicators --------------------------------------------------
   const indicators = [
     { id: "brent", name: "Brent crude", value: "$93.09", unit: "/ barrel", delta: 4, dir: "up", hidden: true,
-      status: "moderate", src: "yfinance", spark: [84,86,85,88,90,91,92,93], note: "Live oil price — kept as the input to the gas replacement basis. Not shown as a standalone indicator: the UAE is a net exporter, so a Brent rise doesn't lower resilience, and its market-stress effect already feeds the Live score via Today's gap." },
-    { id: "gasbasis", name: "Gas — replacement basis", value: "$12.0", unit: "/ MMBtu marginal", delta: 0, dir: "flat",
+      status: "moderate", src: "yfinance", spark: [84,86,85,88,90,91,92,93], note: "Live oil price, kept as the input to the gas replacement basis. Not shown as a standalone indicator: the UAE is a net exporter, so a Brent rise doesn't lower resilience, and its market-stress effect already feeds the Live score via Today's gap." },
+    { id: "gasbasis", name: "Gas, replacement basis", value: "$12.0", unit: "/ MMBtu marginal", delta: 0, dir: "flat",
       status: "moderate", src: "derived", twoState: true, spark: [11.3,11.6,11.4,11.8,12.1,11.9,12.0,12.0],
-      short: "what replacement LNG would cost if Dolphin failed — oil-linked at ~12.5% of Brent, ≈8× the ~$1.50 contract floor",
-      note: "Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor; replacement LNG is oil-linked at ~12.5% of Brent (≈8× today) — a price-basis flip, not a volume gap. Open ƒ for the full basis." },
+      short: "what replacement LNG would cost if Dolphin failed, oil-linked at ~12.5% of Brent, ≈8× the ~$1.50 contract floor",
+      note: "Contracted Dolphin gas sits at a fixed ~$1.50/MMBtu floor; replacement LNG is oil-linked at ~12.5% of Brent (≈8× today), a price-basis flip, not a volume gap. Open ƒ for the full basis." },
     { id: "conflict", name: "Conflict intensity", unit: "coverage vs each state's norm", delta: 0, dir: "flat",
       status: "moderate", src: "acled", spark: [1.0,0.95,1.05,1.0,0.9,1.1,1.0,1.0], valueText: "—", statusText: "",
       short: "live conflict-news coverage on the counterpart states behind exposed dependencies, each vs its own baseline",
-      note: "Conflict-coded news coverage on the states behind the UAE's exposed dependencies (Iran, Yemen, Sudan, Russia), from GDELT. Each is measured against its own 30-day baseline, so a spike reads the same whether a state is high- or low-volume in normal times. Rising coverage is an early warning of counterpart risk — it does not feed the Live score; it flags pressure building before it reaches supply.", bars: true, states: [],
-      fx: { kicker: "Leading indicator · live (GDELT)", title: "Conflict intensity — tracked counterpart states",
-        text: "GDELT's 30-day conflict-coded article volume for each state behind an exposed UAE dependency, measured against that state's own normal level. The headline shows the most-elevated state right now. Rising coverage leads counterpart risk — it warns before a disruption reaches physical supply. It is context only, and never enters the Live Resilience score.",
+      note: "Conflict-coded news coverage on the states behind the UAE's exposed dependencies (Iran, Yemen, Sudan, Russia), from GDELT. Each is measured against its own 30-day baseline, so a spike reads the same whether a state is high- or low-volume in normal times. Rising coverage is an early warning of counterpart risk, it does not feed the Live score; it flags pressure building before it reaches supply.", bars: true, states: [],
+      fx: { kicker: "Leading indicator · live (GDELT)", title: "Conflict intensity: tracked counterpart states",
+        text: "GDELT's 30-day conflict-coded article volume for each state behind an exposed UAE dependency, measured against that state's own normal level. The headline shows the most-elevated state right now. Rising coverage leads counterpart risk, it warns before a disruption reaches physical supply. It is context only, and never enters the Live Resilience score.",
         formula: "Intensity  =  coverage(30d) ÷ that state's baseline − 1     ·     headline = most-elevated state",
         inputs: [
           { k: "Source", v: "GDELT DOC 2.0 · Iran / Yemen / Sudan / Russia conflict coverage", src: "acled" },
-          { k: "Baseline", v: "each state's own 30-day norm — spikes stay comparable across states" },
-          { k: "Role", v: "forward-looking counterpart-risk context — not a Live-score driver" },
+          { k: "Baseline", v: "each state's own 30-day norm, spikes stay comparable across states" },
+          { k: "Role", v: "forward-looking counterpart-risk context, not a Live-score driver" },
         ],
-        assumption: "Per-state baselines are editable estimates. Coverage is a proxy for intensity — noisier than verified event data, but genuinely live." } },
+        assumption: "Per-state baselines are editable estimates. Coverage is a proxy for intensity, noisier than verified event data, but genuinely live." } },
   ];
 
   // ---- Two-state gas pricing node -----------------------------------------
@@ -252,7 +252,7 @@ window.RD = (function () {
   // ---- Scenarios -----------------------------------------------------------
   const scenarios = [
     { id: "baseline", name: "Baseline", sub: "No active stress applied", severity: 0,
-      trigger: "No active stress — the calm-day reference state.", watch: [],
+      trigger: "No active stress, the calm-day reference state.", watch: [],
       deltas: { energy:0, water:0, defence:0, food:0, logistics:0, finance:0, health:0 }, overall: 0 },
     { id: "hormuz", name: "Hormuz closure", sub: "Strait transits collapse to near-zero", severity: 3,
       trigger: "A naval incident, mining, or blockade collapses transits through the Strait of Hormuz.",
@@ -260,14 +260,14 @@ window.RD = (function () {
       deltas: { energy:-6, water:-9, defence:-4, food:-3, logistics:-35, finance:0, health:-5 }, overall: -22 },
     { id: "chips", name: "Silicon access cut", sub: "US export controls restrict advanced-silicon access (what-if)", severity: 2,
       trigger: "A new US export-control tranche restricts the UAE's access to advanced silicon.",
-      watch: [{ k:"ofac" }, { k:"news", id:"general" }, { k:"note", t:"Export controls are a US Commerce/BIS regime with no direct live feed — watched here as a proxy via OFAC sanctions activity and trade-policy news." }],
+      watch: [{ k:"ofac" }, { k:"news", id:"general" }, { k:"note", t:"Export controls are a US Commerce/BIS regime with no direct live feed, watched here as a proxy via OFAC sanctions activity and trade-policy news." }],
       deltas: { energy:-3, water:-1, defence:-18, food:0, logistics:-2, finance:0, health:-2 }, overall: -14 },
     { id: "dolphin", name: "Dolphin pressure", sub: "Marginal gas reprices: contract → oil-linked", severity: 2,
-      trigger: "Qatar curtails Dolphin pipeline gas — by political dispute or technical outage. The shortfall is met by sea-borne LNG, so the marginal molecule reprices from the fixed ~$1.50/MMBtu contract floor to an oil-linked ~$12/MMBtu (≈8×). This is a price-BASIS flip, not a volume gap against a buffer: power and desalination keep running, but on far costlier feedstock.",
-      watch: [{ k:"market", id:"gasbasis" }, { k:"market", id:"brent" }, { k:"news", id:"general" }, { k:"note", t:"Pipeline flow is not publicly metered live — the gas replacement basis (Brent-linked) and regional news are the leading proxies." }],
+      trigger: "Qatar curtails Dolphin pipeline gas, by political dispute or technical outage. The shortfall is met by sea-borne LNG, so the marginal molecule reprices from the fixed ~$1.50/MMBtu contract floor to an oil-linked ~$12/MMBtu (≈8×). This is a price-BASIS flip, not a volume gap against a buffer: power and desalination keep running, but on far costlier feedstock.",
+      watch: [{ k:"market", id:"gasbasis" }, { k:"market", id:"brent" }, { k:"news", id:"general" }, { k:"note", t:"Pipeline flow is not publicly metered live, the gas replacement basis (Brent-linked) and regional news are the leading proxies." }],
       deltas: { energy:-12, water:-10, defence:-2, food:-1, logistics:-3, finance:0, health:-3 }, overall: -16 },
     { id: "combined", name: "Combined", sub: "Hormuz + Dolphin together", severity: 4,
-      trigger: "Hormuz closure and Dolphin curtailment strike together — sea routes choke containerised imports while the lost Dolphin gas reprices to oil-linked LNG that must itself arrive by sea.",
+      trigger: "Hormuz closure and Dolphin curtailment strike together, sea routes choke containerised imports while the lost Dolphin gas reprices to oil-linked LNG that must itself arrive by sea.",
       watch: [{ k:"choke", id:"hormuz" }, { k:"market", id:"gasbasis" }, { k:"news", id:"hormuz" }, { k:"acled", c:"Iran" }],
       // Compounded element-wise: each sector takes the worse of the two shocks
       // plus 0.6x the lesser (overlapping corridors compound), so Combined is
@@ -279,7 +279,7 @@ window.RD = (function () {
       watch: [{ k:"choke", id:"redsea" }, { k:"news", id:"redsea" }, { k:"acled", c:"Yemen" }],
       deltas: { energy:-2, water:-1, defence:-2, food:-4, logistics:-14, finance:0, health:-2 }, overall: -9 },
     { id: "max", name: "Combined Maximum", sub: "Hand-authored worst-case vector (stress test)", severity: 5,
-      trigger: "Every modelled shock at once, at extreme severity — a deliberately hand-authored stress-test ceiling. Its sector deltas are set by judgement, not a multiple of the other scenarios, and it is a ceiling test, not a forecast.",
+      trigger: "Every modelled shock at once, at extreme severity, a deliberately hand-authored stress-test ceiling. Its sector deltas are set by judgement, not a multiple of the other scenarios, and it is a ceiling test, not a forecast.",
       watch: [{ k:"choke", id:"hormuz" }, { k:"choke", id:"redsea" }, { k:"news", id:"general" }, { k:"acled", c:"Iran" }],
       deltas: { energy:-22, water:-31, defence:-30, food:-12, logistics:-48, finance:-2, health:-14 }, overall: -58 },
   ];
@@ -305,20 +305,20 @@ window.RD = (function () {
 
       { id: "waterchem", layer: 1, label: "Dosing chemicals", kind: "precursor", day: 0, band: "high",
         mitigatedDay: 0, mitigatedBand: "moderate",
-        mitigationNote: "Mitigated: rerouted via Fujairah (outside the strait) and an alternate qualified supplier inside the first two weeks — the buffer is topped up before it binds.",
-        detail: "The fastest-biting water precursor. Antiscalants, chlorine and coagulants are bulk imports that land at Jebel Ali — inside the Gulf, so genuinely Hormuz-locked — and can't be air-freighted at volume. With the thinnest buffer in the water chain (~30 days), they draw down first the moment resupply shipping stops." },
+        mitigationNote: "Mitigated: rerouted via Fujairah (outside the strait) and an alternate qualified supplier inside the first two weeks, the buffer is topped up before it binds.",
+        detail: "The fastest-biting water precursor. Antiscalants, chlorine and coagulants are bulk imports that land at Jebel Ali, inside the Gulf, so genuinely Hormuz-locked, and can't be air-freighted at volume. With the thinnest buffer in the water chain (~30 days), they draw down first the moment resupply shipping stops." },
       { id: "ro", layer: 1, label: "RO membranes", kind: "precursor", day: 0, band: "moderate",
-        mitigatedDay: 0, mitigatedBand: "good",
-        mitigationNote: "Mitigated: already reroutable via Fujairah or air-freight given its high value and low shipping volume — that route absorbs the loss with little visible strain.",
-        detail: "A deeper ~75-day buffer, and — being high-value and low-volume — membranes can partly reroute via Fujairah (outside the strait) or air-freight, so they degrade later and more softly than the bulk chemicals. Still a high-consequence input: desalination feeds nearly all potable water." },
+        mitigatedDay: 0, mitigatedBand: "moderate",
+        mitigationNote: "Mitigated: already reroutable via Fujairah or air-freight given its high value and low shipping volume, that route absorbs the loss with little visible strain.",
+        detail: "A deeper ~75-day buffer, and, being high-value and low-volume, membranes can partly reroute via Fujairah (outside the strait) or air-freight, so they degrade later and more softly than the bulk chemicals. Still a high-consequence input: desalination feeds nearly all potable water." },
       { id: "gas", layer: 1, label: "Sea-borne LNG", kind: "precursor", day: 0, band: "moderate",
         mitigatedDay: 0, mitigatedBand: "moderate",
-        mitigationNote: "Mitigated: Dolphin's steady base flow plus accepting the oil-linked replacement cost covers the lost balancing margin — a cost hit, not a supply gap.",
-        detail: "This is NOT the Dolphin pipeline. Dolphin is piped from Qatar, does not transit Hormuz, and keeps flowing through a closure — so its VOLUME is unaffected, which is why it is not the direct hit here. What a Hormuz closure actually blocks is the sea-borne LNG the grid uses to balance peaks (imported via Jebel Ali, inside the Gulf). That lost balancing margin is the gas-side Hormuz exposure, and the replacement molecule is oil-linked (~12.5% of Brent, ≈8× the contract floor), so it also carries a price-BASIS flip. Cushioned by Dolphin's steady base flow." },
+        mitigationNote: "Mitigated: Dolphin's steady base flow plus accepting the oil-linked replacement cost covers the lost balancing margin, a cost hit, not a supply gap.",
+        detail: "This is NOT the Dolphin pipeline. Dolphin is piped from Qatar, does not transit Hormuz, and keeps flowing through a closure, so its VOLUME is unaffected, which is why it is not the direct hit here. What a Hormuz closure actually blocks is the sea-borne LNG the grid uses to balance peaks (imported via Jebel Ali, inside the Gulf). That lost balancing margin is the gas-side Hormuz exposure, and the replacement molecule is oil-linked (~12.5% of Brent, ≈8× the contract floor), so it also carries a price-BASIS flip. Cushioned by Dolphin's steady base flow." },
 
       { id: "taweelah", layer: 2, label: "Taweelah desalination", kind: "asset", day: 30, band: "high",
         mitigatedDay: 120, mitigatedBand: "moderate",
-        mitigationNote: "Mitigated: the reorder point is reached on schedule, but rerouted stock arrives before consumables run out — output tapers, but doesn't stop.",
+        mitigationNote: "Mitigated: the reorder point is reached on schedule, but rerouted stock arrives before consumables run out, output tapers, but doesn't stop.",
         detail: "Dosing-chemical stock reaches its reorder threshold first, with membrane spares following. Output begins to taper as the plant runs down its consumables." },
       { id: "grid", layer: 2, label: "Power grid", kind: "asset", day: 60, band: "high",
         mitigatedDay: 120, mitigatedBand: "moderate",
@@ -327,20 +327,20 @@ window.RD = (function () {
 
       { id: "water", layer: 3, label: "Water", kind: "sector", day: 30, band: "critical",
         mitigatedDay: 150, mitigatedBand: "moderate",
-        mitigationNote: "Mitigated: rerouted procurement plus the 90-day federal strategic reserve hold Water at moderate strain rather than critical — this is the path that matches an actual multi-month closure with limited visible effect.",
-        detail: "Desalination is the spine of water supply. Day-to-day demand is met from operational storage; the 90-day federal strategic reserve then covers essential supply, at a reduced rate — a deep safety net rather than full-demand cover." },
+        mitigationNote: "Mitigated: rerouted procurement plus the 90-day federal strategic reserve hold Water at moderate strain rather than critical. This is the path that matches an actual multi-month closure with limited visible effect.",
+        detail: "Desalination is the spine of water supply. Day-to-day demand is met from operational storage; the 90-day federal strategic reserve then covers essential supply, at a reduced rate: a deep safety net rather than full-demand cover." },
       { id: "energy", layer: 3, label: "Energy", kind: "sector", day: 60, band: "high",
         mitigatedDay: 120, mitigatedBand: "moderate",
         mitigationNote: "Mitigated: the grid absorbs the balancing loss as a cost increase, not an outage.",
         detail: "Gas-for-power and gas-for-water draw on the same envelope. The grid de-rates to keep desalination supplied." },
       { id: "food", layer: 3, label: "Food", kind: "sector", day: 60, band: "moderate",
-        mitigatedDay: 150, mitigatedBand: "good",
+        mitigatedDay: 150, mitigatedBand: "moderate",
         mitigationNote: "Mitigated: with Water and Energy holding at moderate strain, cold-chain and irrigation are barely disturbed.",
         detail: "Cold-chain and irrigation depend on water + power, following the water signal by ~30 days." },
 
       { id: "overall", layer: 4, label: "Live Resilience", kind: "overall", day: 90, band: "critical",
         mitigatedDay: 150, mitigatedBand: "moderate",
-        mitigationNote: "Mitigated: with those responses staged, Live Resilience dips but does not collapse — consistent with a real closure running months with limited visible effect.",
+        mitigationNote: "Mitigated: with those responses staged, Live Resilience dips but does not collapse, consistent with a real closure running months with limited visible effect.",
         detail: "The national headline reading falls as the shock propagates. Non-compensatory aggregation: with Water under load, Live Resilience stays anchored to the most-exposed sector regardless of strong sectors elsewhere." },
     ],
     edges: [
@@ -355,7 +355,7 @@ window.RD = (function () {
   const chipTimeline = [
     { day: 45, text: "EDGE Group production begins to slow", band: "moderate" },
     { day: 60, text: "Guided-systems manufacturing stalls", band: "high" },
-    { day: 90, text: "Full production halt — Defence falls into the critical band", band: "critical" },
+    { day: 90, text: "Full production halt, Defence falls into the critical band", band: "critical" },
   ];
 
   // ---- Control layer -------------------------------------------------------
@@ -376,10 +376,10 @@ window.RD = (function () {
     { name: "Fertiglobe", country: "Egypt / NL", host: "Medium", eff: 0.72 },
   ];
   const agreements = [
-    { name: "Dolphin gas", partner: "Qatar", expiry: "2032", status: "Active", urgent: false, url: "https://www.dolphinenergy.com/", urlNote: "Dolphin Energy — the venture operating the Qatar–UAE pipeline; contract terms are reported, not published" },
-    { name: "123 Agreement", partner: "United States", expiry: "Indefinite", status: "Active", urgent: false, url: "https://2009-2017.state.gov/r/pa/prs/ps/2009/05/123746.htm", urlNote: "US State Dept — the 2009 US–UAE civil-nuclear 123 Agreement announcement" },
-    { name: "CEPA transit", partner: "India", expiry: "2027", status: "Active", urgent: true, url: "https://www.moet.gov.ae/en/cepa_india", urlNote: "UAE Ministry of Economy — official UAE–India CEPA page with the agreement text" },
-    { name: "Defence framework", partner: "France", expiry: "2029", status: "Active", urgent: false, url: "https://gulfnews.com/uae/uae-and-france-sign-new-defence-cooperation-agreement-1.500546551", urlNote: "Gulf News — the May 2026 UAE–France defence cooperation agreement, building on the 1995/2009 accords" },
+    { name: "Dolphin gas", partner: "Qatar", expiry: "2032", status: "Active", urgent: false, url: "https://www.dolphinenergy.com/", urlNote: "Dolphin Energy, the venture operating the Qatar–UAE pipeline; contract terms are reported, not published" },
+    { name: "123 Agreement", partner: "United States", expiry: "Indefinite", status: "Active", urgent: false, url: "https://2009-2017.state.gov/r/pa/prs/ps/2009/05/123746.htm", urlNote: "US State Dept, the 2009 US–UAE civil-nuclear 123 Agreement announcement" },
+    { name: "CEPA transit", partner: "India", expiry: "2027", status: "Active", urgent: true, url: "https://www.moet.gov.ae/en/cepa_india", urlNote: "UAE Ministry of Economy, official UAE–India CEPA page with the agreement text" },
+    { name: "Defence framework", partner: "France", expiry: "2029", status: "Active", urgent: false, url: "https://gulfnews.com/uae/uae-and-france-sign-new-defence-cooperation-agreement-1.500546551", urlNote: "Gulf News, the May 2026 UAE–France defence cooperation agreement, building on the 1995/2009 accords" },
     { name: "Food corridor", partner: "Sudan", expiry: "2026", status: "At risk", urgent: true },
   ];
   const obligations = [
@@ -405,10 +405,10 @@ window.RD = (function () {
   const water = {
     days: 90,
     label: "National strategic water reserve",
-    note: "The UAE operates 90-day strategic desalinated-water reserves — Abu Dhabi's Liwa Strategic Water Reserve (the world's largest desalinated-water aquifer store) and DEWA's Aquifer Storage & Recovery in Dubai (the world's largest potable ASR). These cover essential supply for up to 90 days, with day-to-day demand met from operational storage — a deep safety net behind normal operations.",
+    note: "The UAE operates 90-day strategic desalinated-water reserves, Abu Dhabi's Liwa Strategic Water Reserve (the world's largest desalinated-water aquifer store) and DEWA's Aquifer Storage & Recovery in Dubai (the world's largest potable ASR). These cover essential supply for up to 90 days, with day-to-day demand met from operational storage, a deep safety net behind normal operations.",
     evidence: [
-      { label: "Abu Dhabi — Gulf News", url: "https://gulfnews.com/uae/environment/abu-dhabi-completes-worlds-largest-desalinated-water-reserve-1.2157536" },
-      { label: "Dubai — DEWA", url: "https://www.dewa.gov.ae/en/about-us/media-publications/latest-news/2022/03/dewa-completes-construction-of-the-first-stage-of-the-asr-project" },
+      { label: "Abu Dhabi, Gulf News", url: "https://gulfnews.com/uae/environment/abu-dhabi-completes-worlds-largest-desalinated-water-reserve-1.2157536" },
+      { label: "Dubai, DEWA", url: "https://www.dewa.gov.ae/en/about-us/media-publications/latest-news/2022/03/dewa-completes-construction-of-the-first-stage-of-the-asr-project" },
     ],
   };
   const health = {
@@ -433,34 +433,34 @@ window.RD = (function () {
     { part: "Live data feeds", pct: 90 },
     { part: "Control layer", pct: 90 },
     { part: "Multi-scenario", pct: 100 },
-    { part: "Response & pre-mortem", pct: 90 },
+    { part: "Sector responses", pct: 90 },
     { part: "Feed polling & recompute", pct: 85 },
     { part: "Calibration & tuning", pct: 55 },
   ];
 
   // ---- Data sources / freshness -------------------------------------------
   const sources = {
-    live:     { label: "Live feeds", full: "Six live public feeds — five move the Live score (PortWatch, Open-Meteo, Google News, Markets, OFAC); GDELT conflict coverage powers counterpart-risk context", endpoint: "see individual feeds", url: "https://portwatch.imf.org/", cadence: "continuous", fresh: "live", kind: "live" },
-    acled:    { label: "GDELT", full: "Conflict-event coverage from GDELT DOC 2.0 — 30-day conflict-coded article volume per tracked country (Iran, Yemen, Sudan, Russia), used as a live conflict-intensity signal behind counterpart risk.", endpoint: "GDELT DOC 2.0 · Iran / Yemen / Sudan / Russia conflict coverage", url: "https://www.gdeltproject.org/", cadence: "5 min", fresh: "connecting…", kind: "live" },
+    live:     { label: "Live feeds", full: "Six live public feeds, five move the Live score (PortWatch, Open-Meteo, Google News, Markets, OFAC); GDELT conflict coverage powers counterpart-risk context", endpoint: "see individual feeds", url: "https://portwatch.imf.org/", cadence: "continuous", fresh: "live", kind: "live" },
+    acled:    { label: "GDELT", full: "Conflict-event coverage from GDELT DOC 2.0, 30-day conflict-coded article volume per tracked country (Iran, Yemen, Sudan, Russia), used as a live conflict-intensity signal behind counterpart risk.", endpoint: "GDELT DOC 2.0 · Iran / Yemen / Sudan / Russia conflict coverage", url: "https://www.gdeltproject.org/", cadence: "5 min", fresh: "connecting…", kind: "live" },
     ais:      { label: "PortWatch", full: "IMF PortWatch · daily chokepoint transit calls (satellite AIS, ~90k ships)", endpoint: "services9.arcgis.com · Daily_Chokepoints_Data · transit calls vs 12-month norm", url: "https://portwatch.imf.org/", cadence: "weekly (Tue)", fresh: "connecting…", kind: "live" },
-    yfinance: { label: "Markets", full: "Oil price — Brent (yfinance)", endpoint: "Yahoo Finance · BZ=F", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "connecting…", kind: "live" },
+    yfinance: { label: "Markets", full: "Oil price, Brent (yfinance)", endpoint: "Yahoo Finance · BZ=F", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "connecting…", kind: "live" },
     ofac:     { label: "OFAC", full: "US Treasury SDN sanctions list (OpenSanctions mirror)", endpoint: "data.opensanctions.org · us_ofac_sdn · total entity count (no delta)", url: "https://www.opensanctions.org/datasets/us_ofac_sdn/", cadence: "6 h", fresh: "connecting…", kind: "live" },
     meteo:    { label: "Open-Meteo", full: "Marine & weather (Open-Meteo, live)", endpoint: "marine-api.open-meteo.com · wave height · wind · temperature", url: "https://open-meteo.com/", cadence: "10 min", fresh: "connecting…", kind: "live" },
     gdelt:    { label: "Google News", full: "Supply & trade-route news monitor (Google News RSS, live · GDELT fallback)", endpoint: "news.google.com/rss · closure, conflict & partner-supply coverage · GDELT fallback", url: "https://news.google.com/", cadence: "6 min", fresh: "connecting…", kind: "live" },
     curated:  { label: "Curated", full: "Hand-curated public-source CSV", endpoint: "versioned CSV · public reporting", url: "", cadence: "manual", fresh: "reviewed", kind: "curated" },
-    derived:  { label: "Live · derived", full: "Computed live from the Brent market feed via a curated oil-link basis — the ~$1.50/MMBtu floor and ~12.5%-of-Brent slope are reported estimates; the value moves with Brent every tick", endpoint: "live Brent × curated oil-link basis", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "live", kind: "live" },
+    derived:  { label: "Live · derived", full: "Computed live from the Brent market feed via a curated oil-link basis, the ~$1.50/MMBtu floor and ~12.5%-of-Brent slope are reported estimates; the value moves with Brent every tick", endpoint: "live Brent × curated oil-link basis", url: "https://finance.yahoo.com/quote/BZ=F", cadence: "5 min", fresh: "live", kind: "live" },
     assumption:{ label: "Assumption", full: "Explicit modelling assumption", endpoint: "stated in assumptions ledger", url: "", cadence: "—", fresh: "stated", kind: "assumption" },
   };
 
   // ---- Assets (for map) ----------------------------------------------------
   const assets = [
-    { id: "jebelali", name: "Jebel Ali Port", lat: 25.0, lng: 55.06, weight: 1.0, kind: "port", note: "The single gateway most imported goods pass through — roughly 60% (est.) — and the regional re-export hub, so a disruption here reaches nearly every sector." },
-    { id: "barakah", name: "Barakah Nuclear", lat: 23.97, lng: 52.23, weight: 0.9, kind: "energy", note: "Nuclear baseload — about a quarter of national electricity — running on imported low-enriched uranium with a deep fuel buffer." },
+    { id: "jebelali", name: "Jebel Ali Port", lat: 25.0, lng: 55.06, weight: 1.0, kind: "port", note: "The single gateway most imported goods pass through, roughly 60% (est.), and the regional re-export hub, so a disruption here reaches nearly every sector." },
+    { id: "barakah", name: "Barakah Nuclear", lat: 23.97, lng: 52.23, weight: 0.9, kind: "energy", note: "Nuclear baseload, about a quarter of national electricity, running on imported low-enriched uranium with a deep fuel buffer." },
     { id: "taweelah", name: "Taweelah Desalination", lat: 24.78, lng: 54.7, weight: 0.95, kind: "water", note: "One of the world's largest reverse-osmosis plants; its output rides on a continuous supply of imported membranes and dosing chemicals." },
-    { id: "fujairah", name: "Fujairah Terminal", lat: 25.17, lng: 56.33, weight: 0.85, kind: "port", note: "The east-coast crude-export terminal that ships oil to Asia without entering the Strait of Hormuz — the country's strategic chokepoint bypass." },
+    { id: "fujairah", name: "Fujairah Terminal", lat: 25.17, lng: 56.33, weight: 0.85, kind: "port", note: "The east-coast crude-export terminal that ships oil to Asia without entering the Strait of Hormuz, the country's strategic chokepoint bypass." },
     { id: "ruwais", name: "Ruwais Refinery", lat: 24.11, lng: 52.73, weight: 0.8, kind: "energy", note: "The downstream complex that turns crude and gas into fuels, petrochemicals and the fertiliser the UAE exports." },
     { id: "dubaiwater", name: "Dubai water network", lat: 25.2, lng: 55.27, weight: 0.7, kind: "water", note: "A municipal network with only thin operational storage, cushioned by the 90-day federal strategic reserve behind it." },
-    { id: "portrashid", name: "Port Rashid", lat: 25.32, lng: 55.33, weight: 0.4, kind: "port", note: "Dubai's original port, now cruise and heritage — its cargo role long since consolidated into Jebel Ali, so its resilience weight is low." },
+    { id: "portrashid", name: "Port Rashid", lat: 25.32, lng: 55.33, weight: 0.4, kind: "port", note: "Dubai's original port, now cruise and heritage, its cargo role long since consolidated into Jebel Ali, so its resilience weight is low." },
   ];
 
   // ---- Computed score spine ------------------------------------------------
@@ -603,7 +603,7 @@ window.RD = (function () {
     headline.structural.exposedSector = { name: exposed.name, score: exposed.score };
     headline.structural.anchor = ANCHOR;
     headline.structural.inputs = [
-      { k: "Exposure — most-exposed sector", v: exposed.name + " · " + exposed.score.toFixed(1) + " (weak link)", src: "curated" },
+      { k: "Exposure, most-exposed sector", v: exposed.name + " · " + exposed.score.toFixed(1) + " (weak link)", src: "curated" },
       { k: "Coping capacity", v: "Absorb " + absorb + " · Recover " + recover + " · Adapt " + adapt + " → blend " + blend, src: "curated" },
       { k: "Anchored result", v: "0.60×" + exposed.score.toFixed(1) + " + 0.40×" + blend + " = " + headline.structural.value.toFixed(1) },
     ];
@@ -617,7 +617,7 @@ window.RD = (function () {
     headline.live.cap.at = ceil;
     headline.live.cap.label = "ceiling = baseline " + ceil.toFixed(1);
     headline.live.cap.body = "— live sits below the structural ceiling (" + ceil.toFixed(1) + ") by the size of today's active load. As that load clears, it climbs back to full strength.";
-    headline.live.inputs[0] = { k: "Structural ceiling", v: ceil.toFixed(1) + " — the day's maximum", src: "curated" };
+    headline.live.inputs[0] = { k: "Structural ceiling", v: ceil.toFixed(1) + ", the day's maximum", src: "curated" };
 
     // 6 · UNCERTAINTY — how sensitive each score is to its editable
     //     assumptions. We re-evaluate the whole spine with each key assumption
@@ -647,7 +647,7 @@ window.RD = (function () {
       const meanSub2 = precursors.reduce((a, p) => a + p.dims.substitutability * cons[p.id], 0) / cwAll;
       const resourcing2 = 100 - meanSub2;
       const recover2 = 0.5 * o.fin + 0.5 * resourcing2;
-      const adapt2 = adapt; // plan depth × speed — independent of the nudged axes
+      const adapt2 = adapt; // plan depth × speed, independent of the nudged axes
       const blend2 = (absorb + recover2 + adapt2) / 3;
       const exposed2 = Math.min(...Object.values(sScore));
       const structural = o.anchor * exposed2 + (1 - o.anchor) * blend2;
