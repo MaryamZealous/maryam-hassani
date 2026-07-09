@@ -314,10 +314,10 @@ function OverviewView({ go }) {
           <div className="panel-b" style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
             <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
               The model's core idea: a single disruption doesn't stay put. Watch a Hormuz closure travel from
-              chokepoint to critical import to asset to sector to the national score, day by day, every step explained.
+              chokepoint to critical import to asset to sector to Live Resilience, day by day, every step explained.
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              {["Trigger", "Import", "Asset", "Sector", "National"].map((t, i) => (
+              {["Trigger", "Import", "Asset", "Sector", "Live"].map((t, i) => (
                 <React.Fragment key={t}>
                   <span className="pill"><span className="sq" style={{ background: i === 0 || i === 4 ? "var(--crit)" : "var(--high)" }}></span>{t}</span>
                   {i < 4 && <Icon name="arrowRight" size={14} style={{ color: "var(--faint)" }} />}
@@ -325,7 +325,7 @@ function OverviewView({ go }) {
               ))}
             </div>
             <button className="btn primary" style={{ alignSelf: "flex-start", marginTop: "auto" }} onClick={() => go("cascade")}>
-              <Icon name="play" size={15} />Open the cascade
+              <Icon name="play" size={15} />Play the cascade
             </button>
           </div>
         </section>

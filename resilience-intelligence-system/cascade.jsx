@@ -3,7 +3,7 @@
    Trigger → Precursor → Asset → Sector → National score, on a 0–90 day timeline.
    ========================================================================== */
 const { useState, useEffect } = React;
-const W = 1180, H = 380, NW = 152, NH = 44;
+const W = 1180, H = 348, NW = 152, NH = 42;
 const LAYER_X = [100, 345, 590, 835, 1080];
 const LAYER_NAME = ["Trigger", "Critical imports", "Assets", "Sectors", "National"];
 
@@ -13,7 +13,7 @@ function buildLayout() {
   const pos = {};
   Object.keys(byLayer).forEach((L) => {
     const arr = byLayer[L]; const n = arr.length;
-    const top = 54, bot = 322, span = bot - top;
+    const top = 62, bot = 298, span = bot - top;
     arr.forEach((node, i) => {
       const y = n === 1 ? (top + bot) / 2 : top + (span * i) / (n - 1);
       pos[node.id] = { x: LAYER_X[+L], y };
@@ -110,7 +110,7 @@ function CascadeDiagram() {
 
   return (
     <div className="cascade-wrap">
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
         <button className="btn primary" onClick={() => { if (dayIdx >= days.length - 1) setDayIdx(0); setPlaying((p) => !p); }}>
           <Icon name={playing ? "flat" : "play"} size={15} />{playing ? "Pause" : dayIdx >= days.length - 1 ? "Replay cascade" : "Play cascade"}
         </button>
@@ -122,7 +122,7 @@ function CascadeDiagram() {
           <button className={`stage-opt ${mitigated ? "on" : ""}`} onClick={() => setMitigated(true)}>Stage responses</button>
         </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
         <div className="flow-legend">
           <span className="legend-i"><span className="sw" style={{ background: "var(--crit)" }}></span>Critical</span>
           <span className="legend-i"><span className="sw" style={{ background: "var(--high)" }}></span>High</span>
@@ -134,7 +134,7 @@ function CascadeDiagram() {
       <svg className="cascade-svg" viewBox={`0 0 ${W} ${H}`} role="img">
         {/* column labels */}
         {LAYER_X.map((x, i) => (
-          <text key={i} className="casc-col-label" x={x} y={26} textAnchor="middle">{LAYER_NAME[i]}</text>
+          <text key={i} className="casc-col-label" x={x} y={20} textAnchor="middle">{LAYER_NAME[i]}</text>
         ))}
         {/* base edges */}
         {RD.cascade.edges.map((e, i) => {
@@ -190,7 +190,7 @@ function CascadeDiagram() {
           <div className="l">Projected Live Resilience</div>
         </div>
       </div>
-      <button className="btn gold cta-stage" onClick={() => window.__go && window.__go("act", { sector: "water" })}>
+      <button className="btn gold cta-stage" style={{ marginBottom: 2 }} onClick={() => window.__go && window.__go("act", { sector: "water" })}>
         Explore sector responses <Icon name="arrowRight" size={15} />
       </button>
     </div>

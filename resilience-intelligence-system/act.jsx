@@ -117,9 +117,7 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
         <div className="act-row-stats">
           <span className="mono" style={{ color: "var(--bc)", fontWeight: 600 }} title="Sector fragility, anchored (0.6 × anchor import DRI + 0.4 × consequence-weighted mean), the exact complement of the sector score on the Overview">DRI {prio.wdri}</span>
           <span className="act-row-tier">{r.tier.name.replace(/Tier (\d) · /, "T$1 · ")}</span>
-          <span className="mono act-stat-pts">+{r.pts.toFixed(1)}</span>
-          <span className="mono">{ACT.fmtAED(r.cost)}</span>
-          <span className="mono">{ACT.fmtDays(r.days)}</span>
+          <span className="mono act-stat-pts">+{r.pts.toFixed(1)} pts</span>
         </div>
       </div>
       <button className={`act-stage ${isStaged ? "on" : ""}`} onClick={(e) => { e.stopPropagation(); onStage(p.id); }}
@@ -373,11 +371,11 @@ function ActView({ initial = {} }) {
   const onStage = (id) => setStaged((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   // The queue ORDER is a property of the problem (urgency + stakes), so it never
-  // moves while you explore or stage. The per-row figures, though, reflect your
-  // COMMITTED scope: unstaged rows show the recommended scope; once staged, the
-  // row shows the scope you committed.
+  // moves while you explore or stage. The per-row figures reflect whichever tier
+  // is currently selected for that response, live, so picking a tier in the
+  // detail panel updates the queue row immediately, before you stage it.
   const queueEvals = useMemo(
-    () => ACT.PLAYS.map((p) => ({ p, r: ACT.evalPlay(p, staged.has(p.id) ? states[p.id] : undefined) })),
+    () => ACT.PLAYS.map((p) => ({ p, r: ACT.evalPlay(p, states[p.id]) })),
     [states, staged]
   );
   const prio = useMemo(() => {
@@ -405,7 +403,7 @@ function ActView({ initial = {} }) {
 
       <div className="grid cols-2" style={{ gridTemplateColumns: "minmax(360px, 0.95fr) 1.45fr", alignItems: "start", marginTop: 16 }}>
         <div className="stack act-left" style={{ position: "sticky", top: 120, alignSelf: "start" }}>
-        <Panel title="National response queue" icon="ops" label={ACT.PLAYS.length + " RESPONSES"}
+        <Panel title="National response queue" icon="ops"
           right={<span className="helper" style={{ marginLeft: "auto" }}>Ranked by weakness, payoff &amp; time-pressure</span>}>
           <div className="act-queue" style={{ overflowY: "auto", maxHeight: "52vh", paddingRight: 4, overscrollBehavior: "contain" }}>
             {ranked.map(({ p, r }, i) => (
