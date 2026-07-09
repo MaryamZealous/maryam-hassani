@@ -31,9 +31,11 @@ function edgePath(a, b) {
 
 function CascadeDiagram() {
   const days = RD.cascade.timeline;
+  const todayDay = RD.cascade.todayDay;
   const [dayIdx, setDayIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [sel, setSel] = useState(null);
+  const [mitigated, setMitigated] = useState(false);
   const explain = useExplain();
   const day = days[dayIdx];
 
@@ -44,7 +46,14 @@ function CascadeDiagram() {
     return () => clearTimeout(t);
   }, [playing, dayIdx]);
 
-  const nodeActive = (n) => day >= n.day;
+  // Effective activation day / severity band for a node, given the mitigation
+  // toggle: unmitigated uses the node's raw buffer-exhaustion day; mitigated
+  // uses the day/band it would reach once a real response (reroute via
+  // Fujairah, draw the strategic reserve, accept a costlier substitute) is
+  // already in play — this is what an actual multi-month closure looks like.
+  const dayFor = (n) => (mitigated && n.mitigatedDay != null ? n.mitigatedDay : n.day);
+  const bandFor = (n) => (mitigated && n.mitigatedBand ? n.mitigatedBand : n.band);
+  const nodeActive = (n) => day >= dayFor(n);
   const edgeHot = (e) => {
     const a = RD.cascade.nodes.find((n) => n.id === e[0]);
     const b = RD.cascade.nodes.find((n) => n.id === e[1]);
@@ -54,26 +63,34 @@ function CascadeDiagram() {
   // Projected national score eases from today's live baseline toward the floor
   // the Hormuz-closure scenario projects (see Scenarios) — so the cascade ends
   // where the scenario engine says it should, not at an invented number.
+  // Mitigated path only lets through ~30% of that drop — responses absorb the
+  // rest, which is the honest reason a real closure looks far less severe.
   const liveBase = RD.headline.live.value;
   const hzScn = RD.scenarios.find((s) => s.id === "hormuz");
-  const floor = Math.max(0, +(liveBase + (hzScn ? hzScn.overall : -22)).toFixed(1));
+  const fullFloor = Math.max(0, +(liveBase + (hzScn ? hzScn.overall : -22)).toFixed(1));
+  const floor = mitigated ? +(liveBase - (liveBase - fullFloor) * 0.3).toFixed(1) : fullFloor;
   const proj = (liveBase - (liveBase - floor) * (dayIdx / (days.length - 1))).toFixed(1);
 
-  // caption: nodes that activated at this day
-  const justNow = RD.cascade.nodes.filter((n) => n.day === day);
+  // caption: nodes that activated at this day (using the active mode's timing)
+  const justNow = RD.cascade.nodes.filter((n) => dayFor(n) === day);
   const caption = day === 0
-    ? "Shock fires. Buffers begin drawing down across every sea-routed dependency."
-    : justNow.length
-      ? justNow.map((n) => n.detail).join("  ")
-      : "Buffers continue depleting; no new node crosses its threshold this step.";
+    ? (mitigated ? "Shock fires. Responses are already staged — reroutes and reserves start absorbing the load immediately." : "Shock fires. Buffers begin drawing down across every sea-routed dependency.")
+    : day === todayDay
+      ? (mitigated
+          ? "Day " + todayDay + " — today. This is the mitigated path: the one that matches an actual closure this long producing little visible effect."
+          : "Day " + todayDay + " — today. This is the unmitigated path: what the model projects if no response is ever staged. Toggle mitigation to see why reality looks different.")
+      : justNow.length
+        ? justNow.map((n) => (mitigated && n.mitigationNote ? n.mitigationNote : n.detail)).join("  ")
+        : "Buffers continue depleting; no new node crosses its threshold this step.";
 
   const openNode = (n) => {
     setSel(n.id);
     const layerName = ["Trigger", "Critical import", "Asset", "Sector", "National score"][n.layer];
+    const eDay = dayFor(n), eBand = bandFor(n);
     explain({
-      kicker: layerName + (n.day ? " · activates day " + n.day : " · day 0"),
+      kicker: layerName + (eDay ? " · activates day " + eDay : " · day 0") + (mitigated ? " · mitigated" : " · unmitigated"),
       title: n.label,
-      text: n.detail,
+      text: mitigated && n.mitigationNote ? n.mitigationNote + "  " + n.detail : n.detail,
       formula: n.kind === "precursor"
         ? "Time-to-impact  =  buffer days  −  days since shock"
         : n.kind === "sector"
@@ -83,10 +100,11 @@ function CascadeDiagram() {
             : "Trigger removes the shipping route that feeds downstream buffers",
       inputs: [
         { k: "Propagation layer", v: layerName },
-        { k: "Activates at", v: n.day === 0 ? "Day 0 (immediate)" : "Day " + n.day },
-        { k: "Severity at peak", v: RD.band(n.band === "critical" ? 30 : n.band === "high" ? 50 : 67).label },
+        { k: "Mode", v: mitigated ? "With responses staged" : "Unmitigated exposure" },
+        { k: "Activates at", v: eDay === 0 ? "Day 0 (immediate)" : "Day " + eDay },
+        { k: "Severity", v: RD.band(eBand === "critical" ? 30 : eBand === "high" ? 50 : eBand === "moderate" ? 67 : 85).label },
       ],
-      assumption: "Propagation timing is driven by each import's stated buffer days (curated estimates). Real-world lags vary; treat day markers as illustrative order-of-magnitude, not precise forecasts.",
+      assumption: "Propagation timing is driven by each import's stated buffer days (curated estimates). The mitigated path applies the Response & pre-mortem playbook already available for this exposure. Treat day markers as illustrative order-of-magnitude, not precise forecasts.",
     });
   };
 
@@ -121,14 +139,14 @@ function CascadeDiagram() {
         {RD.cascade.edges.filter(edgeHot).map((e, i) => {
           const a = POS[e[0]], b = POS[e[1]];
           const tgt = RD.cascade.nodes.find((n) => n.id === e[1]);
-          return <path key={"p" + i} className={`casc-pulse band-${tgt.band}`} d={edgePath(a, b)} stroke="var(--bc)" />;
+          return <path key={"p" + i} className={`casc-pulse band-${bandFor(tgt)}`} d={edgePath(a, b)} stroke="var(--bc)" />;
         })}
         {/* nodes */}
         {RD.cascade.nodes.map((n) => {
-          const p = POS[n.id]; const act = nodeActive(n);
+          const p = POS[n.id]; const act = nodeActive(n); const band = bandFor(n);
           return (
             <g key={n.id}
-              className={`casc-node band-${n.band} ${act ? "active" : "dim"} ${sel === n.id ? "sel" : ""}`}
+              className={`casc-node band-${band} ${act ? "active" : "dim"} ${sel === n.id ? "sel" : ""}`}
               transform={`translate(${p.x - NW / 2},${p.y - NH / 2})`} onClick={() => openNode(n)}>
               <rect className="body" width={NW} height={NH} rx="8"
                 fill={act ? "var(--panel-2)" : "var(--panel)"}
@@ -136,7 +154,7 @@ function CascadeDiagram() {
                 strokeWidth={sel === n.id ? 2 : act ? 1.4 : 1} />
               <rect className="accent" width="4" height={NH} rx="2" fill="var(--bc)" opacity={act ? 1 : 0.4} />
               <text className="nlabel" x="16" y={NH / 2 - 2} dominantBaseline="middle">{n.label}</text>
-              <text className="nday" x="16" y={NH - 11}>{n.day === 0 ? "immediate" : "day " + n.day}</text>
+              <text className="nday" x="16" y={NH - 11}>{dayFor(n) === 0 ? "immediate" : "day " + dayFor(n)}</text>
               {act && <circle cx={NW - 14} cy={NH / 2} r="3.4" fill="var(--bc)" />}
             </g>
           );
@@ -146,11 +164,11 @@ function CascadeDiagram() {
       {/* timeline */}
       <div className="timeline">
         {days.map((d, i) => (
-          <button key={d} className={`tl-step ${i === dayIdx ? "on" : ""} ${i < dayIdx ? "passed" : ""}`}
+          <button key={d} className={`tl-step ${i === dayIdx ? "on" : ""} ${i < dayIdx ? "passed" : ""} ${d === todayDay ? "is-today" : ""}`}
             onClick={() => { setPlaying(false); setDayIdx(i); }}>
             <span className="tl-line"></span>
             <span className="tl-dot"></span>
-            <span className="tl-day">{d === 0 ? "D0" : "D" + d}</span>
+            <span className="tl-day">{d === 0 ? "D0" : d === todayDay ? "TODAY" : "D" + d}</span>
           </button>
         ))}
       </div>
@@ -165,6 +183,22 @@ function CascadeDiagram() {
           <div className="v mono">{proj}</div>
           <div className="l">Projected national score</div>
         </div>
+      </div>
+
+      {/* mode switch — the one clear place to flip from the default worst-case
+          trace to the mitigated path a real, ongoing closure actually follows */}
+      <div className={`casc-mode-band ${mitigated ? "is-mitigated" : ""}`}>
+        <div className="casc-mode-txt">
+          {mitigated ? (
+            <><b>Viewing: with responses staged.</b> Reroutes via Fujairah and the strategic reserve are absorbing the shock — this is the path that matches an actual closure running for months with little visible effect.</>
+          ) : (
+            <><b>Viewing: unmitigated exposure (default).</b> This traces the worst case — as if no response is ever staged. Real conditions rarely stay unmitigated for long.</>
+          )}
+        </div>
+        <button className="btn primary" onClick={() => setMitigated((m) => !m)}>
+          {mitigated ? <><Icon name="reset" size={14} />Back to unmitigated</> : <>See it with responses staged →</>}
+        </button>
+        <button className="exp" onClick={() => window.__go && window.__go("act", { sector: "water" })}>Explore the responses →</button>
       </div>
     </div>
   );

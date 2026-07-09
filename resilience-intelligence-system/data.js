@@ -297,31 +297,50 @@ window.RD = (function () {
   // ---- Cascade graph (for the signature animation) -------------------------
   // Layered: trigger -> precursor -> asset -> sector -> overall
   const cascade = {
-    timeline: [0, 15, 30, 45, 60, 75, 90],
+    timeline: [0, 15, 30, 45, 60, 75, 90, 120, 150],
+    todayDay: 150, // the real Hormuz closure's actual elapsed duration, for comparison
     nodes: [
       { id: "trigger", layer: 0, label: "Hormuz closure", kind: "trigger", day: 0, band: "critical",
         detail: "Naval incident closes the strait. Transit calls fall from a ~110/day norm to single digits within 48 hours." },
 
       { id: "waterchem", layer: 1, label: "Dosing chemicals", kind: "precursor", day: 0, band: "high",
+        mitigatedDay: 0, mitigatedBand: "moderate",
+        mitigationNote: "Mitigated: rerouted via Fujairah (outside the strait) and an alternate qualified supplier inside the first two weeks — the buffer is topped up before it binds.",
         detail: "The fastest-biting water precursor. Antiscalants, chlorine and coagulants are bulk imports that land at Jebel Ali — inside the Gulf, so genuinely Hormuz-locked — and can't be air-freighted at volume. With the thinnest buffer in the water chain (~30 days), they draw down first the moment resupply shipping stops." },
       { id: "ro", layer: 1, label: "RO membranes", kind: "precursor", day: 0, band: "moderate",
+        mitigatedDay: 0, mitigatedBand: "good",
+        mitigationNote: "Mitigated: already reroutable via Fujairah or air-freight given its high value and low shipping volume — that route absorbs the loss with little visible strain.",
         detail: "A deeper ~75-day buffer, and — being high-value and low-volume — membranes can partly reroute via Fujairah (outside the strait) or air-freight, so they degrade later and more softly than the bulk chemicals. Still a high-consequence input: desalination feeds nearly all potable water." },
       { id: "gas", layer: 1, label: "Sea-borne LNG", kind: "precursor", day: 0, band: "moderate",
+        mitigatedDay: 0, mitigatedBand: "moderate",
+        mitigationNote: "Mitigated: Dolphin's steady base flow plus accepting the oil-linked replacement cost covers the lost balancing margin — a cost hit, not a supply gap.",
         detail: "This is NOT the Dolphin pipeline. Dolphin is piped from Qatar, does not transit Hormuz, and keeps flowing through a closure — so its VOLUME is unaffected, which is why it is not the direct hit here. What a Hormuz closure actually blocks is the sea-borne LNG the grid uses to balance peaks (imported via Jebel Ali, inside the Gulf). That lost balancing margin is the gas-side Hormuz exposure, and the replacement molecule is oil-linked (~12.5% of Brent, ≈8× the contract floor), so it also carries a price-BASIS flip. Cushioned by Dolphin's steady base flow." },
 
       { id: "taweelah", layer: 2, label: "Taweelah desalination", kind: "asset", day: 30, band: "high",
+        mitigatedDay: 120, mitigatedBand: "moderate",
+        mitigationNote: "Mitigated: the reorder point is reached on schedule, but rerouted stock arrives before consumables run out — output tapers, but doesn't stop.",
         detail: "Dosing-chemical stock reaches its reorder threshold first, with membrane spares following. Output begins to taper as the plant runs down its consumables." },
       { id: "grid", layer: 2, label: "Power grid", kind: "asset", day: 60, band: "high",
+        mitigatedDay: 120, mitigatedBand: "moderate",
+        mitigationNote: "Mitigated: the oil-linked replacement gas and Dolphin's base flow keep the grid balanced, at higher cost rather than lower supply.",
         detail: "Gas balancing tightens; desalination and grid share the same gas envelope, so they move together under load." },
 
       { id: "water", layer: 3, label: "Water", kind: "sector", day: 30, band: "critical",
+        mitigatedDay: 150, mitigatedBand: "moderate",
+        mitigationNote: "Mitigated: rerouted procurement plus the 90-day federal strategic reserve hold Water at moderate strain rather than critical — this is the path that matches an actual multi-month closure with limited visible effect.",
         detail: "Desalination is the spine of water supply. Day-to-day demand is met from operational storage; the 90-day federal strategic reserve then covers essential supply, at a reduced rate — a deep safety net rather than full-demand cover." },
       { id: "energy", layer: 3, label: "Energy", kind: "sector", day: 60, band: "high",
+        mitigatedDay: 120, mitigatedBand: "moderate",
+        mitigationNote: "Mitigated: the grid absorbs the balancing loss as a cost increase, not an outage.",
         detail: "Gas-for-power and gas-for-water draw on the same envelope. The grid de-rates to keep desalination supplied." },
       { id: "food", layer: 3, label: "Food", kind: "sector", day: 60, band: "moderate",
+        mitigatedDay: 150, mitigatedBand: "good",
+        mitigationNote: "Mitigated: with Water and Energy holding at moderate strain, cold-chain and irrigation are barely disturbed.",
         detail: "Cold-chain and irrigation depend on water + power, following the water signal by ~30 days." },
 
       { id: "overall", layer: 4, label: "Live Resilience", kind: "overall", day: 90, band: "critical",
+        mitigatedDay: 150, mitigatedBand: "moderate",
+        mitigationNote: "Mitigated: with those responses staged, Live Resilience dips but does not collapse — consistent with a real closure running months with limited visible effect.",
         detail: "The national headline reading falls as the shock propagates. Non-compensatory aggregation: with Water under load, Live Resilience stays anchored to the most-exposed sector regardless of strong sectors elsewhere." },
     ],
     edges: [

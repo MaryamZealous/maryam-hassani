@@ -128,6 +128,7 @@ a{color:inherit}
 .grid{display:grid;gap:16px}
 .cols-2{grid-template-columns:1fr 1fr}
 .cols-3{grid-template-columns:repeat(3,1fr)}
+.cols-4{grid-template-columns:repeat(4,1fr)}
 .row{display:flex;gap:16px}
 
 /* ---------- score hero --------------------------------------------------- */
@@ -365,6 +366,13 @@ a{color:inherit}
 .casc-proj{text-align:right}
 .casc-proj .v{font-family:var(--font-mono);font-size:26px;font-weight:600;color:var(--crit)}
 .casc-proj .l{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+
+.casc-mode-band{display:flex;align-items:center;gap:16px;margin-top:12px;padding:14px 18px;
+  border:1.5px solid var(--line-2);border-radius:var(--radius-lg);background:var(--panel-2)}
+.casc-mode-band.is-mitigated{border-color:var(--good, #3a8a5c);background:color-mix(in srgb, var(--good, #3a8a5c) 8%, var(--panel-2))}
+.casc-mode-txt{font-size:12.5px;line-height:1.5;color:var(--muted);flex:1}
+.casc-mode-txt b{color:var(--ink)}
+.casc-mode-band .btn{flex:0 0 auto;white-space:nowrap}
 
 .timeline{display:flex;align-items:center;gap:0;margin:4px 0 2px;padding:0 6px}
 .tl-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
@@ -606,7 +614,7 @@ a{color:inherit}
 @media (max-width:1080px){
   .sector-grid{grid-template-columns:repeat(2,1fr)}
   .hero{grid-template-columns:1fr}
-  .cols-2,.cols-3{grid-template-columns:1fr}
+  .cols-2,.cols-3,.cols-4{grid-template-columns:1fr}
   .act-cb-grid{grid-template-columns:repeat(2,1fr)}
   .act-fail-grid{grid-template-columns:1fr}
   .act-brief-sec{grid-template-columns:1fr;gap:7px}

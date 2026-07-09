@@ -608,20 +608,22 @@ function CascadeView() {
       <div className="view-head">
         <div className="view-title">The cascade engine</div>
         <div className="view-sub">
-          This is how the system actually thinks. A shock at a chokepoint draws down the buffers of the imports
-          that route through it; as each buffer draws down, the asset it supports comes under load, then the sector, then the
-          national score. Press play, or step through the timeline — every node explains itself.
+          This traces unmitigated exposure — what would happen if a shock at a chokepoint drew down buffers with no
+          response ever staged. Toggle to "With responses staged" to see the same shock absorbed by the reroutes and
+          reserves the Response & pre-mortem playbook already has ready. That's the honest reason a real closure can run
+          for months with little visible effect: not that the exposure isn't real, but that it's being actively managed.
         </div>
       </div>
-      <Panel title="Hormuz closure — propagation over 90 days" icon="cascade" label="ILLUSTRATIVE TRACE">
+      <Panel title="Hormuz closure — unmitigated exposure vs. responses staged" icon="cascade" label="ILLUSTRATIVE TRACE · 150-DAY WINDOW">
         <CascadeDiagram />
       </Panel>
 
-      <div className="grid cols-3" style={{ marginTop: 16 }}>
+      <div className="grid cols-4" style={{ marginTop: 16 }}>
         {[
           { n: "1", t: "Buffers, not bangs", d: "Nothing fails instantly. Each import carries a stated buffer in days; the shock simply starts the clock." },
           { n: "2", t: "Consequence-weighted", d: (() => { const c = (id) => { const p = RD.precursors.find((x) => x.id === id); return p ? p.consequence.toFixed(2) : "?"; }; return `RO membranes (${c("ro")}) and the gas balancing input (${c("gas")}) propagate hard; gold doré (${c("golddore")}) barely moves the system.`; })() },
-          { n: "3", t: "Non-compensatory end", d: "Once Water turns critical, the national score is capped — strong Finance and Food cannot buy it back." },
+          { n: "3", t: "Non-compensatory end", d: "Once Water turns critical, Live Resilience is capped — strong Finance and Food cannot buy it back." },
+          { n: "4", t: "Unmitigated vs. staged", d: "The default trace assumes nothing is done. Toggle 'With responses staged' to see the same shock absorbed by reroutes and reserves — the mechanism behind a real closure producing limited visible effect." },
         ].map((c) => (
           <div className="method-q" key={c.n} style={{ marginBottom: 0 }}>
             <h3><span className="badge-n">{c.n}</span>{c.t}</h3>
