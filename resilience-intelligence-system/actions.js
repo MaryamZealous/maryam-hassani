@@ -451,11 +451,12 @@ window.ACT = (function () {
         { name: "EDGE Group", role: "defence-grade testing and a secure supply chain" },
       ],
       precedent: {
-        flag: "knowledge",
-        title: "Stargate UAE + the US–UAE AI agreement (figures from general knowledge)",
+        flag: "sourced",
+        title: "Stargate UAE + the US–UAE AI agreement, now with an upgraded export status",
         facts: [
           "May 2025: a US–UAE agreement opened the door, alongside 'Stargate UAE', a planned giant AI campus in Abu Dhabi (G42 with OpenAI, Oracle, NVIDIA, Cisco, SoftBank), first phase targeted for 2026",
           "Nov 2025: G42 received approval to import advanced NVIDIA chips, confirming that imports are permitted under current policy",
+          "10 Jul 2026: the US Commerce Department said it would 'significantly upgrade' the UAE's export status — license-free access to advanced computing items, easing transfers of military equipment, satellites and drone tech (The National)",
           "GlobalFoundries: owned by Abu Dhabi's Mubadala, one of the world's top makers of older-generation chips, the UAE already owns the realistic build path",
         ],
       },
@@ -492,10 +493,10 @@ window.ACT = (function () {
         },
       ],
       premortem: [
-        { mode: "Washington changes its mind", likelihood: "Medium",
+        { mode: "Washington changes its mind", likelihood: "Low",
           indicator: "US export-control rule changes or blacklist actions", tracked: true,
           trackedWhere: "Live signals → trade-policy news lanes & OFAC sanctions feed",
-          mitigation: "Execute the stockpile promptly while access holds, and qualify chips from allied factories too, today's approval is a policy rather than a guarantee, and could be reversed by a change in administration." },
+          mitigation: "Policy keeps moving in the UAE's favour (Nov 2025 G42 approval, Jul 2026 export-status upgrade), so likelihood is now low \u2014 but it is still policy, not statute, and could be reversed by a change in administration. Qualify chips from allied factories too as a hedge." },
         { mode: "Pursuing a fab beyond realistic reach", likelihood: "High",
           indicator: "The gap between what the UAE could realistically make and what it needs", tracked: false,
           mitigation: "Aim at the realistic rungs, finishing, testing, and older-generation chips through GlobalFoundries, and cover the cutting edge with the stockpile plus alliances. Only a handful of firms can make the most advanced chips; no plan changes that." },
