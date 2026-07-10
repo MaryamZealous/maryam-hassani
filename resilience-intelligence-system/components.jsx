@@ -177,7 +177,6 @@ function ScoreCard({ d }) {
                   { k: "Market stress", v: "Brent & the Brent-linked LNG replacement cost", src: "yfinance" },
                   { k: "Sanctions drift", v: "OFAC SDN updates", src: "ofac" },
                 ],
-                assumption: "PortWatch is the dominant mover, but the active load blends six terms from five live feeds (Google News contributes two lanes) against the structural ceiling, never PortWatch alone. ACLED informs counterpart context, not this score.",
               }); }}>
               <span className="d"></span>5 live feeds
             </span>

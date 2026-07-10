@@ -499,7 +499,7 @@ function DependenciesView({ initial }) {
                   { k: "Buffer fragility", v: sel.driBuffer + " / 100, from a " + sel.buffer + "-day buffer vs a 180-day reaction horizon" },
                   { k: "DRI", v: "0.67 × " + sel.driStruct + "  +  0.33 × " + sel.driBuffer + "  =  " + sel.dri + " / 100" },
                 ],
-                assumption: "All five inputs share the same 0–100 fragility scale, the weights (0.34 route / 0.22 each, then 0.67/0.33 structural vs buffer) set how much each counts. Buffer fragility reaches zero past ~180 days of cover, where stock stops being the binding constraint. The route weight and the 180-day horizon are tunable assumptions.",
+                assumption: "Buffer fragility reaches zero past ~180 days of cover, where stock stops being the binding constraint. The route weight and the 180-day horizon are tunable.",
                 links: [
                   { label: "How DRI rolls up into its sector score · Overview", view: "overview" },
                   { label: "Weights & horizons · Assumptions ledger", view: "methodology" },
@@ -517,7 +517,7 @@ function DependenciesView({ initial }) {
                   { k: "Breadth", v: sel.cfac.brd.toFixed(2) + ", sectors & population the loss would touch" },
                   { k: "Weighted result", v: sel.consequence.toFixed(2) + " / 1.00" },
                 ],
-                assumption: "The four factors are scored from public, documented facts, demand shares, which end-service the input feeds, and whether the need is continuous. The 0.40/0.25/0.20/0.15 weights are editable; essentiality dominates because an input feeding a non-essential service can't be a top national consequence however concentrated its supply. Distinct from DRI: DRI scores SUPPLIER fragility (can we get it?); consequence scores national importance (how bad if we can't?).",
+                assumption: "The 0.40/0.25/0.20/0.15 weights are editable; essentiality dominates because an input feeding a non-essential service can't be a top national consequence however concentrated its supply. Distinct from DRI: DRI scores SUPPLIER fragility (can we get it?); consequence scores national importance (how bad if we can't?).",
                 links: [
                   { label: "Where this weight is used · Overview sector grid", view: "overview" },
                   { label: "Responses that lower this risk · Sector responses", view: "act" },
@@ -734,7 +734,6 @@ function ReservesRow() {
                   { k: "Strategic reserve", v: RD.water.days + " days · essential supply" },
                   { k: "Public sources", v: (<span style={{ display: "inline-flex", flexWrap: "wrap", gap: "6px 12px" }}>{RD.water.evidence.map((e, i) => (<a key={i} className="drawer-link" href={e.url} target="_blank" rel="noopener noreferrer">{e.label} ↗</a>))}</span>) },
                 ],
-                assumption: "The 90-day figure is the emergency essential-supply duration, a deep safety net behind normal operations. Day-to-day demand is met from operational storage, with the strategic reserve held in reserve behind it.",
               }} />
             </span>
           </div>
@@ -807,7 +806,7 @@ function MaturityRow() {
               { k: "Storage", v: "one central log, shared by all visitors" },
               { k: "Integrity", v: "episode rules run centrally, no visitor can alter or invent history" },
             ],
-            assumption: "The 3-point open / 1-point close thresholds and the ≥3-live-feeds rule are stated model assumptions. The log starts empty and only fills as real disruptions occur, no seeded history.",
+            assumption: "The 3-point open / 1-point close thresholds are editable, stated assumptions. The log starts empty with no seeded history.",
           }} />}>
           {eps.length === 0 && !open ? (
             <div className="empty" style={{ padding: "18px 0" }}>No episodes recorded yet, the shared log fills as real disruptions occur. {logLive ? "The detector is live." : "Connecting to the log…"}</div>

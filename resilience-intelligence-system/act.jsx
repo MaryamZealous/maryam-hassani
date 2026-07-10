@@ -105,7 +105,7 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
                 { k: "Time-pressure", v: (p.window * 100).toFixed(0) + " / 100 → " + prio.rel.time + " relative" + (p.window >= 0.75 ? ", closing clock" : p.window <= 0.4 ? ", no clock" : "") },
                 { k: "→ Priority", v: prio.score + " / 100 (relative to the other responses)" },
               ],
-              assumption: "Weakness leads (half the weight), and the rescaling is what makes that true in practice, without it, the wide spread of payoffs would dominate the narrow spread of sector fragilities regardless of the weights. Time-pressure is the only hand-set factor (chips' export-licence clock lifts Defence; Finance's depth and absent clock keep it low). A response scoring low here is lower-priority than its peers, not unimportant.",
+              assumption: "Weakness leads (half the weight), and the rescaling is what makes that true in practice \u2014 without it, the wide spread of payoffs would dominate the narrow spread of sector fragilities regardless of the weights. Time-pressure is the only hand-set factor (chips' export-licence clock lifts Defence; Finance's depth and absent clock keep it low).",
               links: [
                 { label: "The " + p.sector + " sector's score & imports · Overview", view: "overview" },
                 { label: "The imports behind the weakness · Dependencies", view: "dependencies", opts: { sector: p.sector } },
@@ -394,7 +394,7 @@ function ActView({ initial = {} }) {
         <div className="view-title">Sector responses</div>
         <div className="view-sub">
           Where the loop closes. Each response is a concrete plan (what gets built, where, with which technology and
-          partners) anchored to a real project already done, with its actual cost and timeline. You make one decision:
+          partners) anchored to a real project already done, with cost and timeline grounded in it. You make one decision:
           <b> how far to go</b>.
         </div>
       </div>

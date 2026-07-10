@@ -37,7 +37,7 @@ window.RD = (function () {
         { k: "Capacity", v: "Absorb · Recover · Adapt → blend", src: "curated" },
         { k: "Anchored result", v: "0.60 × most-exposed + 0.40 × capacity" },
       ],
-      assumption: "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity blend, non-compensatory, so a concentrated weak point can't be fully averaged away by strong capacity. Capacity is equal-weighted across Absorb (consequence-weighted buffers vs a 90-day benchmark), Recover (sovereign firepower + how easily inputs re-source) and Adapt (sectors with a credible structural plan). The 0.60 anchor weight and 90-day benchmark are editable assumptions. The ≈72 frontier marked on the axis is a separate display goalpost, not an input to any score.",
+      assumption: "Capacity blends Absorb, Recover and Adapt equally: buffers vs a 90-day benchmark, sovereign firepower plus how easily inputs re-source, and sectors with a credible structural plan. The 0.60 anchor weight and 90-day benchmark are editable.",
     },
     live: {
       value: 47.0, prev: 44.5,
@@ -59,7 +59,7 @@ window.RD = (function () {
         { k: "Counterpart / sanctions", v: "rise in total SDN entities since session baseline (OpenSanctions mirror)", src: "ofac" },
         { k: "Live = ceiling − active load", v: "recomputed every refresh from the live drivers", src: "curated" },
       ],
-      assumption: "Live Resilience = structural ceiling − today's active load. Each drag term is capped so no single feed can swamp the score, and the total is floored at 25: day-to-day pressure alone can't read as systemic failure (stress-test scenarios can, and floor at 0). Maritime disruption enters through measured vessel throughput, which already reflects how carriers reroute as tension rises. So the Hormuz and Red Sea events shown elsewhere are the causes of that measured drop, presented for context, and are not added to the score a second time.",
+      assumption: "Each drag term is capped so no single feed can swamp the score, and the total floors at 25 — only stress-test scenarios can go lower. Maritime disruption is measured via vessel throughput, which already reflects rerouting as tension rises, so the Hormuz and Red Sea events shown elsewhere are the cause, not a second scoring input.",
     },
   };
 

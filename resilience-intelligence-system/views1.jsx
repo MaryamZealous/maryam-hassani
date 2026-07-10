@@ -198,7 +198,7 @@ function Capacities() {
           { k: "Re-sourcing ease", v: "100 − consequence-weighted substitution-difficulty (" + subPenalty + ") = " + resourcing },
           { k: "Blend (0.5 / 0.5)", v: recover + " / 100" },
         ],
-        assumption: "Equal 0.5/0.5 weighting is an editable judgement. Maps to 'rapidity / resourcefulness' in the resilience-engineering 4 R's (Bruneau et al., 2003, Earthquake Spectra 19(4), robustness, redundancy, resourcefulness, rapidity).",
+        assumption: "Equal 0.5/0.5 weighting between firepower and re-sourcing ease is an editable judgement.",
         links: [{ label: "The sovereign table behind the firepower score · Control layer", view: "control" }],
       } },
     { key: "Adapt", n: adapt, q: "Are we cutting future risk?",
@@ -210,7 +210,7 @@ function Capacities() {
           ...RD.capacity.adaptDetail.map((d) => ({ k: d.name, v: d.score === 0 ? "no structural play → 0" : "depth " + d.depth + " · speed " + d.speed + " → " + d.score + " · weight " + d.w })),
           { k: "Weighted result", v: adapt + " / 100" },
         ],
-        assumption: "Depth and speed come from the response catalog's own tiers (deepest-tier ceiling points; days to the first ceiling-raising tier). The 2.5-pt depth and 24-month speed goalposts are editable judgements. Counts capacity (credible plans), not realized change, maps to the 'bounce forward' / transformative-capacity split of the Index of Future Readiness.",
+        assumption: "The 2.5-pt depth and 24-month speed goalposts are editable judgements. This scores capacity (credible plans on file), not realized change — tracked separately in Sector responses.",
         links: [{ label: "The plans being scored · Sector responses", view: "act" }],
       } },
   ];
@@ -247,14 +247,14 @@ function Capacities() {
         <span style={{ marginLeft: "auto" }}>
           <Fx payload={{
             kicker: "Putting it together", title: "Capacity: measured against exposure",
-            text: "Following the vulnerability-vs-resilience logic used for small open economies (Briguglio): CAPACITY (what you can Absorb, how fast you Recover, your ability to Adapt) is set against EXPOSURE, the most-exposed sector. The result is non-compensatory: strong capacity can't fully paper over a concentrated weak point, so the most-exposed sector anchors the score.",
+            text: "The arithmetic behind the headline Structural Resilience card, with today's actual numbers substituted in.",
             formula: "Structural Resilience  =  0.60 × most-exposed sector  +  0.40 × capacity blend",
             inputs: [
               { k: "Exposure (weak link)", v: exposed.name + " sector · " + exposed.score.toFixed(1) },
               { k: "Capacity blend", v: "(Absorb " + absorb + " + Recover " + recover + " + Adapt " + adapt + ") / 3 = " + capacity },
               { k: "Anchored result", v: "0.60×" + exposed.score.toFixed(1) + " + 0.40×" + capacity + " = " + standing.toFixed(1) },
             ],
-            assumption: "The 0.60 exposure-anchor weight is editable. Capacity is equal-weighted across the three sub-capacities; exposure uses the single most-exposed sector (weakest-link, non-compensatory).",
+            assumption: "Same formula as the headline card, shown here with today's actual sector values plugged in.",
           }} />
         </span>
       </div>
