@@ -137,14 +137,14 @@ function headlineDrivers(d) {
     const gap = +(RD.headline.structural.value - d.value).toFixed(1);
     return {
       kicker: "Live factors",
-      caption: `${gap} pts under the ${RD.headline.structural.value.toFixed(1)} ceiling, clears as today's load eases`,
+      caption: names ? `${names} pressure is today's main load` : `Load is light today`,
       text: `${names} pressure on the sea routes is the active load today. It reaches the score through measured ship transits, which already reflect how carriers reroute, and leaves live ${gap} pts below the ceiling.`,
     };
   }
   const weakest = RD.sectors.reduce((a, b) => (b.score < a.score ? b : a));
   return {
     kicker: "Drivers · refreshed monthly",
-    caption: `Most-exposed sector: ${weakest.name} ${weakest.score.toFixed(1)} · realistic ceiling ~72, not 100`,
+    caption: `Most-exposed sector: ${weakest.name} ${weakest.score.toFixed(1)}`,
     text: `Capacity, Absorb · Recover · Adapt, set against the most-exposed sector (${weakest.name} ${weakest.score.toFixed(1)}). Recomputed monthly from public data.`,
   };
 }

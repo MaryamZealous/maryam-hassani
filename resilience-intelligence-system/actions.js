@@ -18,7 +18,7 @@
 
    Sourcing honesty: precedent.flag = "sourced" (researched, real figures)
    or "knowledge" (well-established program, figures may need refinement).
-   Costs marked "modelled" have no direct comparable and say so.
+   Costs marked "modeled" have no direct comparable and say so.
    AED throughout, ~AED 3.67 / USD.
    ========================================================================== */
 window.ACT = (function () {
@@ -59,6 +59,10 @@ window.ACT = (function () {
           "Sited in Dammam's industrial city; ~70% of the work done locally and 175+ jobs (reported figures)",
           "The region buys ≈ 700,000 filter elements a year (industry estimate), easily enough demand for a second Gulf factory",
         ],
+        sources: [
+          { label: "LG Chem × Alkhorayef partnership announcement (May 1, 2024)", url: "https://www.lgwatersolutions.com/media-center/news/2962/" },
+          { label: "KED Global — SAR 320M (≈US$85M) RO membrane plant, production from 2026", url: "https://www.kedglobal.com/chemical-industry/newsView/ked202405010002" },
+        ],
       },
       tiers: [
         {
@@ -73,9 +77,9 @@ window.ACT = (function () {
         },
         {
           id: "t2", name: "Tier 2 · Build the filter factory", kind: "mixed", recommended: true,
-          deliverable: "A joint-venture filter factory and technical centre at KEZAD, copying the Saudi playbook, making complete filter cartridges for the UAE's own plants, plus export to neighbours.",
+          deliverable: "A joint-venture filter factory and technical center at KEZAD, adapting the Saudi playbook, making complete filter cartridges for the UAE's own plants, plus export to neighbors.",
           cost: 0.70, vehicle: "Operation 300bn co-investment",
-          costBasis: "Anchored to the real US$86M (≈AED 0.32bn) Saudi factory, doubled to cover a technical centre, more capacity and UAE costs.",
+          costBasis: "Anchored to the real US$86M (≈AED 0.32bn) Saudi factory, doubled to cover a technical center, more capacity and UAE costs.",
           days: 660, timeBasis: "~22 months, exactly what the Saudi factory took from announcement (May 2024) to production (early 2026), plus time to test the new filters at Taweelah.",
           livePts: 0.6, ceilPts: 1.4, local: 70,
           residual: "~70% made locally, but the specialty chemicals inside are still imported. The weak point moves one step up the chain, from 'finished filters' to 'chemicals'.",
@@ -85,7 +89,7 @@ window.ACT = (function () {
           id: "t3", name: "Tier 3 · Make the chemicals too", kind: "ceiling",
           deliverable: "Make the specialty chemicals themselves (MPD, TMC and the support plastic) at the TA'ZIZ chemicals hub in Ruwais, using the UAE's own refinery by-products as the starting material, and feeding the Tier-2 factory.",
           cost: 2.2, vehicle: "Operation 300bn + ADNOC/TA'ZIZ",
-          costBasis: "Modelled: there is no directly comparable project. Specialty-chemical plants run US$200–400M each, plus the plastic production. Treat as a planning estimate, not a quote.",
+          costBasis: "Modeled: there is no directly comparable project. Specialty-chemical plants run US$200–400M each, plus the plastic production. Treat as a planning estimate, not a quote.",
           days: 1460, timeBasis: "~4 years, chemical plants need heavy licensing, safety approval and product testing. Best sequenced after Tier 2 proves the demand.",
           livePts: 0, ceilPts: 2.6, local: 95,
           residual: "Near-full independence; what remains imported are common solvents and equipment spares. The honest end-state, but the slow one.",
@@ -116,7 +120,7 @@ window.ACT = (function () {
       thesis: "The 2026 closure of the strait proved the point twice. Oil exports kept flowing, because oil has a pipeline to Fujairah on the open ocean, but imports have no such back door: container ships still funnel through the strait to Jebel Ali. The choice is how much of the import flow gets the same insurance the oil already enjoys.",
       site: {
         where: "Port of Fujairah + Fujairah Terminals, Gulf of Oman coast",
-        why: "The only major UAE port on the open ocean, outside the strait. Already a world-class refuelling hub, with an Etihad Rail freight line running inland, so cargo can land and move without ever touching the strait. Al Maktoum airport (DWC) hosts the reserved air-cargo lane.",
+        why: "The only major UAE port on the open ocean, outside the strait. Already a world-class refueling hub, with an Etihad Rail freight line running inland, so cargo can land and move without ever touching the strait. Al Maktoum airport (DWC) hosts the reserved air-cargo lane.",
       },
       tech: {
         summary: "Nothing new is invented here; this is a routing plan: pre-booked ship berths at the east-coast port, trains to carry cargo inland, and a standing air-cargo lane for the few genuinely urgent goods (medicines, computer chips).",
@@ -139,6 +143,10 @@ window.ACT = (function () {
           "Battle-tested: during the 2026 closure, oil shipments from Fujairah actually ROSE (≈1.17 → 1.62M barrels/day) while the strait was shut",
           "May 2026: ADNOC fast-tracked a second, parallel pipeline to roughly double the bypass, the state doubling down on the same logic",
         ],
+        sources: [
+          { label: "Global Energy Monitor — 380 km, ~US$4.2bn, operational 2012", url: "https://www.gem.wiki/Habshan%E2%80%93Fujairah_Oil_Pipeline" },
+          { label: "UAE Embassy (official) — ADCOP: 380 km, 1.5→1.8M bpd, bypassing the Strait of Hormuz", url: "https://www.uae-embassy.org/news/abu-dhabi-crude-oil-pipeline-project" },
+        ],
       },
       tiers: [
         {
@@ -155,7 +163,7 @@ window.ACT = (function () {
           id: "t2", name: "Tier 2 · Expand the east-coast port", kind: "mixed",
           deliverable: "Expand Fujairah's container terminal and add a rail-connected inland depot, so the east coast can carry a meaningful share of national imports, not just emergencies.",
           cost: 3.0, vehicle: "AD Ports + Operation 300bn",
-          costBasis: "Based on what Gulf container-port expansions actually cost (US$0.8–1bn class for a major increment). Modelled at AED 3bn for the terminal, the depot and the rail works.",
+          costBasis: "Based on what Gulf container-port expansions actually cost (US$0.8–1bn class for a major increment). Modeled at AED 3bn for the terminal, the depot and the rail works.",
           days: 1100, timeBasis: "~3 years, sea walls, cranes and rail connections take time. The oil pipeline itself took ~4 years to build.",
           livePts: 0.4, ceilPts: 1.6, local: null,
           residual: "Even expanded, the east coast supplements Jebel Ali rather than replacing it, and the ships and planes themselves remain foreign-operated.",
@@ -165,7 +173,7 @@ window.ACT = (function () {
           id: "t3", name: "Tier 3 · Make it permanent policy", kind: "ceiling",
           deliverable: "A standing national rule: a fixed share of strategic imports always comes through the east coast, with the warehouses and handling capacity built to match. The 'second pipeline', but for goods.",
           cost: 6.5, vehicle: "Federal infrastructure budget + AD Ports",
-          costBasis: "Modelled, no comparable exists. Builds on Tier 2 plus permanent operating costs. A planning estimate.",
+          costBasis: "Modeled, no comparable exists. Builds on Tier 2 plus permanent operating costs. A planning estimate.",
           days: 1800, timeBasis: "~5 years to full effect, phased in after Tier 2.",
           livePts: 0, ceilPts: 2.4, local: null,
           residual: "Routing this way costs more every year, even in calm times, that extra cost IS the insurance premium, and should be budgeted as one.",
@@ -179,7 +187,7 @@ window.ACT = (function () {
         { mode: "The back door can be attacked too", likelihood: "Medium",
           indicator: "Drone or missile incidents near Fujairah's port and pipeline corridor", tracked: true,
           trackedWhere: "Live signals → trade-route news monitor & ACLED conflict feed",
-          mitigation: "2026 showed it: debris from an intercepted drone set fire to one of Fujairah's own oil tanks. Spread out and harden the storage, the east coast avoids the strait, but not attack, so air defence must cover it too." },
+          mitigation: "2026 showed it: debris from an intercepted drone set fire to one of Fujairah's own oil tanks. Spread out and harden the storage, the east coast avoids the strait, but not attack, so air defense must cover it too." },
         { mode: "The standing costs quietly burn through the budget", likelihood: "High",
           indicator: "Total reservation and air-freight spending vs budget", tracked: false,
           mitigation: "Keep the expensive air lane for genuinely urgent goods only (medicines, chips); everything else waits for shipping to recover. Air freight always costs many times more per tonne: a permanent premium, not a one-off." },
@@ -196,7 +204,7 @@ window.ACT = (function () {
       thesis: "Electricity and drinking water draw on the same gas supply, so if gas is disrupted, both fail together. That is the deepest hidden link in this model. The UAE is already building the cure at world scale: a giant solar farm with batteries big enough to deliver power day and night. The choice is whether water gets a guaranteed share of it, and whether to build a second one that is water's own.",
       site: {
         where: "Abu Dhabi desert (Al Bihouth area), alongside the Masdar solar gigaproject",
-        why: "The 90 km² site, grid connections and construction crews for the current solar gigaproject are already in place, a water-dedicated addition extends a running programme instead of starting a new one. The Taweelah desalination plant is the natural customer on the same grid.",
+        why: "The 90 km² site, grid connections and construction crews for the current solar gigaproject are already in place, a water-dedicated addition extends a running program instead of starting a new one. The Taweelah desalination plant is the natural customer on the same grid.",
       },
       tech: {
         summary: "A very large solar farm paired with very large batteries, so it delivers steady power around the clock, not just when the sun shines. Desalination plants are the perfect customer: they draw a constant, predictable load.",
@@ -220,6 +228,10 @@ window.ACT = (function () {
           "Announced Jan 2025, ground broken Oct 2025, power flowing in 2027, a real ~30-month clock, financed by lenders not the budget",
           "90 km² site, 10,000+ jobs; suppliers and builders already contracted",
         ],
+        sources: [
+          { label: "pv magazine — $6bn, 5.2 GW + 19 GWh, announced Jan 14, 2025", url: "https://www.pv-magazine.com/2025/01/14/masdar-ewec-announce-5-gw-19-gwh-solar-plus-storage-project-in-abu-dhabi/" },
+          { label: "Masdar newsroom — world-first 24/7 solar-plus-storage, operational 2027", url: "https://masdar.ae/en/news/newsroom/uae-president-witnesses-launch-of-worlds-first-24-7-solar-pv-battery-storage" },
+        ],
       },
       tiers: [
         {
@@ -229,7 +241,7 @@ window.ACT = (function () {
           costBasis: "Contract costs only, the solar farm is already being built and financed. What matters is the electricity price, which the project is targeting to be globally competitive.",
           days: 540, timeBasis: "Tied to the solar project switching on in 2027 (~18 months away). No faster path exists, the construction takes what it takes.",
           livePts: 0, ceilPts: 0.8, local: null,
-          residual: "This shares out the first project, it does not add to it: every megawatt promised to water is one the grid, and the AI data centres, also wanted. Tier 2 is the real answer.",
+          residual: "This shares out the first project, it does not add to it: every megawatt promised to water is one the grid, and the AI data centers, also wanted. Tier 2 is the real answer.",
           milestones: [["M0", "Water-priority clause negotiated with EWEC"], ["M6", "Priority written into the grid operator's scheduling rules"], ["M18", "Gigaproject switches on · water's ~300MW share flows"]],
         },
         {
@@ -261,8 +273,8 @@ window.ACT = (function () {
           indicator: "Delivery times for high-voltage transformers (~240 days today, from Korea/EU)", tracked: true,
           trackedWhere: "Dependencies → grid transformers (lead-time & 240-day buffer)",
           mitigation: "Order the transformers the day the project is approved (Tier 3 does exactly this), building solar fast runs straight into the global wait for the equipment that connects it to the grid." },
-        { mode: "AI data centres outbid water for the power", likelihood: "High",
-          indicator: "How the grid operator splits the new power: data centres vs desalination", tracked: false,
+        { mode: "AI data centers outbid water for the power", likelihood: "High",
+          indicator: "How the grid operator splits the new power: data centers vs desalination", tracked: false,
           mitigation: "The current project is openly marketed as powering the UAE's AI push, write water's guaranteed share into the contract now (Tier 1), or computing demand will absorb the entire first project." },
       ],
     },
@@ -301,6 +313,10 @@ window.ACT = (function () {
           "Julphar: the region's largest generic-medicines maker, 13 UAE facilities, European-certified, selling in 50+ countries",
           "Context: the UAE imported ~85% of its medicines as recently as 2019; Pfizer, GSK, Novartis and Roche have since signed local-manufacturing agreements",
         ],
+        sources: [
+          { label: "Pharmaceutical Technology — ~US$136M plant, broke ground Jan 2008, inaugurated Sept 2012", url: "https://www.pharmaceutical-technology.com/projects/gulf-pharmaceutical-industries-julphar-insulin-production-facility-uae/" },
+          { label: "Devex — US$150M API facility, 1,500 kg insulin ingredient / ~40M vials a year", url: "https://www.devex.com/organizations/julphar-gulf-pharmaceutical-industries-43850" },
+        ],
       },
       tiers: [
         {
@@ -327,7 +343,7 @@ window.ACT = (function () {
           id: "t3", name: "Tier 3 · Full pharma campus", kind: "ceiling",
           deliverable: "A complete pharmaceutical campus: ingredient production, sterile packaging, and refrigerated biologic drugs, built with the international drug makers already signing UAE deals, turning the country from an importer into a regional supplier.",
           cost: 3.6, vehicle: "Operation 300bn + international joint ventures",
-          costBasis: "Modelled, combines ingredient lines and packaging lines (US$300–500M class each). A planning estimate until the medicine list is chosen.",
+          costBasis: "Modeled, combines ingredient lines and packaging lines (US$300–500M class each). A planning estimate until the medicine list is chosen.",
           days: 1800, timeBasis: "~5 years with international-standard approvals; sequenced after Tier 2's production lines.",
           livePts: 0, ceilPts: 2.2, local: 80,
           residual: "Some raw materials stay global; the campus turns the UAE from a price-taker into a regional supplier for the medicines it covers.",
@@ -347,9 +363,9 @@ window.ACT = (function () {
       ],
     },
 
-    /* ---- 5 · FINANCE — sovereign import-stabilisation facility ------------ */
+    /* ---- 5 · FINANCE — sovereign import-stabilization facility ------------ */
     {
-      id: "stabilisation",
+      id: "stabilization",
       title: "A standing emergency fund for imports",
       sector: "finance", window: 0.35,
       addresses: "Crisis price spikes · the cost surge of emergency importing",
@@ -372,11 +388,15 @@ window.ACT = (function () {
         { name: "Ministry of Finance · ADIA/EIA", role: "the mandate and the committed capital" },
       ],
       precedent: {
-        flag: "knowledge",
-        title: "TESS: the UAE's own speed record (figures from general knowledge)",
+        flag: "sourced",
+        title: "TESS: the UAE's own speed record",
         facts: [
           "March 2020: within days of the COVID shock, the central bank stood up an AED 50bn support facility, inside a package that grew to ~AED 256bn",
           "It proved the two things this plan needs: the UAE can mobilise a large backstop fast, and can run it through existing machinery with rules and an end date",
+        ],
+        sources: [
+          { label: "CBUAE — AED 100bn Targeted Economic Support Scheme announced March 2020", url: "https://www.centralbank.ae/en/news-and-publications/news-and-insights/thematic-news/the-central-bank-of-the-uae-announces-a-comprehensive-aed-100-billion-targeted-economic-support-scheme-to-contain-the-repercussions-of-the-pandemic-covid-19/" },
+          { label: "WAM (Emirates News Agency) — TESS measures worth AED 256bn", url: "https://wam.ae/en/details/1395302860989" },
         ],
       },
       tiers: [
@@ -424,22 +444,22 @@ window.ACT = (function () {
       ],
     },
 
-    /* ---- 6 · DEFENCE/TECH — compute under the open window ------------------ */
+    /* ---- 6 · DEFENSE/TECH — compute under the open window ------------------ */
     {
-      id: "compute-localisation",
+      id: "compute-localization",
       title: "Computer chips: build a reserve while access holds",
-      sector: "defence", window: 0.92,
-      addresses: "Advanced chips depend on a US export licence, which policy could revoke",
-      sponsor: { name: "Mubadala + AIATC (AI & Advanced Technology Council)", why: "Mubadala owns GlobalFoundries and the realistic build path; AIATC owns the licence relationship the stockpile depends on." },
-      thesis: "The binding constraint on advanced chips is not capital but US export licences: access is available today under the UAE–US AI agreement, though a change in US policy could withdraw it well before any domestic fab could come online. The plan therefore works on two timelines at once: secure chips now, while access holds (months), and build the capability that is realistically achievable here (years), recognising that the most advanced chips are unlikely to be manufactured domestically.",
+      sector: "defense", window: 0.92,
+      addresses: "Advanced chips depend on a US export license, which policy could revoke",
+      sponsor: { name: "Mubadala + AIATC (AI & Advanced Technology Council)", why: "Mubadala owns GlobalFoundries and the realistic build path; AIATC owns the license relationship the stockpile depends on." },
+      thesis: "The binding constraint on advanced chips is not capital but US export licenses: access is available today under the UAE–US AI agreement, though a change in US policy could withdraw it well before any domestic fab could come online. The plan therefore works on two timelines at once: secure chips now, while access holds (months), and build the capability that is realistically achievable here (years), recognizing that the most advanced chips are unlikely to be manufactured domestically.",
       site: {
         where: "Stockpile: G42/Khazna secure facilities, Abu Dhabi · Build: KEZAD chip campus",
-        why: "Khazna's data centres already hold and run top-end chips under the current licences; KEZAD has the industrial base for an assembly-and-test campus near the talent pool. The planned Stargate UAE campus anchors the demand locally.",
+        why: "Khazna's data centers already hold and run top-end chips under the current licenses; KEZAD has the industrial base for an assembly-and-test campus near the talent pool. The planned Stargate UAE campus anchors the demand locally.",
       },
       tech: {
-        summary: "Two separate layers. One: a national reserve of top-end AI chips, bought, not built, under today's licences. Two: local chip 'finishing' (assembling, testing and packaging chips), and eventually a factory for older-generation chips. Only a few companies worldwide can manufacture the most advanced chips, so the plan does not assume the UAE will join them; it concentrates on the capabilities that are realistically attainable.",
+        summary: "Two separate layers. One: a national reserve of top-end AI chips, bought, not built, under today's licenses. Two: local chip 'finishing' (assembling, testing and packaging chips), and eventually a factory for older-generation chips. Only a few companies worldwide can manufacture the most advanced chips, so the plan does not assume the UAE will join them; it concentrates on the capabilities that are realistically attainable.",
         inputs: [
-          { name: "Top-end AI chips (NVIDIA-class)", status: "imported", note: "by design, depends on US licences and the maker's allocation" },
+          { name: "Top-end AI chips (NVIDIA-class)", status: "imported", note: "by design, depends on US licenses and the maker's allocation" },
           { name: "Assembly & test equipment", status: "imported", note: "long waits, but several suppliers exist" },
           { name: "Older-generation chip wafers", status: "partial", note: "via GlobalFoundries, already owned by Abu Dhabi" },
           { name: "Specialist engineers", status: "imported", note: "the scarcest input, staff exchanges must be written into the deal" },
@@ -448,7 +468,7 @@ window.ACT = (function () {
       partners: [
         { name: "G42 · Khazna", role: "secure custody of the chip reserve + the local demand (Stargate UAE)" },
         { name: "GlobalFoundries (Mubadala)", role: "older-generation chip making + know-how transfer, the UAE already owns it" },
-        { name: "EDGE Group", role: "defence-grade testing and a secure supply chain" },
+        { name: "EDGE Group", role: "defense-grade testing and a secure supply chain" },
       ],
       precedent: {
         flag: "sourced",
@@ -459,31 +479,35 @@ window.ACT = (function () {
           "10 Jul 2026: the US Commerce Department said it would 'significantly upgrade' the UAE's export status — license-free access to advanced computing items, easing transfers of military equipment, satellites and drone tech (The National)",
           "GlobalFoundries: owned by Abu Dhabi's Mubadala, one of the world's top makers of older-generation chips, the UAE already owns the realistic build path",
         ],
+        sources: [
+          { label: "OpenAI — Introducing Stargate UAE, built on the US–UAE AI Acceleration Partnership (May 2025)", url: "https://openai.com/index/introducing-stargate-uae/" },
+          { label: "CNBC — 5GW campus, 1GW cluster (G42/OpenAI/Oracle/NVIDIA/Cisco), 200MW live 2026", url: "https://www.cnbc.com/2025/05/22/stargate-uae-openai-nvidia-oracle.html" },
+        ],
       },
       tiers: [
         {
           id: "t1", name: "Tier 1 · Stockpile chips now", kind: "live", recommended: true,
-          deliverable: "Buy top-end AI chips and spares in advance, under today's licences, into secure storage, a strategic compute reserve purchased while policy allows it.",
+          deliverable: "Buy top-end AI chips and spares in advance, under today's licenses, into secure storage, a strategic compute reserve purchased while policy allows it.",
           cost: 3.5, vehicle: "SWF liquid capital + G42",
           costBasis: "≈ AED 3.5bn buys roughly 25–30k top-class AI chips at current prices, enough to keep national-priority systems running, not to power the whole AI build-out. Illustrative.",
-          days: 180, timeBasis: "~6 months, the wait is the maker's delivery queue, not the money. The licence risk argues for starting promptly.",
+          days: 180, timeBasis: "~6 months, the wait is the maker's delivery queue, not the money. The license risk argues for starting promptly.",
           livePts: 0.9, ceilPts: 0, local: 0,
-          residual: "Chips lose value quickly as new generations arrive, and the licence dependency itself remains, this buys time against a policy reversal but does not reduce the underlying reliance.",
-          milestones: [["D0", "Allocation secured under today's licences"], ["M3", "First deliveries into secure storage"], ["M6", "Reserve complete · refresh cycle set"]],
+          residual: "Chips lose value quickly as new generations arrive, and the license dependency itself remains, this buys time against a policy reversal but does not reduce the underlying reliance.",
+          milestones: [["D0", "Allocation secured under today's licenses"], ["M3", "First deliveries into secure storage"], ["M6", "Reserve complete · refresh cycle set"]],
         },
         {
           id: "t2", name: "Tier 2 · Build chip finishing", kind: "ceiling",
-          deliverable: "A chip 'finishing' campus at KEZAD, assembling, testing and packaging chips, with know-how from the UAE-owned GlobalFoundries and defence-grade certification from EDGE.",
+          deliverable: "A chip 'finishing' campus at KEZAD, assembling, testing and packaging chips, with know-how from the UAE-owned GlobalFoundries and defense-grade certification from EDGE.",
           cost: 7.0, vehicle: "Operation 300bn + Mubadala",
           costBasis: "Based on what such campuses cost globally (US$1–2bn class) ≈ AED 7bn. The realistic middle rung of the chip-making ladder.",
           days: 1100, timeBasis: "~3 years, ultra-clean facilities, long equipment waits, then certification. Start recruiting the specialists the day it is approved.",
           livePts: 0, ceilPts: 1.6, local: 40,
           residual: "The silicon wafers still come from abroad, this converts 'import finished chips' into 'import wafers, finish them here'. Real progress, but partial.",
-          milestones: [["M0", "KEZAD campus + GlobalFoundries know-how agreement · specialist recruiting starts"], ["M12", "Cleanroom build · equipment ordered"], ["M30", "Lines commissioned"], ["M36", "Defence-grade certification (EDGE)"]],
+          milestones: [["M0", "KEZAD campus + GlobalFoundries know-how agreement · specialist recruiting starts"], ["M12", "Cleanroom build · equipment ordered"], ["M30", "Lines commissioned"], ["M36", "Defense-grade certification (EDGE)"]],
         },
         {
           id: "t3", name: "Tier 3 · Older-generation chip factory", kind: "ceiling",
-          deliverable: "A factory for older-generation chips, the kind defence systems, industry and cars actually consume in volume, modelled on GlobalFoundries, which the UAE already owns.",
+          deliverable: "A factory for older-generation chips, the kind defense systems, industry and cars actually consume in volume, modeled on GlobalFoundries, which the UAE already owns.",
           cost: 18.0, vehicle: "Mubadala + Operation 300bn + partner equity",
           costBasis: "Estimated from comparable factories worldwide (US$4–5bn class) ≈ AED 18bn. Nothing like it exists in the UAE, treat as a planning estimate.",
           days: 1825, timeBasis: "~5 years to build and certify; best sequenced after Tier 2 has built the talent pipeline.",
@@ -496,24 +520,24 @@ window.ACT = (function () {
         { mode: "Washington changes its mind", likelihood: "Low",
           indicator: "US export-control rule changes or blacklist actions", tracked: true,
           trackedWhere: "Live signals → trade-policy news lanes & OFAC sanctions feed",
-          mitigation: "Policy keeps moving in the UAE's favour (Nov 2025 G42 approval, Jul 2026 export-status upgrade), so likelihood is now low \u2014 but it is still policy, not statute, and could be reversed by a change in administration. Qualify chips from allied factories too as a hedge." },
+          mitigation: "Policy keeps moving in the UAE's favor (Nov 2025 G42 approval, Jul 2026 export-status upgrade), so likelihood is now low \u2014 but it is still policy, not statute, and could be reversed by a change in administration. Qualify chips from allied factories too as a hedge." },
         { mode: "Pursuing a fab beyond realistic reach", likelihood: "High",
           indicator: "The gap between what the UAE could realistically make and what it needs", tracked: false,
           mitigation: "Aim at the realistic rungs, finishing, testing, and older-generation chips through GlobalFoundries, and cover the cutting edge with the stockpile plus alliances. Only a handful of firms can make the most advanced chips; no plan changes that." },
         { mode: "The factory exists, but the people do not", likelihood: "Medium",
           indicator: "The specialist hiring pipeline vs the staffing plan", tracked: false,
-          mitigation: "Write training programmes and staff exchanges with the big chip makers into the deal from day one, these facilities run on rare specialists the UAE would import, so the fix carries the same workforce risk it is trying to cure." },
+          mitigation: "Write training programs and staff exchanges with the big chip makers into the deal from day one, these facilities run on rare specialists the UAE would import, so the fix carries the same workforce risk it is trying to cure." },
       ],
     },
 
     /* ---- 7 · FOOD — grow the essentials indoors --------------------------- */
     {
-      id: "food-localisation",
+      id: "food-localization",
       title: "Food: grow the essentials indoors",
       sector: "food", window: 0.35,
       addresses: "Grain reserves cover ~150 days, but fresh produce has no reserve, and domestic protein rides on ~45 days of imported feed",
       sponsor: { name: "ADQ (Silal) + Ministry of Climate Change & Environment", why: "ADQ owns Silal and the agri-food portfolio; the ministry owns the National Food Security Strategy the play delivers against." },
-      thesis: "Food is the strongest sector in the model, but that strength is purchasing power plus grain reserves, and both are import-facing. Two things the reserves cannot hold: the perishable layer (fresh produce spoils in days, so it arrives continuously by ship and plane), and the protein layer: the UAE's genuine self-sufficiency in eggs, chicken, milk and farmed fish runs on imported animal feed with weeks of stock, not months. The UAE has already proven half the answer at commercial scale; one of the world's largest vertical farms operates beside Al Maktoum airport today. The play: reserve what can be stored, grow indoors what cannot, secure the feed under domestic protein, and only then localise the inputs behind the farms. Grains stay imported by design: that is comparative advantage, not weakness.",
+      thesis: "Food is the strongest sector in the model, but that strength is purchasing power plus grain reserves, and both are import-facing. Two things the reserves cannot hold: the perishable layer (fresh produce spoils in days, so it arrives continuously by ship and plane), and the protein layer: the UAE's genuine self-sufficiency in eggs, chicken, milk and farmed fish runs on imported animal feed with weeks of stock, not months. The UAE has already proven half the answer at commercial scale; one of the world's largest vertical farms operates beside Al Maktoum airport today. The play: reserve what can be stored, grow indoors what cannot, secure the feed under domestic protein, and only then localize the inputs behind the farms. Grains stay imported by design: that is comparative advantage, not weakness.",
       site: {
         where: "Food Tech Valley (Dubai) + Silal's Al Ain agri hub",
         why: "Food Tech Valley is the federal AgTech zone built for exactly this; Al Ain holds the country's existing farm base, packhouses and Silal's offtake network. Both sit inland, away from the coastal infrastructure a maritime shock stresses.",
@@ -522,7 +546,7 @@ window.ACT = (function () {
         summary: "Controlled-environment agriculture: sealed, stacked growing halls where crops grow in nutrient water under LEDs, using ~95% less water than field farming. The scarce input it spends instead is electricity. That is the honest trade: indoor farming swaps food-import risk for energy-and-water dependence, which is why this play assumes the energy play's solar buildout succeeds.",
         inputs: [
           { name: "Seed stock (high-performance varieties)", status: "imported", note: "specialty breeding concentrates in NL / US / Japan, the quiet bottleneck" },
-          { name: "Nutrient salts & fertiliser base", status: "partial", note: "potash imported (tracked); nitrogen inputs can draw on Fertiglobe's domestic ammonia/urea" },
+          { name: "Nutrient salts & fertilizer base", status: "partial", note: "potash imported (tracked); nitrogen inputs can draw on Fertiglobe's domestic ammonia/urea" },
           { name: "LED and climate systems", status: "imported", note: "several suppliers, long but manageable lead times" },
           { name: "Water + power", status: "domestic", note: "desalinated water and grid power, the cross-dependency this play accepts" },
         ],
@@ -533,11 +557,15 @@ window.ACT = (function () {
         { name: "Fertiglobe", role: "the Tier-3 path: blending nutrient inputs from domestic ammonia and urea" },
       ],
       precedent: {
-        flag: "knowledge",
-        title: "ECO 1, the Emirates × Crop One farm already running (figures from general knowledge)",
+        flag: "sourced",
+        title: "ECO 1 (Bustanica), the Emirates × Crop One farm already running",
         facts: [
           "Opened July 2022 beside Al Maktoum airport at ~US$40M, among the world's largest hydroponic vertical farms",
           "Produces on the order of a million kilograms of leafy greens a year using ~95% less water than field farming, proof the model works at commercial scale in the UAE's own climate",
+        ],
+        sources: [
+          { label: "Emirates — world's largest vertical farm opens, US$40M, 18 July 2022", url: "https://www.emirates.com/media-centre/emirates-flight-catering-opens-worlds-largest-vertical-farm-in-dubai/" },
+          { label: "The National — $40M Emirates × Crop One farm, >1M kg/year, 95% less water", url: "https://www.thenationalnews.com/business/2022/07/18/emirates-flight-catering-unit-opens-worlds-biggest-vertical-farm-in-dubai/" },
         ],
       },
       tiers: [
@@ -563,10 +591,10 @@ window.ACT = (function () {
         },
         {
           id: "t3", name: "Tier 3 · Close the input loop", kind: "ceiling",
-          deliverable: "A Gulf seed bank and breeding programme; nutrient blending from Fertiglobe's domestic ammonia and urea; an expanded aquaculture protein line (fish convert feed roughly twice as efficiently as livestock, making it the feed-smart protein path); and partial feed substitution from insect-protein and food-waste streams, so the farms and the protein chain stop depending on weekly imports.",
+          deliverable: "A Gulf seed bank and breeding program; nutrient blending from Fertiglobe's domestic ammonia and urea; an expanded aquaculture protein line (fish convert feed roughly twice as efficiently as livestock, making it the feed-smart protein path); and partial feed substitution from insect-protein and food-waste streams, so the farms and the protein chain stop depending on weekly imports.",
           cost: 3.0, vehicle: "ADQ + federal food-security budget",
-          costBasis: "Modelled, seed programmes and aquaculture at this scale run in the US$0.5–1bn class combined. A planning estimate until the crop list is fixed.",
-          days: 1460, timeBasis: "~4 years, breeding programmes and aquaculture certification simply take seasons, not budget.",
+          costBasis: "Modeled, seed programs and aquaculture at this scale run in the US$0.5–1bn class combined. A planning estimate until the crop list is fixed.",
+          days: 1460, timeBasis: "~4 years, breeding programs and aquaculture certification simply take seasons, not budget.",
           livePts: 0, ceilPts: 1.6, local: 70,
           residual: "Calories stay globally sourced by design, the end-state is essential fresh nutrition that survives a long blockade, not autarky. The honest ceiling for a desert nation.",
           milestones: [["Y0", "Crop list + seed-bank mandate set"], ["Y1", "Nutrient blending line at Fertiglobe agreed"], ["Y2", "Seed bank operating · aquaculture pilot"], ["Y4", "Farm inputs majority-domestic"]],
@@ -579,7 +607,7 @@ window.ACT = (function () {
           mitigation: "Contract dedicated renewable supply (the energy play's solar buildout) and design halls to run degraded, fewer racks, not zero output, when power or water tightens." },
         { mode: "The economics never close and the halls go dark", likelihood: "High",
           indicator: "Cost per kilogram vs the imported equivalent, tracked per facility", tracked: false,
-          mitigation: "Copy the ECO 1 model exactly: anchor demand with airline, hospitality and institutional kitchens before building, and grow premium perishables, not commodities that ships deliver cheaper." },
+          mitigation: "Follow the ECO 1 model closely: anchor demand with airline, hospitality and institutional kitchens before building, and grow premium perishables, not commodities that ships deliver cheaper." },
         { mode: "Seeds, nutrients, and feed, become the new bottleneck", likelihood: "Medium",
           indicator: "Supplier concentration of the seed, nutrient and animal-feed contracts", tracked: false,
           mitigation: "Tier 3 exists for exactly this, a seed bank, domestically blended nutrients and partial feed substitution, and until it lands, qualify seed and feed suppliers on three continents." },
@@ -613,7 +641,7 @@ window.ACT = (function () {
                      complement of the sector score on the Overview.
        • Payoff    — points the recommended fix would recover.
        • Time-pressure — the one hand-set factor: a closing-clock the fragility
-                     number can't see (e.g. an export licence open today).
+                     number can't see (e.g. an export license open today).
 
      Each factor is min-max RESCALED to its observed range across the queue
      before weighting — otherwise a factor with a naturally narrow spread
@@ -664,7 +692,7 @@ window.ACT = (function () {
   function fmtDays(d) {
     if (d < 30) return d + " days";
     if (d < 365) return Math.round(d / 30) + " mo";
-    return (d / 365).toFixed(1) + " yr";
+    return (d / 365).toFixed(1) + " yrs";
   }
   function fmtAED(b) {
     if (b >= 1) return "AED " + (b % 1 === 0 ? b.toFixed(0) : b.toFixed(1)) + "bn";

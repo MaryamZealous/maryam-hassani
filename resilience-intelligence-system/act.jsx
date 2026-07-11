@@ -35,14 +35,13 @@ function TagLegend() {
 function Posture({ staged, evalById }) {
   const liveBase = RD.headline.live.value;
   const ceilBase = RD.headline.structural.value;
-  let addLive = 0, addCeil = 0, cost = 0, firstDays = Infinity, fullDays = 0, firstId = null;
+  let addLive = 0, addCeil = 0, cost = 0, firstDays = Infinity, fullDays = 0;
   staged.forEach((id) => {
     const r = evalById(id);
     addLive += r.live; addCeil += r.ceil; cost += r.cost;
-    if (r.days < firstDays) { firstDays = r.days; firstId = id; }
+    if (r.days < firstDays) { firstDays = r.days; }
     fullDays = Math.max(fullDays, r.days);
   });
-  const firstPlay = firstId ? ACT.PLAYS.find((p) => p.id === firstId) : null;
   const ceilNew = +(ceilBase + addCeil).toFixed(1);
   const liveNew = +Math.min(ceilNew, liveBase + addLive).toFixed(1);
   const liveB = RD.band(liveNew), n = staged.size;
@@ -54,21 +53,27 @@ function Posture({ staged, evalById }) {
           <span className="label">Live resilience now</span>
           <span className="act-pnum mono">{liveBase.toFixed(1)}</span>
         </div>
-        <Icon name="arrowRight" size={20} style={{ color: "var(--faint)", flex: "0 0 auto" }} />
+        <Icon name="arrowRight" size={20} style={{ color: "var(--faint)", flex: "0 0 auto", marginTop: 24 }} />
         <div className={`act-pscore band-${liveB.key}`}>
           <span className="label">With {n} staged</span>
           <span className="act-pnum mono" style={{ color: n ? "var(--bc)" : "var(--ink)" }}>{liveNew.toFixed(1)}</span>
-          <span className="act-pdelta mono">{addLive > 0 ? "+" + (liveNew - liveBase).toFixed(1) + " live" : "—"}{addCeil > 0 ? " · +" + addCeil.toFixed(1) + " ceiling" : ""}</span>
+          {n > 0 && <span className="act-pdelta mono">{[addLive > 0 ? "+" + (liveNew - liveBase).toFixed(1) + " live" : null, addCeil > 0 ? "+" + addCeil.toFixed(1) + " ceiling" : null].filter(Boolean).join(" · ") || "—"}</span>}
         </div>
       </div>
       <div className="act-posture-meta">
         <div className="act-pmeta"><span className="label">Capital committed</span><span className="mono">{n ? ACT.fmtAED(cost) : "—"}</span></div>
-        <div className="act-pmeta"><span className="label">First effect</span><span className="mono">{n ? ACT.fmtDays(firstDays) : "—"}</span>{firstPlay && <span className="helper" style={{ fontSize: 10, lineHeight: 1.3 }} title={firstPlay.title}>{firstPlay.title.length > 34 ? firstPlay.title.slice(0, 32) + "…" : firstPlay.title}</span>}</div>
-        <div className="act-pmeta"><span className="label">Full effect</span><span className="mono">{n ? ACT.fmtDays(fullDays) : "—"}</span></div>
+        {n && firstDays !== fullDays ? (
+          <React.Fragment>
+            <div className="act-pmeta"><span className="label">First effect</span><span className="mono">{ACT.fmtDays(firstDays)}</span></div>
+            <div className="act-pmeta"><span className="label">Full effect</span><span className="mono">{ACT.fmtDays(fullDays)}</span></div>
+          </React.Fragment>
+        ) : (
+          <div className="act-pmeta"><span className="label">Time to effect</span><span className="mono">{n ? ACT.fmtDays(fullDays) : "—"}</span></div>
+        )}
         <div className="act-pmeta"><span className="label">Gap to ceiling</span><span className="mono">{gap.toFixed(1)} pts</span>
           <Fx payload={{
             kicker: "Posture math", title: "How the staged plan stacks",
-            text: "Responses come in two kinds. LIVE responses improve today's score: they close the gap between current stress and the ceiling. CEILING responses raise the ceiling itself, the best score the country can structurally reach. Today's score can never rise above the ceiling, which is why the long-term builds matter. Note the emergency fund's capital is committed, not spent: this roll-up adds headline figures.",
+            text: "Responses come in two kinds. LIVE responses improve today's score: they close the gap between current stress and the ceiling. CEILING responses raise the ceiling itself, the best score the country can structurally reach. Today's score can never rise above the ceiling, which is why the long-term builds matter. Capital shown is committed, not spent.",
             formula: "Ceiling′ = ceiling + Σ ceiling-pts   ·   Live′ = min(Ceiling′,  live + Σ live-pts)",
             inputs: [
               { k: "Live baseline", v: liveBase.toFixed(1), src: "curated" },
@@ -97,7 +102,7 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
             <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--bc)" }} title="Priority score, 0–100, relative standing within this queue; higher = more urgent">{prio.score}<span style={{ fontSize: 9.5, fontWeight: 500, color: "var(--muted)" }}>/100</span></span>
             <Fx payload={{
               kicker: "Priority · computed", title: "Why this rank",
-              text: "Priority ranks the PROBLEM, not the plan you're eyeing. It's a flat blend of three things: how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own. Each factor is first rescaled to its range across the responses in this queue, so a factor whose values naturally cluster (sector fragilities sit close together) counts with its full stated weight instead of being silently outvoted by one that spreads widely (payoffs). Priority is therefore a relative standing within this queue, not an absolute grade, the lowest-ranked response scores 0 by construction, meaning 'least urgent of these', not 'worthless'.",
+              text: "Priority ranks the PROBLEM, not the plan you're eyeing: a blend of how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own. Each factor is rescaled to its range across the queue, so tightly-clustered values (sector fragilities) keep their full weight instead of being outvoted by a wider-spread factor (payoffs). It is a standing within this queue, not an absolute grade: the lowest-ranked response scores 0 by construction, meaning 'least urgent of these', not 'worthless'.",
               formula: "Priority  =  0.5 × Weakness  +  0.3 × Payoff  +  0.2 × Time-pressure   (each rescaled to its range across the queue)",
               inputs: [
                 { k: "Weakness (anchored sector fragility)", v: prio.wdri + " / 100 → " + prio.rel.weakness + " relative" },
@@ -105,7 +110,7 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
                 { k: "Time-pressure", v: (p.window * 100).toFixed(0) + " / 100 → " + prio.rel.time + " relative" + (p.window >= 0.75 ? ", closing clock" : p.window <= 0.4 ? ", no clock" : "") },
                 { k: "→ Priority", v: prio.score + " / 100 (relative to the other responses)" },
               ],
-              assumption: "Weakness leads (half the weight), and the rescaling is what makes that true in practice \u2014 without it, the wide spread of payoffs would dominate the narrow spread of sector fragilities regardless of the weights. Time-pressure is the only hand-set factor (chips' export-licence clock lifts Defence; Finance's depth and absent clock keep it low).",
+              assumption: "Weakness carries half the weight. Time-pressure is the only hand-set factor: chips' export-license clock lifts Defense, while Finance's depth and absent clock keep it low.",
               links: [
                 { label: "The " + p.sector + " sector's score & imports · Overview", view: "overview" },
                 { label: "The imports behind the weakness · Dependencies", view: "dependencies", opts: { sector: p.sector } },
@@ -163,6 +168,9 @@ function TierSelector({ p, tierIndex, onPick }) {
 function TierReadout({ p, r }) {
   const liveBase = RD.headline.live.value, ceilBase = RD.headline.structural.value;
   const t = r.tier;
+  const srcRow = (p.precedent && p.precedent.sources && p.precedent.sources.length)
+    ? [{ k: "Precedent sources", v: (<span style={{ display: "inline-flex", flexDirection: "column", gap: 5 }}>{p.precedent.sources.map((s, i) => (<a key={i} className="drawer-link" href={s.url} target="_blank" rel="noopener noreferrer">{s.label} ↗</a>))}</span>) }]
+    : [];
   const isCeil = t.ceilPts >= t.livePts;
   const after = isCeil
     ? { base: ceilBase, val: +(ceilBase + r.ceil).toFixed(1), lbl: "Structural ceiling" }
@@ -179,8 +187,9 @@ function TierReadout({ p, r }) {
               { k: "Scope", v: t.name },
               { k: "Vehicle", v: t.vehicle },
               { k: "Total", v: ACT.fmtAED(t.cost) },
+              ...srcRow,
             ],
-            assumption: "Figures anchored to a real comparable say so; figures marked 'modelled' have no direct comparable and are planning envelopes, not quotes.",
+            assumption: "Figures anchored to a real comparable say so; figures marked 'modeled' have no direct comparable and are planning envelopes, not quotes.",
           }} /></span></div>
         <div className="kpi"><span className="kpi-v mono">{ACT.fmtDays(r.days)}</span><span className="kpi-l">Time to effect
           <Fx payload={{
@@ -190,6 +199,7 @@ function TierReadout({ p, r }) {
             inputs: [
               { k: "Scope", v: t.name },
               { k: "Physical clock", v: ACT.fmtDays(t.days) },
+              ...srcRow,
             ],
             assumption: "Paying faster does not compress supplier queues, GMP qualification or construction. Where a precedent exists, its real announce→operations clock is used.",
           }} /></span></div>
@@ -202,7 +212,7 @@ function TierReadout({ p, r }) {
       </div>
       {t.milestones && (
         <div style={{ marginTop: 14 }}>
-          <span className="label" style={{ display: "block", marginBottom: 8 }}>The path, {t.name.replace(/Tier \d · /, "")}</span>
+          <span className="label" style={{ display: "block", marginBottom: 8 }}>The path: {t.name.replace(/Tier \d · /, "")}</span>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {t.milestones.map(([at, txt], i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "52px auto 1fr", gap: 10, alignItems: "baseline" }}>
@@ -250,8 +260,7 @@ function Brief({ p }) {
             {p.tech.inputs.map((inp) => (
               <div className="act-input" key={inp.name}>
                 <span className={`tag-band band-${INPUT_BAND[inp.status]}`}><span></span>{inp.status}</span>
-                <span className="act-input-name">{inp.name}</span>
-                <span className="act-input-note">{inp.note}</span>
+                <span className="act-input-body"><span className="act-input-name">{inp.name}</span> <span className="act-input-note">{inp.note}</span></span>
               </div>
             ))}
           </div>
@@ -275,13 +284,22 @@ function Precedent({ p }) {
   return (
     <div className="act-prec">
       <div className="act-prec-head">
-        <span className="act-prec-kicker">REAL-WORLD PRECEDENT</span>
+        <span className="act-prec-kicker"><Icon name="book" size={11} /> Real-world precedent</span>
         <SourceTag src={pr.flag === "sourced" ? "curated" : "assumption"} />
       </div>
       <div className="act-prec-title">{pr.title}</div>
       <ul className="act-prec-facts">
         {pr.facts.map((f, i) => <li key={i}>{f}</li>)}
       </ul>
+      {pr.sources && pr.sources.length > 0 && (
+        <div className="act-prec-foot">
+          <button className="act-prec-srcbtn" onClick={() => window.__explain && window.__explain({
+            kicker: "Real-world precedent", title: pr.title,
+            text: "Primary public sources for this precedent's cost and timeline figures.",
+            inputs: pr.sources.map((s) => ({ k: "Source", v: (<a className="drawer-link" href={s.url} target="_blank" rel="noopener noreferrer">{s.label} ↗</a>) })),
+          })}>Sources <span aria-hidden="true">→</span></button>
+        </div>
+      )}
     </div>
   );
 }
@@ -294,7 +312,7 @@ function Premortem({ p }) {
     <div className="act-pm">
       <div className="act-pm-lead">
         <Icon name="alert" size={15} style={{ color: "var(--high)" }} />
-        <span>A pre-mortem flips a post-mortem: <b>assume this response has already failed</b>, then work back through how, stating failure as given surfaces the weak points optimism hides. Each failure mode (F1, F2…) is ranked by likelihood, with the indicator that would warn first and its mitigation.</span>
+        <span>A pre-mortem flips a post-mortem: <b>assume this response has already failed</b>, then work back through how it happened. Taking failure as given surfaces the weak points that optimism hides. Each failure mode (F1, F2…) is ranked by likelihood, with the indicator that would warn first and its mitigation.</span>
       </div>
       {modes.map((f, i) => {
         const b = LK_BAND[f.likelihood] || "moderate";
@@ -337,12 +355,12 @@ function PlayDetail({ p, r, onPickTier, isStaged, onStage }) {
         <Precedent p={p} />
       </Panel>
 
-      <Panel title="The decision, how far to go" icon="fx" label="EACH TIER IS A COMPLETE PLAN">
+      <Panel title="The decision: how far to go" icon="fx" label="EACH TIER IS A COMPLETE PLAN">
         <TierSelector p={p} tierIndex={r.tierIndex} onPick={onPickTier} />
         <div className="divider"></div>
         <TierReadout p={p} r={r} />
         <button className={`btn ${isStaged ? "" : "primary"}`} style={{ marginTop: 16 }} onClick={() => onStage(p.id)}>
-          <Icon name={isStaged ? "check" : "play"} size={15} />{isStaged ? "Staged in the national plan, remove" : "Stage this scope"}
+          <Icon name={isStaged ? "check" : "play"} size={15} />{isStaged ? "Staged, click to remove" : "Stage this response"}
         </button>
       </Panel>
 
@@ -393,8 +411,8 @@ function ActView({ initial = {} }) {
       <div className="view-head">
         <div className="view-title">Sector responses</div>
         <div className="view-sub">
-          Where the loop closes. Each response is a concrete plan (what gets built, where, with which technology and
-          partners) anchored to a real project already done, with cost and timeline grounded in it. You make one decision:
+          Where the loop closes. Each response is a concrete plan, what gets built, where, and with which technology and
+          partners, informed by a real-world precedent and its reported cost and timeline. You make one decision:
           <b> how far to go</b>.
         </div>
       </div>

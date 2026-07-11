@@ -5,7 +5,7 @@ const { useState } = React;
 
 /* Per-state conflict bars — a static-friendly viz for the daily conflict feed
    (a time sparkline can't move within a session). Bar height = coverage vs that
-   state's own baseline; colour = band. */
+   state's own baseline; color = band. */
 function StateBars({ states, w }) {
   const list = (states && states.length) ? states.slice(0, 4) : [];
   if (!list.length) return <span style={{ width: w, display: "inline-block" }}></span>;
@@ -121,7 +121,7 @@ function DriverTrace() {
   const stateOf = (d) => d.real ? "live" : "sim";
   const META = {
     live:  { badge: "LIVE",  cls: "on",    sub: "live feed" },
-    sim:   { badge: "SIM",   cls: "",      sub: "modelled · not on a live feed" },
+    sim:   { badge: "SIM",   cls: "",      sub: "modeled · not on a live feed" },
   };
   return (
     <Panel title="What's moving the score right now" icon="book"
@@ -129,7 +129,7 @@ function DriverTrace() {
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         {drivers.map((d, i) => {
           const w = Math.round((d.v / maxV) * 100);
-          const calm = !d.modelled && d.v < 0.05;
+          const calm = !d.modeled && d.v < 0.05;
           const st = stateOf(d); const m = META[st];
           return (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -306,7 +306,7 @@ function OverviewView({ go }) {
         </div>
       </Panel>
 
-      <div className="grid cols-2" style={{ marginTop: 16, gridTemplateColumns: "1.5fr 1fr" }}>
+      <div className="grid cols-2" style={{ marginTop: 16, gridTemplateColumns: "1fr 1.35fr", alignItems: "stretch" }}>
         {/* cascade CTA */}
         <section className="panel" style={{ display: "flex", flexDirection: "column" }}>
           <header className="panel-h"><Icon name="cascade" size={15} style={{ color: "var(--muted)" }} />
@@ -316,32 +316,90 @@ function OverviewView({ go }) {
               The model's core idea: a single disruption doesn't stay put. Watch a Hormuz closure travel from
               chokepoint to critical import to asset to sector to Live Resilience, day by day, every step explained.
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              {["Trigger", "Import", "Asset", "Sector", "Live"].map((t, i) => (
-                <React.Fragment key={t}>
-                  <span className="pill"><span className="sq" style={{ background: i === 0 || i === 4 ? "var(--crit)" : "var(--high)" }}></span>{t}</span>
-                  {i < 4 && <Icon name="arrowRight" size={14} style={{ color: "var(--faint)" }} />}
-                </React.Fragment>
-              ))}
-            </div>
-            <button className="btn primary" style={{ alignSelf: "flex-start", marginTop: "auto" }} onClick={() => go("cascade")}>
+            <div style={{ marginTop: "auto" }}><MiniCascade /></div>
+            <button className="btn primary" style={{ alignSelf: "flex-start" }} onClick={() => go("cascade")}>
               <Icon name="play" size={15} />Play the cascade
             </button>
           </div>
         </section>
 
-        {/* top signals */}
-        <Panel title="Live signals" icon="threat"
-          right={<button className="exp" style={{ marginLeft: "auto" }} onClick={() => go("threats")}>All signals →</button>}>
-          {RD.chokepoints.map((c) => (
-            <div className={`indi compact band-${c.band}`} key={c.id}>
-              <span className="indi-led"></span>
-              <div className="indi-name">{c.name} <span className="u">transit calls/day</span></div>
-              <Sparkline data={c.spark || []} band={c.band} w={70} />
-              <div className="indi-val mono">−{c.drop}%</div>
-            </div>
-          ))}
-        </Panel>
+        {/* top response CTA */}
+        <TopResponse go={go} />
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Mini cascade graph (Overview teaser) ------------------------ */
+/* A compact, static echo of the full CascadeDiagram's node/edge flow: */
+/* trigger → imports → assets → sectors → national, so the card previews */
+/* the real thing rather than a generic chart. */
+function MiniCascade() {
+  const nodes = RD.cascade.nodes, edges = RD.cascade.edges;
+  const W = 332, H = 116, LX = [20, 86, 152, 224, 312];
+  const byLayer = {};
+  nodes.forEach((n) => { (byLayer[n.layer] = byLayer[n.layer] || []).push(n); });
+  const pos = {};
+  Object.keys(byLayer).forEach((L) => {
+    const arr = byLayer[L], m = arr.length, top = 24, bot = H - 10;
+    arr.forEach((node, i) => { pos[node.id] = { x: LX[+L], y: m === 1 ? H / 2 : top + ((bot - top) * i) / (m - 1) }; });
+  });
+  const bandCol = (b) => b === "critical" ? "var(--crit)" : b === "high" ? "var(--high)" : b === "moderate" ? "var(--mod)" : "var(--faint)";
+  const heads = [["Trigger", 0], ["Imports", 1], ["Assets", 2], ["Sectors", 3], ["National", 4]];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block" }} aria-hidden="true">
+      {heads.map(([t, l]) => (
+        <text key={t} x={LX[l]} y="8" textAnchor={l === 4 ? "end" : l === 0 ? "start" : "middle"}
+          fontFamily="var(--font-mono)" fontSize="7" letterSpacing="0.06em" fill="var(--faint)"
+          style={{ textTransform: "uppercase" }}>{t}</text>
+      ))}
+      {edges.map((e, i) => {
+        const a = pos[e[0]], b = pos[e[1]]; if (!a || !b) return null;
+        const mx = (a.x + b.x) / 2;
+        return <path key={i} d={`M ${a.x} ${a.y} C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x} ${b.y}`} fill="none" stroke="var(--line-2)" strokeWidth="1" />;
+      })}
+      {nodes.map((n) => {
+        const p = pos[n.id]; const c = n.layer === 0 ? "var(--crit)" : n.layer === 1 ? bandCol(n.band) : n.layer === 4 ? "var(--accent)" : "var(--faint)";
+        const lead = n.layer <= 1 || n.layer === 4;
+        return <circle key={n.id} cx={p.x} cy={p.y} r={lead ? 4.5 : 3.5} fill={lead ? c : "var(--panel)"} stroke={c} strokeWidth="1.6" />;
+      })}
+    </svg>
+  );
+}
+
+/* ---------- Top recommended response (ties Overview to Respond) --------- */
+function TopResponse({ go }) {
+  const queueEvals = ACT.PLAYS.map((p) => ({ p, r: ACT.evalPlay(p, null) }));
+  const prio = {};
+  ACT.priorities(queueEvals).forEach((x) => { prio[x.id] = x; });
+  const ranked = queueEvals.slice().sort((a, b) => prio[b.p.id].score - prio[a.p.id].score);
+  const { p, r } = ranked[0];
+  const t = r.tier;
+  return (
+    <div className="jewel fade-in">
+      <header className="jewel-h">
+        <Icon name="target" size={17} style={{ color: "var(--gold)" }} />
+        <span className="ttl" style={{ fontSize: 15 }}>Top recommended response</span>
+        <span className="label" style={{ marginLeft: "auto", textAlign: "right", lineHeight: 1.35 }}>HIGHEST PRIORITY<br />{ranked.length} QUEUED</span>
+      </header>
+      <div className="jewel-b">
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+          <div className="jewel-title" style={{ fontSize: 17 }}>{p.title}</div>
+          <span className="mono" style={{ fontSize: 12, color: "var(--gold)", fontWeight: 600 }}>{t.name}</span>
+        </div>
+        <div className="jewel-addr">{t.deliverable}</div>
+
+        <div className="jewel-stats">
+          <div className="jewel-stat"><span className="label">Cost</span><span className="mono">{ACT.fmtAED(r.cost)}</span></div>
+          <div className="jewel-stat"><span className="label">First effect</span><span className="mono">{ACT.fmtDays(r.days)}</span></div>
+          <div className="jewel-stat"><span className="label">Localized</span><span className="mono">{t.local}%</span></div>
+          <div className="jewel-stat"><span className="label">Live Resilience</span><span className="mono" style={{ color: r.live > 0 ? "var(--good)" : "var(--faint)" }}>{r.live > 0 ? "+" + r.live.toFixed(1) : "—"} now</span></div>
+          <div className="jewel-stat"><span className="label">Structural ceiling</span><span className="mono" style={{ color: r.ceil > 0 ? "var(--good)" : "var(--faint)" }}>{r.ceil > 0 ? "+" + r.ceil.toFixed(1) : "—"}</span></div>
+        </div>
+
+        <button className="btn gold cta-stage" style={{ marginTop: "auto" }} onClick={() => go("act", { sector: p.sector })}>
+          Explore sector responses <Icon name="arrowRight" size={15} />
+        </button>
       </div>
     </div>
   );
@@ -400,7 +458,9 @@ function ProvenanceLedger() {
     window.__explain && window.__explain({
       kicker: "Observed raw & assumptions",
       title: r.signal,
-      text: `Feed: ${sm.full}. The value below is the raw figure the feed reported; the transform is applied before it reaches the Live Resilience score.`,
+      text: r.src === "acled"
+        ? `Feed: ${sm.full}. This signal informs counterpart-risk context on the Dependencies and Control views; it does not enter the Live Resilience score.`
+        : `Feed: ${sm.full}. The value below is the raw figure the feed reported; the transform is applied before it reaches the Live Resilience score.`,
       inputs: [
         { k: "Observed (raw)", v: r.observed, src: r.src },
         r.series ? { k: "Recent series (old → new)", v: r.series.join("  →  ") } : null,
@@ -490,7 +550,7 @@ function TradeRouteNews() {
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 940 }}>
         Vessel data (PortWatch) updates weekly, so <b>news is the early detector between updates</b>. We scan world
         media every few minutes across two fronts: <b>trade-route closures</b> (Hormuz, Red Sea, Suez) and <b>partner-supply
-        shocks</b>, led by the single- and few-source dependencies (Qatar gas, Taiwan chips, Kazakhstan fuel), then China,
+        shocks</b>, led by the single- and few-source dependencies (Qatar gas, US export-control policy on chips/RO/GNSS, Kazakhstan fuel), then China,
         India and the Brazil/Argentina feed-grain belt. Partner lanes count <b>only adverse coverage</b>: a "deal signed" doesn't add pressure, a halt or export ban does.
         A surge above a lane's normal volume registers as <b>news pressure</b> and adds live drag before throughput or trade data would confirm it.
       </p>
@@ -695,27 +755,34 @@ function ScenariosView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Scenario simulator</div>
-        <div className="view-sub">Pre-built stress tests. Select one to see how each sector and the national score respond, and what would warn you first.</div>
+        <div className="view-sub">Pre-built stress tests. Select one to see how each sector and Live Resilience respond, and what would warn you first.</div>
       </div>
 
       <div className="grid cols-2" style={{ gridTemplateColumns: "0.9fr 1.3fr", alignItems: "start" }}>
         <Panel title="Choose a scenario" icon="layers" label={RD.scenarios.length + " AVAILABLE"}>
           <div className="scn-list">
-            {RD.scenarios.map((s) => (
+            {RD.scenarios.slice().sort((a, b) => {
+              if (a.overall === 0 && b.overall !== 0) return -1;
+              if (b.overall === 0 && a.overall !== 0) return 1;
+              return b.overall - a.overall;
+            }).map((s) => (
               <button key={s.id} className={`scn ${pick === s.id ? "active" : ""} band-${magBand(s.overall)}`} onClick={() => setPick(s.id)}>
                 <span className="scn-sev">{[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < s.severity ? "on" : ""}></i>)}</span>
                 <div>
                   <div className="scn-name">{s.name}</div>
                   <div className="scn-sub">{s.sub}</div>
                 </div>
-                <span className="scn-delta" style={{ color: s.overall < 0 ? "var(--crit)" : "var(--muted)" }}>{s.overall === 0 ? "—" : s.overall}</span>
+                <span className="scn-delta" title="Points this scenario would knock off Live Resilience" style={{ color: s.overall < 0 ? "var(--crit)" : "var(--muted)" }}>{s.overall === 0 ? "—" : s.overall}</span>
               </button>
             ))}
+          </div>
+          <div className="helper" style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--line)", lineHeight: 1.5 }}>
+            Dots show severity (1–5). The number on the right is the points the scenario would knock off Live Resilience.
           </div>
         </Panel>
 
         <div className="stack">
-          <Panel title="Impact on the national score" icon="gauge"
+          <Panel title="Impact on Live Resilience" icon="gauge"
             right={<span className="label" style={{ marginLeft: "auto" }}>{scn.name.toUpperCase()}</span>}>
             <div style={{ display: "flex", alignItems: "center", gap: 22, marginBottom: 18 }}>
               <div className="kpi"><span className="kpi-v mono">{baseLive.toFixed(1)}</span><span className="kpi-l">Baseline live resilience</span></div>
@@ -735,7 +802,7 @@ function ScenariosView() {
                         { k: "Overall", v: "0.60×" + worst.toFixed(1) + " + 0.40×" + mean.toFixed(1) + " = " + scn.overall },
                         { k: "Applied to today's score", v: baseLive.toFixed(1) + " → " + after },
                       ],
-                      assumption: "Sector deltas are curated stress judgements per scenario (Combined compounds its two parents element-wise: the worse shock + 0.6 × the lesser; Combined Maximum is a hand-authored worst-case vector). The 0.60 anchor mirrors the structural formula.",
+                      assumption: "Each sector's hit is a curated stress judgement (Combined takes the worse of its two shocks per sector plus 0.6 × the lesser; Combined Maximum is a hand-built worst case). The 0.60 anchor mirrors the structural formula.",
                       links: [
                         { label: "Watch this unfold day by day · Cascade", view: "cascade" },
                         { label: "Responses that blunt it · Sector responses", view: "act" },
@@ -780,7 +847,7 @@ function ScenariosView() {
                   {scn.watch.map((w, i) => {
                     const r = resolveWatch(w);
                     if (!r) return null;
-                    if (r.note) return <div key={i} className="helper" style={{ padding: "9px 0 9px 8px", borderBottom: "1px solid var(--line)" }}>{r.label}</div>;
+                    if (r.note) return <div key={i} className="helper" style={{ padding: "10px 12px", margin: "8px 0 2px", background: "var(--panel-2)", border: "1px solid var(--line)", borderRadius: "var(--radius)", lineHeight: 1.5, fontStyle: "italic" }}>{r.label}</div>;
                     return (
                       <div className={`band-${r.band}`} key={i} style={{ padding: "10px 0 10px 10px", borderBottom: "1px solid var(--line)", borderLeft: "2px solid var(--bc)" }}>
                         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>

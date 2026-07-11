@@ -150,10 +150,11 @@ function App() {
             <div className="live-chips">
               {liveChips.map((c) => {
                 const mode = (RD.sources[c.src] && RD.sources[c.src].mode) || "sim";
+                const sm = RD.sources[c.src] || {};
                 return (
                   <span className={`live-chip ${mode === "sim" ? "sim" : ""}`} key={c.k}
-                    title={mode === "live" ? `${RD.sources[c.src].full} — live real feed` : `${RD.sources[c.src].full} — simulated (no live source connected)`}>
-                    <span className={`live-dot ${mode === "sim" ? "sim" : ""}`}></span>{c.k}<span className="mono">{mode === "sim" ? "sim" : RD.sources[c.src].fresh}</span>
+                    title={mode === "live" ? `${sm.full} — live real feed. Last checked ${sm.fresh}; source updates ${sm.cadence}.` : `${sm.full} — simulated (no live source connected)`}>
+                    <span className={`live-dot ${mode === "sim" ? "sim" : ""}`}></span>{c.k}<span className="mono">{mode === "sim" ? "sim" : sm.fresh}</span>
                   </span>
                 );
               })}

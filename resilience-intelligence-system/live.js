@@ -205,13 +205,15 @@ window.LIVE = (function () {
     newsDrag = clamp(newsDrag, 0, 5);
 
     // (c2) partner-supply news — REAL (GDELT): above-normal ADVERSE coverage of a
-    // SUPPLY PARTNER's disruption, prioritised by supply concentration — the
-    // single- and few-source dependencies lead (Qatar gas, Taiwan chips,
-    // Kazakhstan fuel), then China processing, India APIs and the Brazil/
-    // Argentina feed-grain belt. Negative-sentiment
+    // SUPPLY PARTNER's disruption, prioritized by supply concentration — the
+    // single- and few-source dependencies lead (Qatar gas, Kazakhstan fuel),
+    // then China processing, India APIs, the Brazil/Argentina feed-grain belt,
+    // and US export-control policy (the binding risk for chips AND the six
+    // other US-sourced precursors — RO membranes, ERD, turbines, water chems,
+    // GNSS, USD clearing). Negative-sentiment
     // gated upstream, so positive coverage of the same topic adds no drag.
     // Weighted by the consequence of the imports that ride on each partner.
-    const PARTNER_LANES = { qatar: ["gas"], taiwan: ["chips"], kazakhstan: ["leu"], china: ["solarpv", "libattery", "devices"], india: ["api"], feedgrain: ["feed"] };
+    const PARTNER_LANES = { qatar: ["gas"], us: ["chips", "ro", "erd", "turbines", "waterchem", "gps", "usdclearing"], kazakhstan: ["leu"], china: ["solarpv", "libattery", "devices"], india: ["api"], feedgrain: ["feed"] };
     let partnerDrag = 0; const partnerHot = [];
     if (REAL.news) {
       for (const lane in PARTNER_LANES) {
@@ -275,7 +277,7 @@ window.LIVE = (function () {
       const tv = vols.reduce((a, b) => a + b, 0);
       reads.gdelt = tv + " articles/2d \u00b7 " + (newsDrag > 0.05 ? "above-normal coverage" : "coverage at/below normal");
     }
-    reads.partner = REAL.news ? (partnerHot.length ? "above-normal: " + partnerHot.join(" \u00b7 ") : "partner coverage at/below normal") : "modelled baseline";
+    reads.partner = REAL.news ? (partnerHot.length ? "above-normal: " + partnerHot.join(" \u00b7 ") : "partner coverage at/below normal") : "modeled baseline";
     if (REAL.meteo && REAL.meteo.sea) {
       let mx = 0;
       for (const id in REAL.meteo.sea) { const sv = REAL.meteo.sea[id]; if (sv && sv.wave != null) mx = Math.max(mx, sv.wave); }
@@ -348,14 +350,23 @@ window.LIVE = (function () {
   // country's OWN baseline, the same way the news lanes work. Editable estimates.
   const CONFLICT_BASELINE = { Iran: 40000, Russia: 30000, Yemen: 1800, Sudan: 1400 };
   // partner-supply news lanes (GDELT) keyed by a substring of the import's source
-  const NEWS_PARTNER_ALIASES = { "qatar": "qatar", "taiwan": "taiwan", "kazakhstan": "kazakhstan", "china": "china", "india": "india" };
+  const NEWS_PARTNER_ALIASES = { "qatar": "qatar", "taiwan": "taiwan", "kazakhstan": "kazakhstan", "china": "china", "india": "india", "united states": "us" };
   // live news-pressure on a supply partner, for the Dependencies drawer. Returns
   // tracked:false when the import's source isn't a news-watched partner, so the
-  // UI falls back to the curated counterpart score honestly.
-  function partnerNewsFor(source) {
+  // UI falls back to the curated counterpart score honestly. `forceLane` lets a
+  // precursor watch a DIFFERENT partner than its displayed source country when
+  // that's where the real risk mechanism sits (e.g. chips: sourced from Taiwan,
+  // but the binding risk is US export-control policy, so it watches "us").
+  function partnerNewsFor(source, forceLane) {
     const hay = String(source || "").toLowerCase();
     const news = REAL.news;
     const liveOk = REAL.status.gdelt === "live" && !!news;
+    if (forceLane) {
+      const d = news && news[forceLane];
+      const label = forceLane === "us" ? "United States" : forceLane;
+      if (d && d.score != null) return { tracked: true, live: liveOk, lane: forceLane, score: d.score, vol: d.vol, band: CONFLICT_BAND(d.score), partner: label, headlines: d.headlines || [] };
+      return { tracked: true, live: false, lane: forceLane, score: 0, vol: null, band: "good", partner: label, headlines: [] };
+    }
     for (const key in NEWS_PARTNER_ALIASES) {
       if (hay.includes(key)) {
         const lane = NEWS_PARTNER_ALIASES[key];
