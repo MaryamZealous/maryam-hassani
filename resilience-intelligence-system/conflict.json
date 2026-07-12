@@ -1,1 +1,1 @@
-{"ok":true,"byCountry":{"Iran":38896,"Yemen":1244,"Sudan":1339,"Russia":22197},"gulf":38896,"events":63676,"since":"2026-06-12 (GDELT, 30-day conflict coverage)","generated":"2026-07-12T08:28:33.433Z"}
+{"ok":true,"byCountry":{"Iran":41721,"Yemen":1735,"Sudan":1339,"Russia":22197},"gulf":41721,"events":66992,"since":"2026-06-08 (GDELT, 30-day conflict coverage)","generated":"2026-07-08T06:24:06.527Z","note":"Iran seeded from a known-good GDELT run; the build-time merge in scripts/prefetch-conflict.js keeps each country's last-known value when a given run's query is dropped."}

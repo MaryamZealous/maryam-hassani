@@ -81,7 +81,7 @@ function Posture({ staged, evalById }) {
               { k: "Staged live recovery", v: "+" + addLive.toFixed(1) + " pts" },
               { k: "Staged ceiling lift", v: "+" + addCeil.toFixed(1) + " pts" },
             ],
-            assumption: "Effects are treated as independent and additive, a deliberate simplification. Real responses interact (the same transformer queue constrains two plays); the pre-mortems flag where that coupling bites.",
+            assumption: "We add each response's points together as if they don't affect each other. That keeps the math simple, but some plans compete for the same scarce resource, such as two plans waiting on the same transformer order, so stacking them can deliver less than the sum. The pre-mortems flag where this overlap matters.",
           }} />
         </div>
       </div>
@@ -140,14 +140,15 @@ function TierSelector({ p, tierIndex, onPick }) {
       {p.tiers.map((t, i) => {
         const on = i === tierIndex;
         const pts = t.livePts + t.ceilPts;
+        const ek = t.livePts > 0 && t.ceilPts > 0 ? "mixed" : t.ceilPts > 0 ? "ceiling" : "live";
         return (
           <button key={t.id} className={`act-tier ${on ? "on" : ""}`} onClick={() => onPick(i)}>
             <div className="act-tier-head">
               <span className="act-tier-name">{t.name}</span>
               {t.recommended && <span className="act-tier-rec">recommended start</span>}
-              <span className={`act-eff ${t.kind === "live" ? "live" : "ceiling"}`} style={{ marginLeft: "auto" }}
-                title={t.kind === "live" ? "Improves today's score (Live Resilience)" : t.kind === "ceiling" ? "Improves the long-term score (Structural ceiling)" : "Improves both today's score and the long-term ceiling"}>
-                {t.kind === "live" ? "LIVE" : t.kind === "ceiling" ? "CEILING" : "LIVE+CEILING"}
+              <span className={`act-eff ${ek === "live" ? "live" : "ceiling"}`} style={{ marginLeft: "auto" }}
+                title={ek === "live" ? "Improves today's score (Live Resilience)" : ek === "ceiling" ? "Improves the long-term score (Structural ceiling)" : "Improves both today's score and the long-term ceiling"}>
+                {ek === "live" ? "LIVE" : ek === "ceiling" ? "CEILING" : "LIVE+CEILING"}
               </span>
             </div>
             <div className="act-tier-del">{t.deliverable}</div>
@@ -156,6 +157,13 @@ function TierSelector({ p, tierIndex, onPick }) {
               <span className="mono">{ACT.fmtDays(t.days)}</span>
               <span className="mono act-stat-pts">{t.livePts > 0 && t.ceilPts > 0 ? `+${t.livePts} now · +${t.ceilPts} ceiling` : t.livePts > 0 ? `+${t.livePts} now` : `+${t.ceilPts} ceiling`}</span>
               {t.local != null && <span className="mono">{t.local}% localized</span>}
+            </div>
+            <div className="act-tier-note">
+              {t.livePts > 0 && t.ceilPts > 0
+                ? "Some relief now, but the bigger gain builds over years, and that gain is permanent."
+                : t.ceilPts > 0
+                ? "No relief now. Builds home-grown capability that lasts and can't expire."
+                : "Full relief now, but it's a buffer that drains, so it must be re-bought to keep it."}
             </div>
           </button>
         );
@@ -310,10 +318,6 @@ function Premortem({ p }) {
   const modes = p.premortem.slice().sort((a, b) => (LK_ORDER[a.likelihood] ?? 1) - (LK_ORDER[b.likelihood] ?? 1));
   return (
     <div className="act-pm">
-      <div className="act-pm-lead">
-        <Icon name="alert" size={15} style={{ color: "var(--high)" }} />
-        <span>A pre-mortem flips a post-mortem: <b>assume this response has already failed</b>, then work back through how it happened. Taking failure as given surfaces the weak points that optimism hides. Each failure mode (F1, F2…) is ranked by likelihood, with the indicator that would warn first and its mitigation.</span>
-      </div>
       {modes.map((f, i) => {
         const b = LK_BAND[f.likelihood] || "moderate";
         return (
@@ -336,6 +340,9 @@ function Premortem({ p }) {
           </div>
         );
       })}
+      <div className="act-pm-note">
+        A pre-mortem flips a post-mortem: assume this response has already failed, then work back through how it happened. Taking failure as given surfaces the weak points that optimism hides. Each failure mode (F1, F2…) is ranked by likelihood, with the indicator that would warn first and its mitigation.
+      </div>
     </div>
   );
 }

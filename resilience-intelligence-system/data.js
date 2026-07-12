@@ -26,7 +26,7 @@ window.RD = (function () {
       tag: "Baseline · the ceiling",
       horizon: "30d",
       formula: "0.60 × most-exposed sector (exposure)  +  0.40 × capacity (Absorb · Recover · Adapt)",
-      cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "— no trade economy reaches it. The marked ≈72 frontier is a stated goalpost (an assumption, not a computed value): the realistic ceiling for an open, import-dependent economy. It anchors the axis only, no score is derived from it. This is also the ceiling Live Resilience recovers toward." },
+      cap: { at: 72, label: "frontier ~72", lead: "100 is a phantom ceiling", body: "No trade economy reaches it. The marked ≈72 frontier is a stated goalpost (an assumption, not a computed value): the realistic ceiling for an open, import-dependent economy. It anchors the axis only, no score is derived from it. This is also the ceiling Live Resilience recovers toward." },
       explain: "Structural Resilience: how well the system copes on a calm day, before today's events. Following the vulnerability-vs-resilience logic used for small, open, import-dependent economies, it sets the country's capacity (what it can absorb, how fast it recovers, its ability to adapt) against its exposure (the most-exposed sector). It moves over months as buffers, sovereign depth and structural builds change, and is independent of today's events. It is also the ceiling the live score recovers toward. On the 0–100 axis, 100 = total self-sufficiency (no trade economy reaches it); ≈72 marks a realistic frontier.",
       // NOTE: value/prev are seeds only — computeSpine() overwrites value (and
       // recomputes prev to preserve the displayed 30-day delta) from the
@@ -47,7 +47,7 @@ window.RD = (function () {
       formula: "Structural ceiling  −  today's active load (live)",
       // cap + inputs[0] below are seeds; computeSpine() overwrites them with the
       // computed ceiling so the displayed ceiling always equals Structural.
-      cap: { at: 55, label: "ceiling = baseline", lead: "Tracking toward your baseline", body: "— live sits below the structural ceiling by the size of today's active load. As that load clears, it climbs back to full strength." },
+      cap: { at: 55, label: "ceiling = baseline", lead: "Tracking toward your baseline", body: "Live sits below the structural ceiling by the size of today's active load. As that load clears, it climbs back to full strength." },
       explain: "How resilient the system is to today's conditions, the structural ceiling minus the active load from what's happening now, not a free-floating number. On a calm day it sits at the ceiling; live pressure lowers it. The gap between this and the ceiling is the headline signal: a wide gap shows where to focus today, a narrow gap means the country is operating close to its fundamentals.",
       inputs: [
         { k: "Structural ceiling", v: "the day's maximum", src: "curated" },
@@ -73,9 +73,9 @@ window.RD = (function () {
     { id: "energy", name: "Energy",
       note: "Power and desalination share one gas envelope, so they move together under load. The acute risk is single-counterpart gas concentration and a contract→oil-linked price flip, not a Hormuz crude story, since crude bypasses via Fujairah and Dolphin is a fixed pipeline. The clean-energy buildout trades some gas-reliance for China-concentrated processing risk." },
     { id: "water", name: "Water",
-      note: "The binding constraint is reorder lead-time against buffers, not overnight single-source failure. The thin-buffer dosing chemicals bite fastest." },
+      note: "The main constraint is reorder time against buffers, not overnight single-source failure. The thin-buffer dosing chemicals bite fastest." },
     { id: "defense", name: "Defense",
-      note: "The binding risk is US export-control licensing on advanced silicon, not Taiwanese supply — a channel that has kept easing since late 2025, most recently a 10 Jul 2026 US upgrade of the UAE's export status." },
+      note: "The main risk is US export-control licensing on advanced chips, not Taiwanese supply. That access has kept easing since late 2025, most recently a 10 Jul 2026 US upgrade of the UAE's export status." },
     { id: "food", name: "Food",
       note: "Grain reserves are deep and diversified; the real anchor is animal feed. Domestic eggs, poultry, dairy and fish all run on imported feed with only weeks of stock, so protein self-sufficiency sits one step down the chain from an import." },
     { id: "logistics", name: "Logistics",
@@ -617,7 +617,7 @@ window.RD = (function () {
     headline.live.prev = round1(headline.live.value - ldelta);
     headline.live.cap.at = ceil;
     headline.live.cap.label = "ceiling = baseline " + ceil.toFixed(1);
-    headline.live.cap.body = "— live sits below the structural ceiling (" + ceil.toFixed(1) + ") by the size of today's active load. As that load clears, it climbs back to full strength.";
+    headline.live.cap.body = "Live sits below the structural ceiling (" + ceil.toFixed(1) + ") by the size of today's active load. As that load clears, it climbs back to full strength.";
     headline.live.inputs[0] = { k: "Structural ceiling", v: ceil.toFixed(1) + ", the day's maximum", src: "curated" };
 
     // 6 · UNCERTAINTY — how sensitive each score is to its editable

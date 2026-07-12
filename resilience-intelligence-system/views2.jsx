@@ -749,7 +749,7 @@ function ReservesRow() {
             <div className="bar-fill band-good" style={{ width: "100%", background: "var(--good)" }}></div>
           </div>
           <div className="note-card" style={{ marginTop: 16 }}>
-            Held across two aquifer stores — Abu Dhabi's <b>Liwa Strategic Water Reserve</b> and Dubai's <b>DEWA Aquifer Storage &amp; Recovery</b>. Open the breakdown for how the reserve is sourced.
+            Held across two aquifer stores: Abu Dhabi's <b>Liwa Strategic Water Reserve</b> and Dubai's <b>DEWA Aquifer Storage &amp; Recovery</b>. Open the breakdown for how the reserve is sourced.
           </div>
         </Panel>
         <Panel title="Health supply snapshot" icon="ops">
@@ -764,7 +764,7 @@ function ReservesRow() {
           </div>
           <div className="note-card assume" style={{ marginTop: 14 }}>
             <div>{RD.health.threshold}</div>
-            <div className="helper" style={{ marginTop: 5, lineHeight: 1.5 }}>A curated clinical planning floor, not a computed figure — the minimum days of cover for ICU consumables below which intensive-care delivery is compromised.</div>
+            <div className="helper" style={{ marginTop: 5, lineHeight: 1.5 }}>A curated clinical planning floor, not a computed figure: the minimum days of cover for ICU consumables below which intensive-care delivery is compromised.</div>
           </div>
         </Panel>
       </div>
@@ -1081,7 +1081,7 @@ function MethodologyView() {
                   "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity (non-compensatory anchor)",
                   "Capacity = equal-weight Absorb (consequence-weighted buffers vs a 90-day operational-cover benchmark) · Recover (sovereign firepower + re-sourcing ease) · Adapt (plan depth × speed; 2.5 pts & 24 months = full credit, no play = 0). Compensatory by design; scores stocks, money and plans only, redundancy, workforce and institutions are tracked qualitatively in the Control layer",
                   "Financial firepower = 100 × min(liquidity-weighted deployable sovereign capital / $750bn benchmark, 1); liquidity factors 1.0 / 0.6 / 0.3; benchmark ≈ 18 months of the national import bill (est.)",
-                  "Axis goalposts: 100 = autarky (unreachable); ~72 = realistic frontier, display anchors only, feeding no score",
+                  "Axis goalposts: 100 = total self-sufficiency (unreachable); ~72 = realistic frontier, display anchors only, feeding no score",
                   "Score uncertainty = each editable assumption nudged to its high and low ends; the wider the swing, the wider the ± range on the score",
                 ]],
                 ["Live load & feeds", [

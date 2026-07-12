@@ -214,7 +214,7 @@ function ScoreCard({ d }) {
             : [{ label: "The imports behind the weak link · Dependencies", view: "dependencies" }, { label: "Raise the ceiling · Sector responses", view: "act" }, { label: "Model chain & ledger · How it works", view: "methodology" }],
           context: [
             { h: dr.kicker, t: dr.text },
-            d.cap ? { h: "Reading the scale", t: d.cap.lead + " " + d.cap.body } : null,
+            d.cap ? { h: "Reading the scale", t: d.cap.lead + ". " + d.cap.body } : null,
           ].filter(Boolean),
         }); }}>How is this calculated?</button>
       </div>
