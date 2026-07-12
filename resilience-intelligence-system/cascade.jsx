@@ -3,7 +3,7 @@
    Trigger → Precursor → Asset → Sector → National score, on a 0–90 day timeline.
    ========================================================================== */
 const { useState, useEffect } = React;
-const W = 1180, H = 348, NW = 152, NH = 42;
+const W = 1180, H = 348, NW = 152, NH = 48;
 const LAYER_X = [100, 345, 590, 835, 1080];
 const LAYER_NAME = ["Trigger", "Critical imports", "Assets", "Sectors", "National"];
 
@@ -77,8 +77,8 @@ function CascadeDiagram() {
     ? (mitigated ? "Shock fires. Responses are already staged, reroutes and reserves start absorbing the load immediately." : "Shock fires. Buffers begin drawing down across every sea-routed dependency.")
     : day === todayDay
       ? (mitigated
-          ? "Day " + todayDay + ", today. This is the mitigated path: the one that matches an actual closure this long producing little visible effect."
-          : "Day " + todayDay + ", today. This is the unmitigated path: what the model projects if no response is ever staged. Toggle mitigation to see why reality looks different.")
+          ? "Day " + todayDay + ". This is the mitigated path: the one that matches an actual closure this long producing little visible effect."
+          : "Day " + todayDay + ". This is the unmitigated path: what the model projects if no response is ever staged. Toggle mitigation to see why reality looks different.")
       : justNow.length
         ? justNow.map((n) => (mitigated && n.mitigationNote ? n.mitigationNote : n.detail)).join("  ")
         : "Buffers continue depleting; no new node crosses its threshold this step.";
@@ -159,8 +159,8 @@ function CascadeDiagram() {
                 stroke={sel === n.id ? "var(--accent)" : act ? "var(--bc)" : "var(--line-2)"}
                 strokeWidth={sel === n.id ? 2 : act ? 1.4 : 1} />
               <rect className="accent" width="4" height={NH} rx="2" fill="var(--bc)" opacity={act ? 1 : 0.4} />
-              <text className="nlabel" x="16" y={NH / 2 - 2} dominantBaseline="middle">{n.label}</text>
-              <text className="nday" x="16" y={NH - 11}>{dayFor(n) === 0 ? "immediate" : "day " + dayFor(n)}</text>
+              <text className="nlabel" x="16" y={NH / 2 - 6} dominantBaseline="middle">{n.label}</text>
+              <text className="nday" x="16" y={NH - 12}>{dayFor(n) === 0 ? "immediate" : "day " + dayFor(n)}</text>
             </g>
           );
         })}
@@ -173,7 +173,7 @@ function CascadeDiagram() {
             onClick={() => { setPlaying(false); setDayIdx(i); }}>
             <span className="tl-line"></span>
             <span className="tl-dot"></span>
-            <span className="tl-day">{d === 0 ? "D0" : d === todayDay ? "TODAY" : "D" + d}</span>
+            <span className="tl-day">{d === 0 ? "D0" : "D" + d}</span>
           </button>
         ))}
       </div>

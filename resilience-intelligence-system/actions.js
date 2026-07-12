@@ -545,7 +545,7 @@ window.ACT = (function () {
       tech: {
         summary: "Controlled-environment agriculture: sealed, stacked growing halls where crops grow in nutrient water under LEDs, using ~95% less water than field farming. The scarce input it spends instead is electricity. That is the honest trade: indoor farming swaps food-import risk for energy-and-water dependence, which is why this play assumes the energy play's solar buildout succeeds.",
         inputs: [
-          { name: "Seed stock (high-performance varieties)", status: "imported", note: "specialty breeding concentrates in NL / US / Japan, the quiet bottleneck" },
+          { name: "Seed stock (high-performance varieties)", status: "imported", note: "specialty breeding concentrates in the Netherlands / US / Japan, the quiet bottleneck" },
           { name: "Nutrient salts & fertilizer base", status: "partial", note: "potash imported (tracked); nitrogen inputs can draw on Fertiglobe's domestic ammonia/urea" },
           { name: "LED and climate systems", status: "imported", note: "several suppliers, long but manageable lead times" },
           { name: "Water + power", status: "domestic", note: "desalinated water and grid power, the cross-dependency this play accepts" },
