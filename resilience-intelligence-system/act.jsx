@@ -90,7 +90,7 @@ function Posture({ staged, evalById }) {
 }
 
 /* ---- Ranked queue row -------------------------------------------------- */
-function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
+function QueueRow({ p, rank, total, prio, r, selected, isStaged, onSelect, onStage }) {
   const b = prio.weakness >= 0.56 ? "critical" : prio.weakness >= 0.5 ? "high" : "moderate";
   return (
     <div className={`act-row band-${b} ${selected ? "sel" : ""}`} onClick={() => onSelect(p.id)}>
@@ -98,29 +98,9 @@ function QueueRow({ p, rank, prio, r, selected, isStaged, onSelect, onStage }) {
       <div className="act-row-body">
         <div className="act-row-top">
           <span className="act-row-title">{p.title}</span>
-          <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, flex: "0 0 auto" }} onClick={(e) => e.stopPropagation()}>
-            <span className="mono" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--bc)" }} title="Priority score, 0–100, relative standing within this queue; higher = more urgent">{prio.score}<span style={{ fontSize: 9.5, fontWeight: 500, color: "var(--muted)" }}>/100</span></span>
-            <Fx payload={{
-              kicker: "Priority · computed", title: "Why this rank",
-              text: "Priority ranks the PROBLEM, not the plan you're eyeing: a blend of how weak the sector is, how much the recommended fix would recover, and any time-pressure the weakness can't show on its own. Each factor is rescaled to its range across the queue, so tightly-clustered values (sector fragilities) keep their full weight instead of being outvoted by a wider-spread factor (payoffs). It is a standing within this queue, not an absolute grade: the lowest-ranked response scores 0 by construction, meaning 'least urgent of these', not 'worthless'.",
-              formula: "Priority  =  0.5 × Weakness  +  0.3 × Payoff  +  0.2 × Time-pressure   (each rescaled to its range across the queue)",
-              inputs: [
-                { k: "Weakness (anchored sector fragility)", v: prio.wdri + " / 100 → " + prio.rel.weakness + " relative" },
-                { k: "Payoff, points the recommended fix recovers", v: (prio.payoff * 100).toFixed(0) + " / 100 → " + prio.rel.payoff + " relative" },
-                { k: "Time-pressure", v: (p.window * 100).toFixed(0) + " / 100 → " + prio.rel.time + " relative" + (p.window >= 0.75 ? ", closing clock" : p.window <= 0.4 ? ", no clock" : "") },
-                { k: "→ Priority", v: prio.score + " / 100 (relative to the other responses)" },
-              ],
-              assumption: "Weakness carries half the weight. Time-pressure is the only hand-set factor: chips' export-license clock lifts Defense, while Finance's depth and absent clock keep it low.",
-              links: [
-                { label: "The " + p.sector + " sector's score & imports · Overview", view: "overview" },
-                { label: "The imports behind the weakness · Dependencies", view: "dependencies", opts: { sector: p.sector } },
-              ],
-            }} />
-          </span>
         </div>
         <div className="act-row-addr">{p.addresses}</div>
         <div className="act-row-stats">
-          <span className="mono" style={{ color: "var(--bc)", fontWeight: 600 }} title="Sector fragility, anchored (0.6 × anchor import DRI + 0.4 × consequence-weighted mean), the exact complement of the sector score on the Overview">DRI {prio.wdri}</span>
           <span className="act-row-tier">{r.tier.name.replace(/Tier (\d) · /, "T$1 · ")}</span>
           <span className="mono act-stat-pts">+{r.pts.toFixed(1)} pts</span>
         </div>
@@ -432,7 +412,7 @@ function ActView({ initial = {} }) {
           right={<span className="helper" style={{ marginLeft: "auto" }}>Ranked by weakness, payoff &amp; time-pressure</span>}>
           <div className="act-queue" style={{ overflowY: "auto", maxHeight: "52vh", paddingRight: 4, overscrollBehavior: "contain" }}>
             {ranked.map(({ p, r }, i) => (
-              <QueueRow key={p.id} p={p} rank={i + 1} prio={prio[p.id]} r={r}
+              <QueueRow key={p.id} p={p} rank={i + 1} total={ranked.length} prio={prio[p.id]} r={r}
                 selected={selId === p.id} isStaged={staged.has(p.id)}
                 onSelect={setSelId} onStage={onStage} />
             ))}
