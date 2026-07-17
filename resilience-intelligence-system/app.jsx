@@ -60,6 +60,7 @@ function App() {
   const go = (v, o = {}) => { setView(v); setOpts(o); setDrawer(null); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
   const explain = (p) => setDrawer(p);
   useEffect(() => { window.__go = go; window.__explain = explain; }, []);
+  useEffect(() => { if (window.MA) window.MA.section(intro ? "Welcome screen" : (TITLES[view] || view)); }, [view, intro]);
 
   const enter = () => { localStorage.setItem("uae_seen", "1"); setIntro(false); };
 

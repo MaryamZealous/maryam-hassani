@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Analytics — Maryam Hassani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500;6..72,600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="pages.css" />
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#FAF9F5"/>
+    <g fill="#2B50E0"><rect x="26" y="52" width="9" height="22"/><rect x="42" y="38" width="9" height="36"/><rect x="58" y="46" width="9" height="28"/></g>
+    <path d="M26 30 h48" stroke="#2B50E0" stroke-width="2.4" stroke-linecap="round"/>
+  </svg>
+</template>
+<style>
+  :root{--serif:"Newsreader",Georgia,serif}
+  .an-wrap{max-width:1060px;margin:0 auto;padding:36px 48px 90px}
+  .an-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:8px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+  .an-h1{font-family:var(--serif);font-weight:400;font-size:clamp(30px,4vw,46px);line-height:1.05;letter-spacing:-.01em;margin:10px 0 0}
+  .an-h1 .em{font-style:italic;color:var(--blue-deep)}
+  .an-lede{color:var(--muted);font-family:var(--serif);font-size:18px;line-height:1.5;max-width:60ch;margin:14px 0 0}
+  .an-meta{font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.04em;text-align:right;white-space:nowrap}
+  .an-meta b{color:var(--ink-2);font-weight:500}
+  .refresh{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:none;border:1px solid var(--line);border-radius:2px;padding:6px 12px;cursor:pointer;transition:all .16s ease;margin-top:8px}
+  .refresh:hover{color:var(--ink);border-color:var(--ink)}
+
+  .totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:30px 0 8px}
+  .tot{background:var(--paper);padding:20px 22px}
+  .tot .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .tot .v{font-family:var(--serif);font-size:38px;line-height:1;margin-top:12px;letter-spacing:-.02em}
+  .tot .v small{font-size:16px;color:var(--faint);font-family:var(--mono);letter-spacing:0}
+
+  .banner{margin:22px 0 0;padding:12px 16px;border:1px dashed var(--line);border-radius:3px;background:var(--blue-soft);
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-2);line-height:1.55}
+  .banner b{color:var(--blue-deep)}
+
+  .pages{margin-top:34px;display:flex;flex-direction:column;gap:26px}
+  .pcard{border:1px solid var(--line);border-radius:4px;background:var(--paper);overflow:hidden}
+  .pcard-h{display:flex;align-items:baseline;gap:16px;padding:18px 22px;border-bottom:1px solid var(--line-2);background:var(--paper-2)}
+  .pcard-h .name{font-family:var(--serif);font-size:22px;letter-spacing:-.01em}
+  .pcard-h .stats{margin-left:auto;display:flex;gap:26px;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.02em}
+  .pcard-h .stats b{color:var(--ink);font-size:15px;font-weight:600}
+  .pcard-b{padding:16px 22px 22px}
+  .col-head{display:grid;grid-template-columns:1fr auto auto;gap:16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);padding:0 0 10px;border-bottom:1px solid var(--line-2)}
+  .col-head .r{text-align:right;min-width:74px}
+  .srow{display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line-2)}
+  .srow:last-child{border-bottom:none}
+  .srow .sname{font-family:var(--serif);font-size:16.5px;color:var(--ink)}
+  .srow .bar{height:6px;margin-top:7px;background:var(--paper-3);border-radius:3px;overflow:hidden;max-width:520px}
+  .srow .bar > i{display:block;height:100%;background:var(--blue);border-radius:3px}
+  .srow .val{font-family:var(--mono);font-size:14px;text-align:right;min-width:74px;color:var(--ink)}
+  .srow .sub{font-family:var(--mono);font-size:14px;text-align:right;min-width:74px;color:var(--muted)}
+  .empty{font-family:var(--mono);font-size:12.5px;color:var(--faint);padding:8px 0}
+  .foot-note{margin-top:40px;font-family:var(--mono);font-size:11.5px;color:var(--faint);line-height:1.7;max-width:74ch}
+  @media(max-width:640px){.an-wrap{padding:28px 20px 70px}.pcard-h .stats{gap:16px}}
+</style>
+</head>
+<body data-page="__analytics__">
+  <header class="topbar">
+    <a class="tb-home" href="index.html"><span class="arr">←</span><span>maryam hassani</span></a>
+    <nav class="tb-nav">
+      <a class="tb-link" href="learn.html">Learn</a>
+      <a class="tb-link" href="build.html">Build</a>
+      <a class="tb-link current" href="analytics.html">Analytics</a>
+    </nav>
+  </header>
+
+  <div class="an-wrap">
+    <div class="an-head">
+      <div>
+        <div class="eyebrow">Analytics · private</div>
+        <h1 class="an-h1">Who visits, and where their <span class="em">attention</span> goes.</h1>
+        <p class="an-lede">Unique viewers per page and the real time — visible-tab only — spent in each section. No cookies; visitors are counted by a first-party id.</p>
+      </div>
+      <div>
+        <div class="an-meta" id="meta">loading…</div>
+        <button class="refresh" id="refresh">Refresh</button>
+      </div>
+    </div>
+
+    <div class="totals" id="totals"></div>
+    <div id="banner"></div>
+    <div class="pages" id="pages"></div>
+
+    <p class="foot-note">Time is attention time: it only accrues while the browser tab is visible, and is credited to whichever section is on screen (or the active view, inside the Resilience Intelligence System). “Avg / view” divides a section’s total time by that page’s number of loads. Unique viewers are de-duplicated per page by a durable first-party id stored in the visitor’s browser — clearing site data or a fresh browser counts as new.</p>
+  </div>
+
+  <script>
+  var PAGE_ORDER = ["Home", "Learn", "Build", "Resilience Intelligence System"];
+
+  function fmtDur(ms){
+    var s = Math.round(ms/1000);
+    if (s < 1) return "0s";
+    if (s < 60) return s + "s";
+    var m = Math.floor(s/60), r = s % 60;
+    if (m < 60) return m + "m" + (r ? " " + r + "s" : "");
+    var h = Math.floor(m/60); m = m % 60;
+    return h + "h" + (m ? " " + m + "m" : "");
+  }
+  function fmtNum(n){ return (n||0).toLocaleString("en-US"); }
+
+  var SAMPLE = { sample:true, updated: Date.now() - 3.2*3600e3, pages: {
+    "Home": { views:214, uniques:168, sections:{ "(page)":{ms:214*41000,hits:214} } },
+    "Learn": { views:132, uniques:97, sections:{ "Intro":{ms:132*12000,hits:132}, "Idea map":{ms:132*88000,hits:120} } },
+    "Build": { views:151, uniques:118, sections:{ "Intro":{ms:151*9000,hits:151}, "Featured — RIS":{ms:151*47000,hits:139}, "In the workshop":{ms:151*14000,hits:96} } },
+    "Resilience Intelligence System": { views:88, uniques:61, sections:{
+      "Welcome screen":{ms:88*11000,hits:88}, "Overview":{ms:88*74000,hits:86}, "Live signals":{ms:88*52000,hits:64},
+      "Supply map":{ms:88*61000,hits:58}, "Dependencies":{ms:88*44000,hits:49}, "Cascade":{ms:88*38000,hits:37},
+      "Scenarios":{ms:88*57000,hits:41}, "Sector responses":{ms:88*33000,hits:29}, "Control layer":{ms:88*21000,hits:18},
+      "How it works":{ms:88*46000,hits:33} } }
+  }};
+
+  function orderedPageNames(pages){
+    var names = Object.keys(pages);
+    names.sort(function(a,b){
+      var ia = PAGE_ORDER.indexOf(a), ib = PAGE_ORDER.indexOf(b);
+      if (ia === -1) ia = 99; if (ib === -1) ib = 99;
+      if (ia !== ib) return ia - ib;
+      return (pages[b].uniques||0) - (pages[a].uniques||0);
+    });
+    return names;
+  }
+
+  function render(data){
+    var pages = data.pages || {};
+    var names = orderedPageNames(pages);
+
+    // totals
+    var totalViews = 0, totalUniq = 0, totalMs = 0, sectionCount = 0;
+    names.forEach(function(n){
+      var p = pages[n];
+      totalViews += p.views||0; totalUniq += p.uniques||0;
+      for (var s in (p.sections||{})){ totalMs += p.sections[s].ms||0; sectionCount++; }
+    });
+    document.getElementById("totals").innerHTML =
+      tot("Unique viewers", fmtNum(totalUniq), "across all pages") +
+      tot("Total views", fmtNum(totalViews), "page loads") +
+      tot("Time on site", fmtDur(totalMs), "attention, all sections") +
+      tot("Sections tracked", fmtNum(sectionCount), names.length + " pages");
+
+    document.getElementById("meta").innerHTML = data.updated
+      ? "updated <b>" + timeAgo(data.updated) + "</b>"
+      : "no data yet";
+
+    document.getElementById("banner").innerHTML = data.sample
+      ? '<div class="banner"><b>Preview — sample data.</b> The live collector runs once this site is deployed on Netlify. These figures are illustrative so you can see the layout; real numbers replace them automatically in production.</div>'
+      : (totalViews === 0
+        ? '<div class="banner">No visits recorded yet. Numbers appear here as people browse the site.</div>'
+        : "");
+
+    var out = "";
+    names.forEach(function(n){
+      var p = pages[n];
+      var secs = p.sections || {};
+      var keys = Object.keys(secs).sort(function(a,b){ return (secs[b].ms||0) - (secs[a].ms||0); });
+      var maxMs = keys.length ? (secs[keys[0]].ms||0) : 0;
+      var views = p.views || 0;
+
+      var rows = keys.length ? keys.map(function(k){
+        var ms = secs[k].ms || 0;
+        var avg = views ? ms / views : 0;
+        var pct = maxMs ? Math.max(3, Math.round(ms/maxMs*100)) : 0;
+        return '<div class="srow"><div><div class="sname">' + esc(k) + '</div>' +
+          '<div class="bar"><i style="width:' + pct + '%"></i></div></div>' +
+          '<div class="val">' + fmtDur(ms) + '</div>' +
+          '<div class="sub">' + fmtDur(avg) + '</div></div>';
+      }).join("") : '<div class="empty">no section data yet</div>';
+
+      out += '<div class="pcard"><div class="pcard-h">' +
+        '<div class="name">' + esc(n) + '</div>' +
+        '<div class="stats"><span><b>' + fmtNum(p.uniques||0) + '</b> unique</span>' +
+        '<span><b>' + fmtNum(views) + '</b> views</span></div></div>' +
+        '<div class="pcard-b">' +
+        '<div class="col-head"><span>Section</span><span class="r">Total</span><span class="r">Avg / view</span></div>' +
+        rows + '</div></div>';
+    });
+    document.getElementById("pages").innerHTML = out || '<div class="empty">No pages tracked yet.</div>';
+  }
+
+  function tot(k,v,sub){ return '<div class="tot"><div class="k">' + k + '</div><div class="v">' + v + ' <small>' + (sub||"") + '</small></div></div>'; }
+  function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+  function timeAgo(ts){
+    var d = Date.now() - ts;
+    if (d < 60000) return "just now";
+    if (d < 3600e3) return Math.round(d/60000) + " min ago";
+    if (d < 864e5) return Math.round(d/3600e3) + " h ago";
+    return Math.round(d/864e5) + " d ago";
+  }
+
+  function getKey(force){
+    var k = null;
+    try { k = localStorage.getItem("ma_analytics_key"); } catch(e){}
+    if (!k || force){
+      k = window.prompt("Enter analytics passphrase");
+      if (k){ try { localStorage.setItem("ma_analytics_key", k); } catch(e){} }
+    }
+    return k || "";
+  }
+
+  function load(reprompt){
+    document.getElementById("meta").textContent = "loading…";
+    var key = getKey(reprompt);
+    fetch("/.netlify/functions/analytics?key=" + encodeURIComponent(key), { cache: "no-store" })
+      .then(function(r){
+        if (r.status === 401){ var e = new Error("unauthorized"); e.auth = true; throw e; }
+        if (!r.ok) throw new Error("http " + r.status);
+        return r.json();
+      })
+      .then(function(j){
+        if (!j || !j.ok) throw new Error("bad payload");
+        var hasData = j.pages && Object.keys(j.pages).length;
+        render(hasData ? j : SAMPLE);
+      })
+      .catch(function(err){
+        if (err && err.auth){
+          try { localStorage.removeItem("ma_analytics_key"); } catch(e){}
+          document.getElementById("meta").textContent = "wrong passphrase";
+          document.getElementById("banner").innerHTML = '<div class="banner"><b>Locked.</b> Wrong or missing passphrase. <button class="refresh" id="unlock" style="margin:6px 0 0">Try again</button></div>';
+          var u = document.getElementById("unlock"); if (u) u.addEventListener("click", function(){ load(true); });
+          document.getElementById("totals").innerHTML = "";
+          document.getElementById("pages").innerHTML = "";
+          return;
+        }
+        // network/endpoint absent (e.g. local preview) → show illustrative layout
+        render(SAMPLE);
+      });
+  }
+  document.getElementById("refresh").addEventListener("click", function(){ load(false); });
+  load(false);
+  </script>
+</body>
+</html>

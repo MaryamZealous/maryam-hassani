@@ -3,8 +3,8 @@
    ========================================================================== */
 const { useState } = React;
 
-/* ---------- Supply map (real world geography + directional flows) -------- */
-const MAP_W = 1200, MAP_H = 468, LAT_T = 78, LAT_B = -56, LON0 = 20;
+/* ---------- Asset Map (real world geography + directional flows) -------- */
+const MAP_W = 1200, MAP_H = 468, LAT_T = 78, LAT_B = -56, LON0 = 58;
 const GULF = { lonMin: 46, lonMax: 60.5, latMin: 20.5, latMax: 31, w: 270, h: 198 };
 const GULF_NAMES = new Set(["Saudi Arabia", "Iran", "Oman", "United Arab Emirates", "Qatar", "Kuwait", "Iraq"]);
 function proj(lng, lat) {
@@ -31,23 +31,20 @@ function geoPath(geom, P, wrap) {
 }
 const UAE_LL = [54.4, 24.5];
 const CHOKE = { hormuz: [56.4, 26.6], redsea: [43.3, 12.6], suez: [32.5, 30.2] };
-const TIP_TONE = { import: "var(--accent)", export: "var(--gold)", transit: "var(--good)", choke: "var(--crit)" };
 const GEO_SRC = {
-  "United States of America": { label: "United States", who: "RO · ERD · turbines · water chems · GNSS · USD", pre: ["ro","erd","turbines","waterchem","gps","usdclearing"], cons: 0.88, lng: -98, lat: 39, hov: "The backbone of desalination hardware and dollar-clearing access", tip: "Leading source of reverse-osmosis membranes and energy-recovery devices within a concentrated US/Japan/Korea supplier set, the spine of UAE desalination, plus GE gas-turbine hot-section parts, specialty desalination chemicals (antiscalants), precision-timing modules and correspondent-bank USD clearing." },
-  "Taiwan": { label: "Taiwan", who: "Leading-edge chips", pre: ["chips"], cons: 0.72, lng: 121, lat: 23.6, hov: "A US-licensing risk, not a supply halt", tip: "Fabrication of advanced silicon for EDGE guided-systems concentrates here, but the binding risk is US export-control licensing, not a Taiwan supply halt, a channel that eased in late 2025." },
-  "India": { label: "India", who: "APIs · workers", pre: ["api"], cons: 0.78, lng: 79, lat: 22.5, dy: 17, hov: "~65% concentration in one country (est.)", tip: "~65% of active pharma ingredients (est.), plus the largest share of critical-infrastructure workers." },
-  "Kazakhstan": { label: "Kazakhstan", who: "Uranium, LEU fuel chain", pre: ["leu"], cons: 0.72, lng: 67, lat: 48, hov: "Feeds Barakah, a 540-day buffer, no near-term alternative", tip: "Uranium feedstock for Barakah's fuel chain, conversion, enrichment and fabrication (KEPCO NF, Korea) happen downstream. A 540-day buffer with no near-term alternative chain." },
-  "Qatar": { label: "Qatar", who: "Piped gas (Dolphin)", pre: ["gas"], cons: 1.00, lng: 51.2, lat: 25.3, dx: -10, dy: -10, anchor: "end", hov: "25% of power & water, the highest-consequence input", tip: "25% of gas for power and water via the Dolphin pipeline, piped, not Hormuz-routed. Contract runs to 2032. The exposure is counterpart + price-basis: losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8×)." },
-  "Canada": { label: "Canada", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.55, lng: -109, lat: 57, hov: "Diversified, lower-risk food inputs", tip: "Muriate-of-potash fertilizer and milling wheat from a stable, well-diversified supplier, one of the lower-risk lines on the map." },
-  "Russia": { label: "Russia", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.60, lng: 62, lat: 61, hov: "Alternate food supply, with elevated sanctions risk", tip: "Alternate potash and wheat supply; counterpart risk elevated by sanctions exposure." },
-  "China": { label: "China", who: "Solar PV · batteries · devices", pre: ["solarpv","libattery","devices"], cons: 0.70, lng: 103, lat: 35, hov: "The processing chokepoint for the clean-energy transition", tip: "Concentrates the clean-energy transition inputs, ~80%+ of solar polysilicon/modules and the bulk of lithium-ion cell supply, plus 40% of medical devices (est.) on a thin 45-day buffer. China as the processing chokepoint, with rising counterpart risk." },
-  "Australia": { label: "Australia", who: "Wheat", pre: ["wheat"], cons: 0.60, lng: 134, lat: -25, hov: "Deepens national food reserves", tip: "Milling and feed wheat from a second Southern-Hemisphere source, widening the grain base against a Black Sea disruption." },
-  "Chile": { label: "Chile", who: "Copper (cathode / rod)", pre: ["copper"], cons: 0.60, lng: -71, lat: -33, hov: "The bottleneck metal of electrification", tip: "The UAE mines no copper; refined cathode and rod from Chile, Zambia and the global market feed Ducab's cabling and the grid build-out. Diversified today, structurally tight over the decade ahead as electrification demand climbs." },
-  "Brazil": { label: "Brazil", who: "Animal feed & fodder", pre: ["feed"], cons: 0.55, lng: -51, lat: -12, hov: "The hidden import beneath domestic protein", tip: "Soybean meal, corn and fodder for poultry, dairy and aquaculture (sourced with Argentina, the US and Spain), the continuous input behind UAE-raised protein. Feed mills hold only weeks of stock, so a disruption reaches domestic eggs, chicken and milk faster than a wheat shock reaches bread." },
-  "Japan": { label: "Japan", who: "Turbines (Mitsubishi) · RO membranes", pre: ["turbines","ro"], cons: 0.82, lng: 138, lat: 37.5, hov: "Inside two single-digit-supplier fields for power & water", tip: "Mitsubishi gas-turbine hot-section parts plus Toray / Nitto reverse-osmosis membranes, Japan sits inside both the turbine-OEM and the desalination-membrane supplier sets, two single-digit-supplier fields for the power-and-water fleet." },
-  "South Korea": { label: "South Korea", who: "Grid transformers", pre: ["transformers"], cons: 0.70, lng: 127.8, lat: 36.2, dy: 16, hov: "Long-lead power hardware; a failure cascades into water too", tip: "Long-lead high-voltage grid transformers (with EU suppliers), 12–24 month lead times, and a failure cascades into desalination as well as power. Held spares cushion a single loss; a fleet-wide or export-control cut-off does not." },
-  "Germany": { label: "Germany", who: "Turbines (Siemens) · water chemicals", pre: ["turbines","waterchem"], cons: 0.82, lng: 10.4, lat: 51.2, hov: "Part of the qualified-OEM field behind power & desalination", tip: "Siemens gas-turbine hot-section components and BASF-class specialty water-treatment chemicals (antiscalants), part of the single-digit qualified-OEM field the generation and desalination fleet runs on." },
-  "United Arab Emirates": { label: "UAE", hub: true, lng: 54.4, lat: 24.5, who: "Jebel Ali · Barakah · Taweelah", hov: "Imports land here, then re-export across the region", tip: "The hub. ~60% of imports land at Jebel Ali (est.), then re-export across the region, dependency runs both ways." },
+  "United States of America": { label: "United States", who: "RO · ERD · turbines · water chems · GNSS · USD", pre: ["ro","erd","turbines","waterchem","gps","usdclearing"], cons: 0.88, lng: -98, lat: 39, tip: "Leading source of reverse-osmosis membranes and energy-recovery devices within a concentrated US/Japan/Korea supplier set — the spine of UAE desalination — plus GE gas-turbine hot-section parts, specialty desalination chemicals (antiscalants), precision-timing modules and correspondent-bank USD clearing." },
+  "Taiwan": { label: "Taiwan", who: "Leading-edge chips", pre: ["chips"], cons: 0.72, lng: 121, lat: 23.6, tip: "Fabrication of advanced silicon for EDGE guided-systems concentrates here, but the binding risk is US export-control licensing, not a Taiwan supply halt — a channel that eased in late 2025." },
+  "India": { label: "India", who: "APIs · devices · labour", pre: ["api"], cons: 0.78, lng: 79, lat: 22.5, dy: 17, tip: "~65% of active pharma ingredients (est.) and the largest share of critical-infrastructure workers." },
+  "Kazakhstan": { label: "Kazakhstan", who: "Uranium — LEU fuel chain", pre: ["leu"], cons: 0.72, lng: 67, lat: 48, tip: "Uranium feedstock for Barakah's fuel chain — conversion, enrichment and fabrication (KEPCO NF, Korea) happen downstream. A 540-day buffer with no near-term alternative chain." },
+  "Qatar": { label: "Qatar", who: "Piped gas (Dolphin)", pre: ["gas"], cons: 1.00, lng: 51.2, lat: 25.3, dx: -10, dy: -10, anchor: "end", tip: "25% of gas for power and water via the Dolphin pipeline — piped, not Hormuz-routed. Contract runs to 2032. The exposure is counterpart + price-basis: losing Dolphin reprices the marginal molecule from a fixed ~$1.50/MMBtu contract to oil-linked LNG (~12.5% of Brent, ≈8×)." },
+  "Canada": { label: "Canada", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.55, lng: -109, lat: 57, tip: "Fertiliser and grain feedstock — diversified, lower-risk food inputs." },
+  "Russia": { label: "Russia", who: "Potash · wheat", pre: ["potash","wheat"], cons: 0.60, lng: 62, lat: 61, tip: "Alternate potash and wheat supply; counterpart risk elevated by sanctions exposure." },
+  "China": { label: "China", who: "Solar PV · batteries · devices", pre: ["solarpv","libattery","devices"], cons: 0.70, lng: 103, lat: 35, tip: "Concentrates the clean-energy transition inputs — ~80%+ of solar polysilicon/modules and the bulk of lithium-ion cell supply — plus 40% of medical devices (est.) on a thin 45-day buffer. The Material World pattern: China as the processing chokepoint, with rising counterpart risk." },
+  "Australia": { label: "Australia", who: "Wheat", pre: ["wheat"], cons: 0.60, lng: 134, lat: -25, tip: "Diversified grain supply that deepens national food reserves." },
+  "Chile": { label: "Chile", who: "Copper (cathode / rod)", pre: ["copper"], cons: 0.60, lng: -71, lat: -33, tip: "The UAE mines no copper; refined cathode & rod — from Chile, Zambia and the global market — feed Ducab's cabling and the grid build-out. Material World's bottleneck metal of electrification: diversified today, structurally tight over the decade ahead." },
+  "Japan": { label: "Japan", who: "Turbines (Mitsubishi) · RO membranes", pre: ["turbines","ro"], cons: 0.82, lng: 138, lat: 37.5, tip: "Mitsubishi gas-turbine hot-section parts plus Toray / Nitto reverse-osmosis membranes — Japan sits inside both the turbine-OEM and the desalination-membrane supplier sets, two single-digit-supplier fields for the power-and-water fleet." },
+  "Germany": { label: "Germany", who: "Turbines (Siemens) · water chemicals", pre: ["turbines","waterchem"], cons: 0.82, lng: 10.4, lat: 51.2, tip: "Siemens gas-turbine hot-section components and BASF-class specialty water-treatment chemicals (antiscalants) — part of the single-digit qualified-OEM field the generation and desalination fleet runs on." },
+  "United Arab Emirates": { label: "UAE", hub: true, lng: 54.4, lat: 24.5, who: "Jebel Ali · Barakah · Taweelah", tip: "The hub. ~60% of imports land at Jebel Ali (est.), then re-export across the region — dependency runs both ways." },
 };
 const PRE_BY_ID = Object.fromEntries((window.RD ? RD.precursors : []).map((p) => [p.id, p]));
 const consOf = (s) => (s.pre && s.pre.length) ? Math.max(...s.pre.map((id) => (PRE_BY_ID[id] ? PRE_BY_ID[id].consequence : 0))) : (s.cons || 0);
@@ -55,15 +52,15 @@ const FLOWS = [
   { from: "United States of America", via: "suez" }, { from: "Taiwan", via: null },
   { from: "India", via: "hormuz" }, { from: "Kazakhstan", via: null }, { from: "Qatar", via: null },
   { from: "Canada", via: "suez" }, { from: "Russia", via: null }, { from: "China", via: "hormuz" },
-  { from: "Australia", via: null }, { from: "Chile", via: null }, { from: "Brazil", via: null },
-  { from: "Japan", via: null }, { from: "South Korea", via: "hormuz" }, { from: "Germany", via: "suez" },
+  { from: "Australia", via: null }, { from: "Chile", via: null },
+  { from: "Japan", via: null }, { from: "Germany", via: "suez" },
 ];
 const OUTFLOWS = [
-  { label: "Crude → East Asia (via Hormuz)", tag: "Crude → Asia", lp: [129, 14], to: [114, 27], via: "hormuz", type: "export", w: 3.8, tip: "The bulk of energy exports still transit the Strait of Hormuz to East-Asian buyers, the UAE's largest, and most exposed, outbound flow." },
-  { label: "Fujairah bypass → Asia", tag: "Fujairah bypass", lp: [94, -12], from: [56.33, 25.17], to: [90, 8], via: null, type: "export", w: 3.0, tip: "Fujairah's east-coast terminal ships crude straight to Asia WITHOUT entering the Strait of Hormuz, the UAE's strategic Hormuz bypass." },
-  { label: "Ammonia / urea → world markets", tag: "Ammonia / urea →", lp: [70, -3], from: [52.73, 24.11], to: [82, 16], via: "hormuz", type: "export", w: 2.6, tip: "Fertiglobe (ADNOC ~87%) ships urea & ammonia from Ruwais/Fertil to ~41 countries, the world's largest seaborne nitrogen exporter. The UAE's domestic gas leaves as fertilizer, not as a food-security input. This export sails OUT through Hormuz, so the UAE's fertilizer strength shares the same chokepoint exposure as its imports." },
+  { label: "Crude → East Asia (via Hormuz)", tag: "Crude → Asia", lp: [129, 14], to: [114, 27], via: "hormuz", type: "export", w: 3.8, tip: "The bulk of energy exports still transit the Strait of Hormuz to East-Asian buyers — the UAE's largest, and most exposed, outbound flow." },
+  { label: "Fujairah bypass → Asia", tag: "Fujairah bypass", lp: [94, -12], from: [56.33, 25.17], to: [90, 8], via: null, type: "export", w: 3.0, tip: "Fujairah's east-coast terminal ships crude straight to Asia WITHOUT entering the Strait of Hormuz — the UAE's strategic Hormuz bypass." },
+  { label: "Ammonia / urea → world markets", tag: "Ammonia / urea →", lp: [70, -3], from: [52.73, 24.11], to: [82, 16], via: "hormuz", type: "export", w: 2.6, tip: "Fertiglobe (ADNOC ~87%) ships urea & ammonia from Ruwais/Fertil to ~41 countries — the world's largest seaborne nitrogen exporter. The UAE's domestic gas leaves as fertiliser, not as a food-security input. Note the irony: this export sails OUT through Hormuz, so the fertiliser strength shares the same chokepoint exposure as the imports." },
   { label: "Energy → Europe", tag: "Energy → Europe", lp: [-16, 41], to: [11, 45], via: "suez", type: "transit", w: 2.2, tip: "Crude and product routed through the Red Sea and Suez to European markets." },
-  { label: "Re-export → East Africa", tag: "Re-export → E. Africa", lp: [42, -14], to: [40, 5], via: "redsea", type: "transit", w: 1.6, tip: "Jebel Ali re-export hub supplies East-African markets, the UAE as regional entrepôt." },
+  { label: "Re-export → East Africa", tag: "Re-export → E. Africa", lp: [42, -14], to: [40, 5], via: "redsea", type: "transit", w: 1.6, tip: "Jebel Ali re-export hub supplies East-African markets — the UAE as regional entrepôt." },
 ];
 function arcD(a, b, lift) {
   const cx = (a[0] + b[0]) / 2 - (b[1] - a[1]) * lift, cy = (a[1] + b[1]) / 2 + (b[0] - a[0]) * lift;
@@ -75,13 +72,13 @@ function routeD(from, to, via, lift) {
   return arcD(from, v, lift * 0.8) + arcD(v, to, lift * 0.8).replace("M", "L");
 }
 
-const Z_MIN = 0.5, Z_MAX = 64, ASSET_ZOOM = 3;
+const Z_MIN = 1, Z_MAX = 64, ASSET_ZOOM = 3;
 const ASSET_FILL = { port: "var(--accent)", energy: "var(--high)", water: "var(--good)" };
 const ASSET_IO = {
   jebelali: "Imports ≈60% of national goods (est.) · regional re-export hub",
   fujairah: "Crude-export terminal · bypasses the Strait of Hormuz",
   taweelah: "World's largest RO plant · membrane-dependent",
-  barakah: "5.6 GW nuclear baseload · LEU-fueled",
+  barakah: "5.6 GW nuclear baseload · LEU-fuelled",
   ruwais: "Downstream refining & petrochemicals hub",
   dubaiwater: "Municipal network · thin operational storage · 90-day federal strategic reserve",
   portrashid: "Cruise & heritage today · freight role absorbed by Jebel Ali",
@@ -98,18 +95,14 @@ const ASSET_LABEL = {
 };
 function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
 function clampView(k, x, y) {
-  const spanX = MAP_W * k, spanY = MAP_H * k;
-  // when zoomed out past fit, center the map (letterbox); otherwise clamp to edges
-  const cx = spanX <= MAP_W ? (MAP_W - spanX) / 2 : clamp(x, MAP_W - spanX, 0);
-  const cy = spanY <= MAP_H ? (MAP_H - spanY) / 2 : clamp(y, MAP_H - spanY, 0);
-  return { k, x: cx, y: cy };
+  return { k, x: clamp(x, MAP_W - MAP_W * k, 0), y: clamp(y, MAP_H - MAP_H * k, 0) };
 }
 
 const LandLayer = React.memo(function LandLayer({ paths, onTip, onPick }) {
   return paths.map((p) => {
     const s = GEO_SRC[p.name];
     return <path key={p.name} className={"geo-land" + (s ? " src" : "")} d={p.d} style={{ vectorEffect: "non-scaling-stroke" }}
-      onMouseEnter={s ? () => onTip({ b: s.hub ? "National hub" : "Source country", text: s.label + ", " + (s.hov || s.tip), who: s.who }) : undefined}
+      onMouseEnter={s ? () => onTip({ b: s.hub ? "National hub" : "Source country", text: s.label + " — " + s.tip, who: s.who }) : undefined}
       onMouseLeave={s ? () => onTip(null) : undefined}
       onClick={s && !s.hub ? () => onPick(p.name) : undefined} />;
   });
@@ -151,7 +144,7 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
     return () => el.removeEventListener("wheel", h);
   }, [geo]);
 
-  if (err) return <div className="map-loading">World geography unavailable offline, dependency flows are listed below.</div>;
+  if (err) return <div className="map-loading">World geography unavailable offline — dependency flows are listed below.</div>;
   if (!geo) return <div className="map-loading">Loading world geography…</div>;
 
   const zoomAt = (sx, sy, f) => setView((v) => {
@@ -188,15 +181,9 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
       </g>
       {/* flows */}
       {layers.imports && FLOWS.map((fl) => {
-        const s = GEO_SRC[fl.from]; const cons = consOf(s); const d = routeS(P(s.lng, s.lat), hubS, fl.via, 0.16);
-        // Widen the visible range further and pair it with opacity so weight
-        // reads clearly even at small map scale, not just a subtle px delta.
-        const t = (cons - 0.55) / 0.45; // 0..1 across this dataset's real range
-        const w = 1.2 + Math.pow(t, 0.75) * 7;
-        const op = 0.45 + t * 0.5;
+        const s = GEO_SRC[fl.from]; const cons = consOf(s); const d = routeS(P(s.lng, s.lat), hubS, fl.via, 0.16); const w = 0.8 + cons * 3;
         return (
-          <g key={fl.from} className="flow-grp" style={{ opacity: op }} onMouseEnter={() => onTip({ b: "Import → UAE", tone: "import", text: s.label + ", " + (s.hov || s.tip), who: s.who + " · import weight " + cons.toFixed(2) })} onMouseLeave={() => onTip(null)}>
-            <path className="flow-hit" d={d} strokeWidth="16" />
+          <g key={fl.from} className="flow-grp" onMouseEnter={() => onTip({ b: "Import → UAE", text: s.label + " — " + s.tip, who: s.who + " · import weight " + cons.toFixed(2) })} onMouseLeave={() => onTip(null)}>
             <path className="flow-arc import" d={d} markerEnd="url(#mk-import)" strokeWidth={w} />
             <path className="flow-pulse import casc-pulse" d={d} strokeWidth={w} />
           </g>
@@ -206,8 +193,7 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
         const origin = fl.from ? P(fl.from[0], fl.from[1]) : hubS;
         const d = routeS(origin, P(fl.to[0], fl.to[1]), fl.via, 0.16); const w = fl.w || 2.4;
         return (
-          <g key={i} className="flow-grp" onMouseEnter={() => onTip({ b: fl.type === "export" ? "Export ← UAE" : "Transit · hub", tone: fl.type, text: fl.label + ", " + fl.tip, who: "outbound weight " + w.toFixed(1) })} onMouseLeave={() => onTip(null)}>
-            <path className="flow-hit" d={d} strokeWidth="16" />
+          <g key={i} className="flow-grp" onMouseEnter={() => onTip({ b: fl.type === "export" ? "Export ← UAE" : "Transit · hub", text: fl.label + " — " + fl.tip, who: "outbound weight " + w.toFixed(1) })} onMouseLeave={() => onTip(null)}>
             <path className={"flow-arc " + fl.type} d={d} markerEnd={`url(#mk-${fl.type})`} strokeWidth={w} />
             <path className={"flow-pulse casc-pulse " + fl.type} d={d} strokeWidth={w} />
           </g>
@@ -217,7 +203,7 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
         const p = P(CHOKE[c.id][0], CHOKE[c.id][1]);
         return (
           <g key={c.id} className={`map-node band-${c.band}`} onClick={() => onPick("choke:" + c.id)}
-            onMouseEnter={() => onTip({ b: "Chokepoint · " + RD.band(c.band === "critical" ? 30 : c.band === "high" ? 50 : 80).label, tone: "choke", text: c.name + ", " + c.note, who: c.vessels + " / " + c.baseline + " vessels · −" + c.drop + "%" })}
+            onMouseEnter={() => onTip({ b: "Chokepoint · " + RD.band(c.band === "critical" ? 30 : c.band === "high" ? 50 : 80).label, text: c.name + " — " + c.note, who: c.vessels + " / " + c.baseline + " vessels · −" + c.drop + "%" })}
             onMouseLeave={() => onTip(null)}>
             <circle cx={p[0]} cy={p[1]} r="13" fill="none" stroke="var(--bc)" opacity="0.35">
               <animate attributeName="r" values="11;22;11" dur="2.6s" repeatCount="indefinite" />
@@ -232,25 +218,25 @@ const WorldMap = React.memo(function WorldMap({ layers, onTip, onPick }) {
         const p = P(s.lng, s.lat);
         return (
           <g key={name} className="map-node" onClick={() => onPick(name)}
-            onMouseEnter={() => onTip({ b: "Source country", tone: "import", text: s.label + ", " + (s.hov || s.tip), who: s.who })} onMouseLeave={() => onTip(null)}>
+            onMouseEnter={() => onTip({ b: "Source country", text: s.label + " — " + s.tip, who: s.who })} onMouseLeave={() => onTip(null)}>
             <circle cx={p[0]} cy={p[1]} r="3.5" fill="var(--accent)" />
             <text x={p[0] + (s.dx || 0)} y={p[1] + (s.dy || -7)} textAnchor={s.anchor || "middle"}>{s.label}</text>
           </g>
         );
       })}
-      {/* in-country assets, revealed on zoom */}
+      {/* in-country assets — revealed on zoom */}
       {showAssets && RD.assets.map((a) => {
         const p = P(a.lng, a.lat); const io = ASSET_IO[a.id]; const L = ASSET_LABEL[a.id] || {};
         return (
           <g key={a.id} className="asset-node map-node" onClick={() => onPick("asset:" + a.id)}
-            onMouseEnter={() => onTip({ b: "UAE asset · " + a.kind, text: a.name + ", " + a.note, who: io })} onMouseLeave={() => onTip(null)}>
+            onMouseEnter={() => onTip({ b: "UAE asset · " + a.kind, text: a.name + " — " + a.note, who: io })} onMouseLeave={() => onTip(null)}>
             <circle cx={p[0]} cy={p[1]} r="4.5" fill={ASSET_FILL[a.kind] || "var(--accent)"} stroke="var(--panel-2)" strokeWidth="1.2" />
             <text x={p[0] + (L.dx || 0)} y={p[1] + (L.dy != null ? L.dy : -8)} textAnchor={L.anchor || "middle"}>{L.short || a.name}</text>
           </g>
         );
       })}
       {/* hub */}
-      <g className="map-node" onMouseEnter={() => onTip({ b: "National hub", text: GEO_SRC["United Arab Emirates"].hov, who: GEO_SRC["United Arab Emirates"].who })} onMouseLeave={() => onTip(null)}>
+      <g className="map-node" onMouseEnter={() => onTip({ b: "National hub", text: GEO_SRC["United Arab Emirates"].tip, who: GEO_SRC["United Arab Emirates"].who })} onMouseLeave={() => onTip(null)}>
         <circle cx={hubS[0]} cy={hubS[1]} r="16" className="ring" stroke="var(--accent)" opacity="0.4">
           <animate attributeName="r" values="13;26;13" dur="3s" repeatCount="indefinite" />
           <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite" />
@@ -274,13 +260,13 @@ function uaeProj(lng, lat) {
   return [(lng - UAE_BB.lonMin) / (UAE_BB.lonMax - UAE_BB.lonMin) * UAE_BB.w, (UAE_BB.latMax - lat) / (UAE_BB.latMax - UAE_BB.latMin) * UAE_BB.h];
 }
 const UAE_DLABEL = {
-  jebelali: { short: "Jebel Ali Port", dx: -11, dy: 4, anchor: "end" },
-  dubaiwater: { short: "Dubai network", dx: 12, dy: 15, anchor: "start" },
+  jebelali: { short: "Jebel Ali Port", dx: 0, dy: -11, anchor: "middle" },
+  dubaiwater: { short: "Dubai network", dx: 12, dy: 4, anchor: "start" },
   taweelah: { short: "Taweelah desal.", dx: -12, dy: -2, anchor: "end" },
   barakah: { short: "Barakah nuclear", dx: 0, dy: 20, anchor: "middle" },
   ruwais: { short: "Ruwais refinery", dx: -12, dy: 2, anchor: "end" },
   fujairah: { short: "Fujairah terminal", dx: 0, dy: -12, anchor: "middle" },
-  portrashid: { short: "Port Rashid", dx: 12, dy: -8, anchor: "start" },
+  portrashid: { short: "Port Rashid", dx: 12, dy: -6, anchor: "start" },
 };
 const UAEDetail = React.memo(function UAEDetail({ onTip, onPick }) {
   const [geo, setGeo] = useState(null);
@@ -303,22 +289,22 @@ const UAEDetail = React.memo(function UAEDetail({ onTip, onPick }) {
     <svg className="uae-detail" viewBox={`0 0 ${UAE_BB.w} ${UAE_BB.h}`} style={{ width: "100%", display: "block" }} onMouseLeave={() => onTip(null)}>
       <defs><marker id="mk-uae" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,3 L0,6 Z" fill="var(--accent)" /></marker>
       <marker id="mk-uae-out" markerWidth="8" markerHeight="8" refX="5.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L5.5,3 L0,6 Z" fill="var(--gold)" /></marker></defs>
-      <rect width={UAE_BB.w} height={UAE_BB.h} fill="color-mix(in srgb, var(--accent) 7%, var(--panel-2))" />
+      <rect width={UAE_BB.w} height={UAE_BB.h} fill="var(--panel-2)" />
       {paths.map((p) => <path key={p.name} className={"geo-land" + (p.name === "United Arab Emirates" ? " src" : "")} d={p.d}
-        onMouseEnter={p.name !== "United Arab Emirates" ? () => onTip({ b: "Neighbor", text: p.name }) : undefined} onMouseLeave={() => onTip(null)} />)}
+        onMouseEnter={p.name !== "United Arab Emirates" ? () => onTip({ b: "Neighbour", text: p.name }) : undefined} onMouseLeave={() => onTip(null)} />)}
       {/* inbound flows for context */}
       <path className="flow-arc import" d={gas} markerEnd="url(#mk-uae)" strokeWidth="3.8" />
       <path className="flow-pulse import casc-pulse" d={gas} strokeWidth="3.8" />
       <path className="flow-arc import" d={sea} markerEnd="url(#mk-uae)" strokeWidth="2.4" />
       <path className="flow-pulse import casc-pulse" d={sea} strokeWidth="2.4" />
-      {/* outbound, Fujairah crude export, the Hormuz bypass */}
+      {/* outbound — Fujairah crude export, the Hormuz bypass */}
       <path className="flow-arc export" d={bypass} markerEnd="url(#mk-uae-out)" strokeWidth="3.4" style={{ opacity: 0.85 }} />
       <path className="flow-pulse export casc-pulse" d={bypass} strokeWidth="3.4" />
       <text x={oman[0] - 22} y={oman[1] - 12} textAnchor="end" style={{ fill: "var(--gold)", fontWeight: 600 }}>Crude export → Asia</text>
       <text x={oman[0] - 22} y={oman[1] + 2} textAnchor="end" style={{ fill: "var(--gold)", opacity: 0.8 }}>bypasses the Strait of Hormuz</text>
       {/* Hormuz */}
       <g className="map-node band-critical" onClick={() => onPick("choke:hormuz")}
-        onMouseEnter={() => { const hzc = RD.chokepoints.find((c) => c.id === "hormuz"); onTip({ b: "Chokepoint · " + hzc.band.toUpperCase(), text: "Strait of Hormuz, " + hzc.vessels + " of " + hzc.baseline + " transit calls/day", who: "−" + hzc.drop + "% vs. 12-month norm" }); }} onMouseLeave={() => onTip(null)}>
+        onMouseEnter={() => { const hzc = RD.chokepoints.find((c) => c.id === "hormuz"); onTip({ b: "Chokepoint · " + hzc.band.toUpperCase(), text: "Strait of Hormuz — " + hzc.vessels + " of " + hzc.baseline + " transit calls/day", who: "−" + hzc.drop + "% vs. 12-month norm" }); }} onMouseLeave={() => onTip(null)}>
         <rect x={hz[0] - 7} y={hz[1] - 7} width="14" height="14" rx="2" fill="var(--bc)" transform={`rotate(45 ${hz[0]} ${hz[1]})`} />
         <text x={hz[0]} y={hz[1] - 14} textAnchor="middle">Hormuz</text>
       </g>
@@ -328,7 +314,7 @@ const UAEDetail = React.memo(function UAEDetail({ onTip, onPick }) {
         const p = uaeProj(a.lng, a.lat); const L = UAE_DLABEL[a.id] || {}; const io = ASSET_IO[a.id];
         return (
           <g key={a.id} className="asset-node map-node" onClick={() => onPick("asset:" + a.id)}
-            onMouseEnter={() => onTip({ b: "UAE asset · " + a.kind, text: a.name + ", " + a.note, who: io })} onMouseLeave={() => onTip(null)}>
+            onMouseEnter={() => onTip({ b: "UAE asset · " + a.kind, text: a.name + " — " + a.note, who: io })} onMouseLeave={() => onTip(null)}>
             <circle cx={p[0]} cy={p[1]} r="7" fill={ASSET_FILL[a.kind] || "var(--accent)"} stroke="var(--panel-2)" strokeWidth="1.6" />
             <text x={p[0] + (L.dx || 0)} y={p[1] + (L.dy != null ? L.dy : -11)} textAnchor={L.anchor || "middle"}>{L.short || a.name}</text>
           </g>
@@ -352,13 +338,13 @@ function MapView() {
       return explain({ kicker: "Chokepoint", title: c.name, text: c.note, formula: c.real ? "Pressure  =  1 − (7-day avg transits / 12-month norm)" : "Pressure  =  1 − (today / baseline)",
         inputs: [{ k: "Transits", v: c.vessels + " / " + c.baseline + " per day", src: "ais" }, { k: "Drop", v: "−" + c.drop + "%" }],
         assumption: c.real
-          ? "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm, never an absolute count."
+          ? "Real IMF PortWatch transit calls (satellite AIS), smoothed to a 7-day average and judged against this strait's own 12-month busy-period norm — never an absolute count."
           : "Judged against this strait's own baseline, never an absolute count." });
     }
     if (id.startsWith("asset:")) {
       const a = RD.assets.find((x) => x.id === id.slice(6));
-      return explain({ kicker: "UAE strategic asset", title: a.name, text: a.note,
-        inputs: [{ k: "Type", v: a.kind }, { k: "Criticality", v: Math.round(a.weight * 100) + " / 100" }],
+      return explain({ kicker: "UAE strategic asset", title: a.name, text: a.note + (ASSET_IO[a.id] ? ".  " + ASSET_IO[a.id] : ""),
+        inputs: [{ k: "Type", v: a.kind }, { k: "Criticality", v: Math.round(a.weight * 100) + " / 100" }, { k: "Location", v: a.lat.toFixed(2) + "°N, " + a.lng.toFixed(2) + "°E" }],
         assumption: "Asset criticality weights are curated from public capacity data, not operational throughput." });
     }
     const s = GEO_SRC[id]; if (!s) return;
@@ -369,10 +355,10 @@ function MapView() {
   return (
     <div className="view fade-in">
       <div className="view-head">
-        <div className="view-title">Supply map</div>
-        <div className="view-sub">Where the UAE sits in the world's supply web. Each line is a dependency: <b>blue flows in</b> (imports), <b>gold &amp; green flow out</b> (export &amp; transit), because the UAE is a hub, not an endpoint. Hover anything for why it matters, click for the full logic, and <b>zoom into the UAE to reveal its strategic assets and ports</b>.</div>
+        <div className="view-title">Global dependency map</div>
+        <div className="view-sub">Where the UAE sits in the world's supply web. Each line is a dependency — <b>blue flows in</b> (imports, line thickness ~ relative import weight), <b>gold &amp; green flow out</b> (export &amp; transit) — because the UAE is a hub, not an endpoint. Hover anything for why it matters, click for the full logic, and <b>zoom into the UAE to reveal its strategic assets and ports</b>.</div>
       </div>
-      <Panel title="Supply map" icon="map" label="LIVE FLOWS · ZOOM · HOVER TO EXPLAIN"
+      <Panel title="Global dependency map" icon="map" label="LIVE FLOWS · ZOOM · HOVER TO EXPLAIN"
         right={<div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
           {[["imports", "Imports"], ["exports", "Export · transit"], ["countries", "Countries"], ["chokes", "Chokepoints"]].map(([k, l]) => (
             <button key={k} className={`dir-btn ${layers[k] ? "active" : ""}`} onClick={() => t(k)}>{l}</button>
@@ -381,7 +367,7 @@ function MapView() {
         <div className="map-stage" onMouseMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); setPos({ x: e.clientX - r.left, y: e.clientY - r.top }); }}>
           <WorldMap layers={layers} onTip={setTip} onPick={onPick} />
           {tip && <div className="map-tip" style={{ left: pos.x, top: pos.y }}>
-            {tip.b && <b style={{ color: TIP_TONE[tip.tone] || "var(--accent)" }}>{tip.b}</b>}{tip.text}{tip.who && <span className="who2">{tip.who}</span>}
+            {tip.b && <b>{tip.b}</b>}{tip.text}{tip.who && <span className="who2">{tip.who}</span>}
           </div>}
         </div>
         <div className="flow-legend" style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
@@ -393,10 +379,10 @@ function MapView() {
         </div>
       </Panel>
 
-      <Panel title="UAE detail, strategic assets &amp; ports" icon="map" label="ZOOMED TO THE EMIRATES" style={{ marginTop: 16 }}>
+      <Panel title="UAE detail — strategic assets &amp; ports" icon="map" label="ZOOMED TO THE EMIRATES" style={{ marginTop: 16 }}>
         <div className="map-stage" onMouseMove={(e) => { const r = e.currentTarget.getBoundingClientRect(); setPos2({ x: e.clientX - r.left, y: e.clientY - r.top }); }}>
           <UAEDetail onTip={setTip2} onPick={onPick} />
-          {tip2 && <div className="map-tip" style={{ left: pos2.x, top: pos2.y }}>{tip2.b && <b style={{ color: TIP_TONE[tip2.tone] || "var(--accent)" }}>{tip2.b}</b>}{tip2.text}{tip2.who && <span className="who2">{tip2.who}</span>}</div>}
+          {tip2 && <div className="map-tip" style={{ left: pos2.x, top: pos2.y }}>{tip2.b && <b>{tip2.b}</b>}{tip2.text}{tip2.who && <span className="who2">{tip2.who}</span>}</div>}
         </div>
         <div className="flow-legend" style={{ marginTop: 10, paddingTop: 14, borderTop: "1px solid var(--line)" }}>
           <span className="legend-i"><span className="sw" style={{ background: "var(--accent)" }}></span>Port</span>
@@ -417,11 +403,11 @@ function MapView() {
               <span className="helper" style={{ flex: 1 }}>{a.note}</span>
             </div>
           ))}
-          <div className="helper" style={{ paddingTop: 10, marginTop: 2 }}>Color = asset type (matches the map) · fainter = lower criticality weight.</div>
+          <div className="helper" style={{ paddingTop: 10, marginTop: 2 }}>Colour = asset type (matches the map) · fainter = lower criticality weight.</div>
         </Panel>
         <Panel title="Reading the map" icon="info">
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[["Why a hub, not a list", "~60% of imports (est.) land at Jebel Ali and re-export across the region, so dependency runs both ways, inbound and outbound."],
+            {[["Why a hub, not a list", "~60% of imports (est.) land at Jebel Ali and re-export across the region — so dependency runs both ways, inbound and outbound."],
               ["Flows inherit chokepoint risk", "Any line routed through Hormuz, Bab-el-Mandeb or Suez carries that chokepoint's live pressure into the sectors it feeds."],
               ["Distance ≠ safety", "Taiwan is far but single-sourced; Qatar is next door but pipeline-locked. Proximity tells you nothing about fragility."]].map(([h, d], i) => (
               <div key={i}>
@@ -441,21 +427,21 @@ function DependenciesView({ initial }) {
   LIVE.useLiveTick();
   const [filter, setFilter] = useState((initial && initial.sector) || "all");
   const [q, setQ] = useState("");
-  const list = RD.precursors.filter((p) => (filter === "all" || p.sector === filter) && p.name.toLowerCase().includes(q.toLowerCase())).slice().sort((a, b) => b.dri - a.dri);
+  const list = RD.precursors.filter((p) => (filter === "all" || p.sector === filter) && p.name.toLowerCase().includes(q.toLowerCase()));
   const [selId, setSelId] = useState((initial && initial.import) || (list[0] ? list[0].id : "ro"));
   const sel = RD.precursors.find((p) => p.id === selId) || RD.precursors[0];
   const dims = [
-    ["concentration", "Source concentration", "How few suppliers or countries provide it. The fewer the sources, the higher the score."],
-    ["substitutability", "Substitution difficulty", "How hard it is to switch if the source is cut, both technical fit and the time to qualify an alternative. No real alternative scores high."],
-    ["route", "Route exposure", "How much the shipment must pass through a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). Chokepoint-locked routes score high."],
-    ["counterpart", "Counterpart risk", "How reliably the supplier will keep selling, the risk it turns unwilling or unable to (conflict, sanctions, export controls)."],
+    ["concentration", "Source concentration", "How few suppliers or countries provide it today. One dominant source scores high — all your eggs in one basket right now."],
+    ["substitutability", "Substitution difficulty", "If that source is cut, how hard it is to switch — technical fit plus time to qualify or retool an alternative. No viable alternative scores high."],
+    ["route", "Route exposure", "How much the physical shipment depends on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). Chokepoint-locked routes score high."],
+    ["counterpart", "Counterpart risk", "Political and sanctions reliability of the supplier — the chance it becomes unwilling or unable to sell (conflict, sanctions, export controls)."],
   ];
   const sectorBand = RD.band(100 - sel.dri).key;
   return (
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Dependencies</div>
-        <div className="view-sub">The {RD.precursors.length} critical imports the whole model rests on. Each carries a Dependency Risk Index (DRI), built from its four supply dimensions and how thin its buffer is, plus a national-consequence weight. The breakdown below shows both parts; a higher number means more fragile.</div>
+        <div className="view-sub">The {RD.precursors.length} critical imports the whole model rests on. Each carries a Dependency Risk Index (DRI) — a route-weighted blend of its supply dimensions <i>plus</i> a buffer / reaction-time fragility — and a national-consequence weight. The breakdown below shows both parts, all scored so that <b>higher always means more fragile</b>.</div>
       </div>
       <div className="grid cols-2" style={{ gridTemplateColumns: "0.85fr 1.4fr", alignItems: "start" }}>
         <Panel title="Critical imports" icon="chain" label={list.length + " SHOWN"}>
@@ -494,15 +480,15 @@ function DependenciesView({ initial }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>
               <div className="kpi"><span className="kpi-v mono">{sel.dri}</span><span className="kpi-l">DRI / 100 <Fx payload={{
                 kicker: "Dependency Risk Index", title: "How DRI is built",
-                text: "DRI scores how fragile a single import is, from two parts. Structural fragility blends the four supply dimensions above (Route carries the most weight, since a shipment locked to a contested chokepoint is the hardest risk to avoid). Buffer fragility adds reaction time: a thin buffer is a fragility on its own, which is why gas (30-day buffer) and nuclear fuel (540-day) differ even when their dimensions look alike.",
-                formula: "DRI = 0.67 × structural fragility + 0.33 × buffer fragility, every input on the same 0–100 scale.  Structural = 0.34·Route + 0.22·Concentration + 0.22·Substitution + 0.22·Counterpart.  Buffer = (1 − min(buffer / 180d, 1)) × 100",
+                text: "DRI scores how fragile a single import is, from two parts. STRUCTURAL fragility blends the four supply dimensions — Route carries the largest weight, because a contested-chokepoint shipment is a higher-severity risk than the other axes. BUFFER fragility adds the missing half: the buffer is your reaction time, so a thin buffer is itself a fragility (Dolphin's 30 days and LEU's 540 are not the same risk even with similar dimensions).",
+                formula: "DRI = 0.67 × structural fragility + 0.33 × buffer fragility — every input on the same 0–100 scale.  Structural = 0.34·Route + 0.22·Concentration + 0.22·Substitution + 0.22·Counterpart.  Buffer = (1 − min(buffer / 180d, 1)) × 100",
                 inputs: [
-                  ...dims.map(([k, l, def]) => ({ k: l + (k === "route" ? " (weight 0.34)" : " (weight 0.22)"), v: sel.dims[k] + " / 100, " + def })),
-                  { k: "Structural fragility", v: sel.driStruct + " / 100, route-weighted blend of the four dimensions" },
-                  { k: "Buffer fragility", v: sel.driBuffer + " / 100, from a " + sel.buffer + "-day buffer vs a 180-day reaction horizon" },
+                  ...dims.map(([k, l, def]) => ({ k: l + (k === "route" ? " (weight 0.34)" : " (weight 0.22)"), v: sel.dims[k] + " / 100 — " + def })),
+                  { k: "Structural fragility", v: sel.driStruct + " / 100 — route-weighted blend of the four dimensions" },
+                  { k: "Buffer fragility", v: sel.driBuffer + " / 100 — from a " + sel.buffer + "-day buffer vs a 180-day reaction horizon" },
                   { k: "DRI", v: "0.67 × " + sel.driStruct + "  +  0.33 × " + sel.driBuffer + "  =  " + sel.dri + " / 100" },
                 ],
-                assumption: "Buffer fragility falls to zero once cover passes ~180 days, the point where stock is no longer what limits you. The route weight and the 180-day horizon can be adjusted.",
+                assumption: "All five inputs sit on the same 0–100 fragility scale; the weights just set how much each counts — 0.34/0.22 across the four dimensions, then 0.67/0.33 between the structural and buffer halves. Route carries the largest dimension weight because chokepoint exposure is a higher-severity, harder-to-mitigate risk. The buffer term treats reaction time as a first-class fragility: zero only past ~180 days of cover, the point where stock is no longer the binding constraint. Both the 0.34 route weight and the 180-day horizon are tunable model assumptions.",
                 links: [
                   { label: "How DRI rolls up into its sector score · Overview", view: "overview" },
                   { label: "Weights & horizons · Assumptions ledger", view: "methodology" },
@@ -510,25 +496,25 @@ function DependenciesView({ initial }) {
               }} /></span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.buffer}</span><span className="kpi-l">Buffer days{sel.bufferProv ? " · " + (sel.bufferProv.t === "stated" ? "stated" : "est.") : ""}</span></div>
               <div className="kpi"><span className="kpi-v mono">{sel.consequence.toFixed(2)}</span><span className="kpi-l" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>Consequence weight <Fx payload={{
-                kicker: "Consequence · computed", title: sel.name + ", national consequence",
-                text: "How much losing this import would hurt the nation, computed, not assigned. A blend of four publicly-grounded factors (each 0–1), so the weight moves only when the underlying reality does. It scales this import's pull on its sector score and on Absorb capacity.",
+                kicker: "Consequence · computed", title: sel.name + " — national consequence",
+                text: "How much losing this import would hurt the nation — computed, not assigned. A blend of four publicly-grounded factors (each 0–1), so the weight moves only when the underlying reality does. It scales this import's pull on its sector score and on Absorb capacity.",
                 formula: "Consequence  =  0.40·Essentiality + 0.25·Service reliance + 0.20·Immediacy + 0.15·Breadth",
                 inputs: [
-                  { k: "Essentiality", v: sel.cfac.ess.toFixed(2) + ", how vital the end-service is (does life/economy stop?)" },
-                  { k: "Service reliance", v: sel.cfac.svc.toFixed(2) + ", share of that service riding on this input" },
-                  { k: "Immediacy", v: sel.cfac.imm.toFixed(2) + ", does a cut bite in days (continuous supply) or slowly (stock that runs down over months)" },
-                  { k: "Breadth", v: sel.cfac.brd.toFixed(2) + ", sectors & population the loss would touch" },
+                  { k: "Essentiality", v: sel.cfac.ess.toFixed(2) + " — how vital the end-service is (does life/economy stop?)" },
+                  { k: "Service reliance", v: sel.cfac.svc.toFixed(2) + " — share of that service riding on this input" },
+                  { k: "Immediacy", v: sel.cfac.imm.toFixed(2) + " — continuous-flow (fails fast) vs slow-burn consumable" },
+                  { k: "Breadth", v: sel.cfac.brd.toFixed(2) + " — sectors & population the loss would touch" },
                   { k: "Weighted result", v: sel.consequence.toFixed(2) + " / 1.00" },
                 ],
-                assumption: "The 0.40/0.25/0.20/0.15 weights are editable; essentiality dominates because an input feeding a non-essential service can't be a top national consequence however concentrated its supply. Distinct from DRI: DRI scores SUPPLIER fragility (can we get it?); consequence scores national importance (how bad if we can't?).",
+                assumption: "The four factors are scored from public, documented facts — demand shares, which end-service the input feeds, and whether the need is continuous. The 0.40/0.25/0.20/0.15 weights are editable; essentiality dominates because an input feeding a non-essential service can't be a top national consequence however concentrated its supply. Distinct from DRI: DRI scores SUPPLIER fragility (can we get it?); consequence scores national importance (how bad if we can't?).",
                 links: [
                   { label: "Where this weight is used · Overview sector grid", view: "overview" },
-                  { label: "Responses that lower this risk · Sector responses", view: "act" },
+                  { label: "Responses that lower this risk · Response & pre-mortem", view: "act" },
                 ],
               }} /></span></div>
               <div className="kpi"><span className="kpi-v" style={{ fontSize: 15, fontFamily: "var(--font-display)" }}>{RD.sectors.find((s) => s.id === sel.sector).name}</span><span className="kpi-l">Sector</span></div>
             </div>
-            <h4 style={{ fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--faint)", marginBottom: 12 }}>DRI breakdown, structural dimensions + buffer <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--faint)", fontWeight: 400 }}>(higher = more fragile)</span></h4>
+            <h4 style={{ fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--faint)", marginBottom: 12 }}>DRI breakdown — structural dimensions + buffer <span style={{ textTransform: "none", letterSpacing: 0, color: "var(--faint)", fontWeight: 400 }}>(higher = more fragile)</span></h4>
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               {dims.map(([k, l, def]) => {
                 const v = sel.dims[k]; const b = RD.band(100 - v).key;
@@ -552,10 +538,10 @@ function DependenciesView({ initial }) {
                       <div className="bar-track" style={{ height: 7 }}><div className="bar-fill" style={{ width: bf + "%" }}></div></div>
                       <div className="helper" style={{ marginTop: 5, lineHeight: 1.45 }}>{
                         bf <= 0
-                          ? "The " + sel.buffer + "-day buffer is longer than the ~180 days needed to re-source, so it adds no fragility, there is ample time to react before stock runs out."
+                          ? "The " + sel.buffer + "-day buffer exceeds the ~180-day reaction horizon, so it adds no fragility — there is ample time to re-source before stock runs out."
                           : bf >= 70
-                          ? "A thin " + sel.buffer + "-day buffer leaves little time to react, a major fragility on its own (" + Math.round(bf) + "/100)."
-                          : "The " + sel.buffer + "-day buffer gives partial reaction time, a moderate fragility (" + Math.round(bf) + "/100) that eases toward zero as cover nears ~180 days."
+                          ? "A thin " + sel.buffer + "-day buffer leaves little time to react, so it is a major fragility in its own right (" + Math.round(bf) + "/100)."
+                          : "The " + sel.buffer + "-day buffer gives partial reaction time — a moderate fragility (" + Math.round(bf) + "/100), easing toward zero as cover approaches ~180 days."
                       }</div>
                     </div>
                     <span className="mono" style={{ fontSize: 12, textAlign: "right" }}>{Math.round(bf)}</span>
@@ -570,23 +556,23 @@ function DependenciesView({ initial }) {
                 <div className={`band-${c.band}`} style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 9, padding: "10px 12px", border: "1px solid var(--line)", borderLeft: "3px solid var(--bc)", borderRadius: "var(--radius)", background: "var(--panel-2)" }}>
                   <span className="live-dot"></span>
                   <span style={{ fontSize: 12.5, lineHeight: 1.5 }}>
-                    <b>Live counterpart signal</b>, {c.events} conflict-coded news reports on {c.country} over the last 30 days. Real conflict in this source's territory is raising counterpart risk now, above the curated baseline.
+                    <b>Live counterpart signal</b> — {c.events} battle / remote-violence events in {c.country} over the last 30 days. Real conflict in this source's territory is raising counterpart risk now, above the curated baseline.
                   </span>
                   <span style={{ marginLeft: "auto" }}><SourceTag src="acled" /></span>
                 </div>
               );
             })()}
             {(() => {
-              const pn = LIVE.partnerNewsFor(sel.source, sel.newsPartner);
+              const pn = LIVE.partnerNewsFor(sel.source);
               if (!pn.tracked) return null;
               const pct = Math.round((pn.score || 0) * 100);
               return (
                 <div className={`band-${pn.band}`} style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 9, padding: "10px 12px", border: "1px solid var(--line)", borderLeft: "3px solid var(--bc)", borderRadius: "var(--radius)", background: "var(--panel-2)" }}>
                   <span className="live-dot"></span>
                   <span style={{ fontSize: 12.5, lineHeight: 1.5 }}>
-                    <b>Live partner-supply signal</b>, {pn.live ? (pct > 5
+                    <b>Live partner-supply signal</b> — {pn.live ? (pct > 5
                       ? "supply-disruption coverage on " + pn.partner.replace(/^./, (m) => m.toUpperCase()) + " is running " + pct + "% above normal, lifting counterpart risk above the curated baseline now."
-                      : "coverage on " + pn.partner.replace(/^./, (m) => m.toUpperCase()) + " is at/below normal, no adverse pressure above the curated baseline right now.")
+                      : "coverage on " + pn.partner.replace(/^./, (m) => m.toUpperCase()) + " is at/below normal — no adverse pressure above the curated baseline right now.")
                       : "watched via the news monitor; the feed is connecting, so this falls back to the curated counterpart score."}
                   </span>
                   <span style={{ marginLeft: "auto" }}><SourceTag src="gdelt" /></span>
@@ -599,11 +585,11 @@ function DependenciesView({ initial }) {
               <span className="pill"><span className="sq" style={{ background: "var(--accent)" }}></span>Source: {sel.source}</span>
             </div>
             <p className="muted" style={{ fontSize: 13, lineHeight: 1.6, marginTop: 6 }}>{sel.note}</p>
-            {sel.bufferProv && <p className="helper" style={{ marginTop: 6 }}><b style={{ color: "var(--muted)" }}>Buffer ({sel.buffer}d), {sel.bufferProv.t === "stated" ? "stated policy" : "analyst estimate"}:</b> {sel.bufferProv.n}</p>}
+            {sel.bufferProv && <p className="helper" style={{ marginTop: 6 }}><b style={{ color: "var(--muted)" }}>Buffer ({sel.buffer}d) — {sel.bufferProv.t === "stated" ? "stated policy" : "analyst estimate"}:</b> {sel.bufferProv.n}</p>}
           </Panel>
 
           {sel.id === "chips" && (
-            <Panel title="Cascade timeline, if cut off today" icon="cascade" label="90-DAY BUFFER">
+            <Panel title="Cascade timeline — if cut off today" icon="cascade" label="90-DAY BUFFER">
               <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                 {RD.chipTimeline.map((c, i) => (
                   <div key={i} className={`band-${c.band}`} style={{ display: "flex", gap: 14, padding: "12px 0", borderBottom: i < 2 ? "1px solid var(--line)" : "none" }}>
@@ -631,7 +617,7 @@ function ControlView() {
     <div className="view fade-in">
       <div className="view-head">
         <div className="view-title">Control layer</div>
-        <div className="view-sub">The levers the state can pull in a crisis: sovereign capital, assets held abroad, treaty and supply agreements, the workforce that runs critical infrastructure, and the national reserves sitting behind essential supply.</div>
+        <div className="view-sub">The levers the state can actually pull — sovereign capital, assets held abroad, agreements, treaty obligations, the workforce that runs critical infrastructure, and the national reserves held behind essential supply.</div>
       </div>
       <div className="grid" style={{ gridTemplateColumns: "repeat(4,1fr)", marginBottom: 16 }}>
         {[
@@ -661,21 +647,16 @@ function ControlView() {
             ))}</tbody></table>
         )}
         {tab === "foreign" && (
-          <React.Fragment>
-          <table className="tbl"><thead><tr><th>Asset</th><th>Country</th><th>Host risk</th><th title="How much of the asset's value counts as reliably deployable resilience once discounted for host-country risk">Effective reduction</th></tr></thead>
+          <table className="tbl"><thead><tr><th>Asset</th><th>Country</th><th>Host risk</th><th>Effective reduction</th></tr></thead>
             <tbody>{RD.foreignAssets.map((v) => {
               const b = v.host === "Low" ? "good" : v.host === "Medium" ? "moderate" : "high";
               return <tr key={v.name}><td style={{ fontWeight: 600 }}>{v.name}</td><td className="muted">{v.country}</td>
                 <td><span className={`tag-band band-${b}`}><span></span>{v.host}</span></td><td className="mono">{v.eff.toFixed(2)}×</td></tr>;
             })}</tbody></table>
-          <div className="helper" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)", lineHeight: 1.55 }}>
-            <b>Host risk</b> is how exposed each asset is to the politics of the country it sits in (Low / Medium / High). <b>Effective reduction</b> is the resulting haircut: the fraction of the asset's value the UAE can count on in a crisis, once that host risk is discounted. 1.00× would be fully reliable; 0.70× means about 30% is discounted as at-risk under stress. Higher host risk → lower multiplier. These are curated judgements, not market prices.
-          </div>
-          </React.Fragment>
         )}
         {tab === "agreements" && (
           <React.Fragment>
-          <table className="tbl"><thead><tr><th>Agreement</th><th>Partner</th><th>Expiry</th><th>Status</th><th>Partner conflict · GDELT</th></tr></thead>
+          <table className="tbl"><thead><tr><th>Agreement</th><th>Partner</th><th>Expiry</th><th>Status</th><th>Partner conflict · ACLED</th></tr></thead>
             <tbody>{RD.agreements.map((v) => {
               const c = LIVE.conflictFor(v.partner);
               return (
@@ -685,10 +666,10 @@ function ControlView() {
                 <td><span className="mono" style={{ color: v.urgent ? "var(--high)" : "var(--ink)" }}>{v.expiry}{v.urgent && " ⚠"}</span></td>
                 <td><span className={`tag-band band-${v.status === "Active" ? "good" : "high"}`}><span></span>{v.status}</span></td>
                 <td>{!c.live
-                  ? <span className="helper" title="This partner uses the curated counterpart baseline.">sim</span>
+                  ? <span className="helper" title="ACLED not connected — set credentials to make partner conflict risk live.">sim</span>
                   : c.tracked
-                    ? <span className={`tag-band band-${c.band}`} title={`${c.events} conflict-coded news reports on ${c.country} over the last 30 days (GDELT).`}><span></span>{c.events} reports / 30d</span>
-                    : <span className="tag-band band-good" title="No tracked conflict coverage in this partner's territory (GDELT)."><span></span>calm</span>}</td></tr>
+                    ? <span className={`tag-band band-${c.band}`} title={`${c.events} battle / remote-violence events in ${c.country} over the last 30 days (ACLED).`}><span></span>{c.events} events / 30d</span>
+                    : <span className="tag-band band-good" title="No tracked conflict events in this partner's territory (ACLED)."><span></span>calm</span>}</td></tr>
               );
             })}</tbody></table>
           <div className="helper" style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6 }}>
@@ -704,7 +685,7 @@ function ControlView() {
               return <tr key={v.skill}><td style={{ fontWeight: 600 }}>{v.skill}</td><td className="muted mono" style={{ fontSize: 11.5 }}>{v.origin}</td>
                 <td><span className={`tag-band band-${b}`}><span></span>{v.risk}</span></td></tr>;
             })}</tbody></table>
-          <div className="helper" style={{ marginTop: 10, lineHeight: 1.55 }}>Risk reflects how concentrated a critical role is in one origin country: HIGH means a single country supplies over half the workforce for a function that can't be paused or quickly backfilled (grid, desalination). Origin splits are analyst estimates assembled from public labor reporting — no official dataset publishes this breakdown at this precision.</div>
+          <div className="helper" style={{ marginTop: 10 }}>Origin splits are analyst estimates assembled from public labour reporting — no official dataset publishes this breakdown at this precision.</div>
           </React.Fragment>
         )}
         {tab === "obligations" && (
@@ -742,6 +723,7 @@ function ReservesRow() {
                   { k: "Strategic reserve", v: RD.water.days + " days · essential supply" },
                   { k: "Public sources", v: (<span style={{ display: "inline-flex", flexWrap: "wrap", gap: "6px 12px" }}>{RD.water.evidence.map((e, i) => (<a key={i} className="drawer-link" href={e.url} target="_blank" rel="noopener noreferrer">{e.label} ↗</a>))}</span>) },
                 ],
+                assumption: "The 90-day figure is the emergency essential-supply duration — a deep safety net behind normal operations. Day-to-day demand is met from operational storage, with the strategic reserve held in reserve behind it.",
               }} />
             </span>
           </div>
@@ -749,23 +731,23 @@ function ReservesRow() {
             <div className="bar-fill band-good" style={{ width: "100%", background: "var(--good)" }}></div>
           </div>
           <div className="note-card" style={{ marginTop: 16 }}>
-            Held across two aquifer stores: Abu Dhabi's <b>Liwa Strategic Water Reserve</b> and Dubai's <b>DEWA Aquifer Storage &amp; Recovery</b>. Open the breakdown for how the reserve is sourced.
+            The UAE operates <b>90-day strategic desalinated-water reserves</b> — Abu Dhabi's <b>Liwa Strategic Water Reserve</b>
+            {" "}(the world's largest desalinated-water aquifer store) and Dubai's <b>DEWA Aquifer Storage &amp; Recovery</b> (the
+            world's largest potable ASR). These cover essential supply for up to 90 days, with day-to-day demand met from
+            operational storage — a deep safety net held behind normal operations.
           </div>
         </Panel>
         <Panel title="Health supply snapshot" icon="ops">
           <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-            {[["Active pharmaceutical ingredients (APIs)", RD.health.apis, "high"], ["Vaccines", RD.health.vaccines, "good"], ["Medical devices", RD.health.devices, "high"], ["Hospital capacity", RD.health.beds, "good"]].map(([k, v, b]) => (
+            {[["APIs", RD.health.apis, "high"], ["Vaccines", RD.health.vaccines, "good"], ["Medical devices", RD.health.devices, "high"], ["Hospital capacity", RD.health.beds, "good"]].map(([k, v, b]) => (
               <div key={k} className={`band-${b}`} style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--bc)", flex: "0 0 auto" }}></span>
-                <span style={{ fontSize: 12.5, fontWeight: 600, width: 148, flex: "0 0 auto", lineHeight: 1.3 }}>{k}</span>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--bc)" }}></span>
+                <span style={{ fontSize: 12.5, fontWeight: 600, minWidth: 120 }}>{k}</span>
                 <span className="helper" style={{ flex: 1 }}>{v}</span>
               </div>
             ))}
           </div>
-          <div className="note-card assume" style={{ marginTop: 14 }}>
-            <div>{RD.health.threshold}</div>
-            <div className="helper" style={{ marginTop: 5, lineHeight: 1.5 }}>A curated clinical planning floor, not a computed figure: the minimum days of cover for ICU consumables below which intensive-care delivery is compromised.</div>
-          </div>
+          <div className="note-card assume" style={{ marginTop: 14 }}>{RD.health.threshold}</div>
         </Panel>
       </div>
   );
@@ -806,22 +788,22 @@ function MaturityRow() {
         <Panel title="Measured episodes" icon="check" label={logLive ? "SHARED LOG · LIVE" : "SHARED LOG · CONNECTING"}
           right={<Fx payload={{
             kicker: "Validation · measured, not asserted", title: "How the track record is built",
-            text: "The system watches its own score around the clock and keeps a permanent record of every real disruption. When the live score falls 3 or more points below its recent normal, an episode opens; when the score recovers, it closes. Each closed episode records what was measured, how far the score fell, how long the fall took, how long recovery took, which driver caused it, and whether the news signal moved before the shipping signal (the early-warning lead time). Episodes only count when at least 3 data feeds are live, so simulated readings can never enter the record. The log is stored centrally and is identical for every visitor.",
+            text: "The system watches its own score around the clock and keeps a permanent record of every real disruption. When the live score falls 3 or more points below its recent normal, an episode opens; when the score recovers, it closes. Each closed episode records what was measured — how far the score fell, how long the fall took, how long recovery took, which driver caused it, and whether the news signal moved before the shipping signal (the early-warning lead time). Episodes only count when at least 3 data feeds are live, so simulated readings can never enter the record. The log is stored centrally and is identical for every visitor.",
             formula: "open: live < baseline − 3 (≥3 live feeds) · close: live ≥ baseline − 1 · peak drop = baseline − min(live)",
             inputs: [
               { k: "Episodes recorded", v: String(eps.length) },
               { k: "Monitoring cadence", v: "every 6 hours around the clock; every 10 minutes while the dashboard is open" },
               { k: "Storage", v: "one central log, shared by all visitors" },
-              { k: "Integrity", v: "episode rules run centrally, no visitor can alter or invent history" },
+              { k: "Integrity", v: "episode rules run centrally — no visitor can alter or invent history" },
             ],
-            assumption: "The 3-point open / 1-point close thresholds are editable, stated assumptions. The log starts empty with no seeded history.",
+            assumption: "The 3-point open / 1-point close thresholds and the ≥3-live-feeds rule are stated model assumptions. The log starts empty and only fills as real disruptions occur — no seeded history.",
           }} />}>
           {eps.length === 0 && !open ? (
-            <div className="empty" style={{ padding: "18px 0" }}>No episodes recorded yet, the shared log fills as real disruptions occur. {logLive ? "The detector is live." : "Connecting to the log…"}</div>
+            <div className="empty" style={{ padding: "18px 0" }}>No episodes recorded yet — the shared log fills as real disruptions occur. {logLive ? "The detector is live." : "Connecting to the log…"}</div>
           ) : (
             <table className="tbl"><thead><tr><th>Episode</th><th>Peak drop</th><th>Recovery</th><th>News lead</th></tr></thead>
               <tbody>
-                {open && <tr><td style={{ fontWeight: 600 }}>{fmtD(open.start)}, ongoing · {DRIVER_LABEL[open.topDriver] || open.topDriver}</td><td className="mono" style={{ color: "var(--high)" }}>−{open.dropSoFar} so far</td><td className="mono">—</td><td className="mono">—</td></tr>}
+                {open && <tr><td style={{ fontWeight: 600 }}>{fmtD(open.start)} — ongoing · {DRIVER_LABEL[open.topDriver] || open.topDriver}</td><td className="mono" style={{ color: "var(--high)" }}>−{open.dropSoFar} so far</td><td className="mono">—</td><td className="mono">—</td></tr>}
                 {eps.slice(-6).reverse().map((e, i) => (
                   <tr key={i}><td style={{ fontWeight: 600 }}>{fmtD(e.start)} · {DRIVER_LABEL[e.topDriver] || e.topDriver}</td>
                     <td className="mono">−{e.peakDrop} pts · {e.daysToPeak}d</td>
@@ -834,10 +816,10 @@ function MaturityRow() {
         <Panel title="Calibration anchors" icon="gauge" label="SCENARIO SEVERITY vs MEASURED"
           right={<Fx payload={{
             kicker: "Calibration", title: "How measured episodes recalibrate the model",
-            text: "Each scenario's severity is a stress-test assumption, not a prediction, so it is graded here as a calibration anchor: when a real episode of the same kind occurs (matched by chokepoint context or dominant driver), its measured peak drop is compared to the anchor. Close agreement raises confidence in the drag weights; a large gap produces a concrete correction, Apply scales the live drag layer by measured ÷ anchor (clamped 0.5–1.5×), per-browser and revertable, and the active multiplier is disclosed here and in the assumptions ledger.",
+            text: "Each scenario's severity is a stress-test assumption, not a prediction — so it is graded here as a calibration anchor: when a real episode of the same kind occurs (matched by chokepoint context or dominant driver), its measured peak drop is compared to the anchor. Close agreement raises confidence in the drag weights; a large gap produces a concrete correction — Apply scales the live drag layer by measured ÷ anchor (clamped 0.5–1.5×), per-browser and revertable, and the active multiplier is disclosed here and in the assumptions ledger.",
             formula: "grade(|anchor − measured|): ≤3 HIGH · ≤7 MODERATE · else LOW · apply: drag × (measured ÷ |anchor|)",
             inputs: anchors.map((a) => ({ k: a.name, v: a.ep ? "anchor " + a.predicted + " · measured −" + a.ep.peakDrop : "anchor " + a.predicted + " · awaiting a measured episode" })),
-            assumption: "Scenario sector deltas stay curated, calibration tunes the LIVE drag layer only. The grade thresholds (3 / 7 pts) are stated assumptions.",
+            assumption: "Scenario sector deltas stay curated — calibration tunes the LIVE drag layer only. The grade thresholds (3 / 7 pts) are stated assumptions.",
           }} />}>
           <table className="tbl"><thead><tr><th>Scenario anchor</th><th>Anchor</th><th>Measured</th><th>Fit</th></tr></thead>
             <tbody>{anchors.map((a) => {
@@ -851,8 +833,8 @@ function MaturityRow() {
             })}</tbody></table>
           <div className="helper" style={{ marginTop: 10, lineHeight: 1.5 }}>
             {calib
-              ? <>Calibration <b>×{calib.dragScale}</b> applied to the live drag layer, basis: {calib.basis}. <button className="drawer-link" style={{ fontSize: 11.5, background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => LIVE.setCalibration(null)}>revert to ×1.0</button></>
-              : "No calibration applied, the live drag layer runs at its stated weights (×1.0). Apply becomes available once a matching episode is measured."}
+              ? <>Calibration <b>×{calib.dragScale}</b> applied to the live drag layer — basis: {calib.basis}. <button className="drawer-link" style={{ fontSize: 11.5, background: "none", border: "none", cursor: "pointer", padding: 0 }} onClick={() => LIVE.setCalibration(null)}>revert to ×1.0</button></>
+              : "No calibration applied — the live drag layer runs at its stated weights (×1.0). Apply becomes available once a matching episode is measured."}
           </div>
         </Panel>
         </div>
@@ -877,52 +859,54 @@ function MaturityRow() {
 /* ---------- Methodology (explainability home) --------------------------- */
 function MethodologyView() {
   const qs = [
-    { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation. Structural Resilience is the slow-moving ceiling, your fundamentals, built from three capacities (Absorb, Recover, Adapt) set against the most-exposed sector. Live Resilience is that ceiling minus today's active load, and climbs back toward it as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm." },
-    { n: "2", t: "What is the DRI, and how is it built?", d: "The Dependency Risk Index scores one import's fragility, 0–100, from five inputs on the same scale. Structural fragility (0.67 of the score) blends four supply dimensions (source concentration, substitution difficulty, route exposure and counterpart risk), with Route weighted highest (0.34 vs 0.22 each) because chokepoint dependence is the hardest risk to mitigate. Buffer fragility (0.33) adds reaction time: a thin buffer is itself a fragility, which is why Dolphin gas (30-day buffer) and LEU fuel (540-day) score very differently despite comparable dimensions." },
-    { n: "3", t: "How is consequence weighting calculated?", d: "It is computed, not assigned: a blend of four publicly-grounded factors (Essentiality, Service reliance, Immediacy and Breadth) combined as 0.40·ess + 0.25·svc + 0.20·imm + 0.15·brd. Piped gas scores " + RD.precursors.find((p) => p.id === "gas").consequence.toFixed(2) + " (continuous, universal); gold doré " + RD.precursors.find((p) => p.id === "golddore").consequence.toFixed(2) + " (a refining margin, narrow). The weight scales each import's pull on its sector score and on Absorb capacity; open any import in Dependencies to see its four factors. Distinct from the DRI, which scores supplier fragility, not national importance." },
-    { n: "4", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, route & partner-supply news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying which of the three tiers it came from." },
-    { n: "5", t: "Does the system recommend actions?", d: "Yes, the Sector responses view holds a ranked queue of national responses. Each is a concrete implementation brief, what gets built, where, with which technology and partners, anchored to a real precedent project with cost and timeline grounded in it. The one decision per response is scope: three tiers, from quick stopgap to full build. Live tiers improve today's score; ceiling tiers raise the structural ceiling." },
-    { n: "6", t: "What happens when a live feed is unreachable?", d: "The system never quietly substitutes invented data for measured data. Each feed is marked ● Live in the status bar while connected; if a source goes down, that one signal falls back to a clearly-marked simulation (○ Sim) anchored to its last known values, and the driver attribution on the Overview keeps showing exactly which inputs are measured and which are modeled." },
-    { n: "7", t: "Why do the scores show a ± range?", d: "A single fixed number implies precision the model does not have, so every headline and sector score is shown with a ± range, the band you see on each score track. The range comes from re-running the whole model with each editable assumption pushed to the high and low ends of what's reasonable; the widest swings set its width. Open any score's explainer to see that range broken down, how far it moves, a plain-language confidence read, and which assumptions move it most, longest bar first, so a tighter range is a more settled score." },
-    { n: "8", t: "Why is gas modeled as two prices, not one?", d: "Because the UAE lives in two gas-price worlds at once. Contracted Dolphin gas is a fixed ~$1.50/MMBtu floor; its replacement if curtailed is sea-borne LNG at ~12.5% of Brent (~$12 today). Losing Dolphin is a price-basis flip, roughly an 8× reprice, not a volume gap. Henry Hub (US gas, ~$3) is the wrong price basis for the UAE and is not used." },
+    { n: "1", t: "Why two scores, not one?", d: "They are a baseline and its live deviation, not two rival readings. Structural Resilience is the slow-moving ceiling — your fundamentals. Live Resilience is that ceiling minus today's active load, and tracks toward it: live strength climbs back to what your fundamentals allow as conditions settle. The gap between them tells you whether a low number is a deep structural problem or a passing storm. Structural Resilience itself breaks into three capacities — Absorb, Recover and Adapt — measured against your most-exposed sector." },
+    { n: "2", t: "What is the DRI — and how is it built?", d: "The Dependency Risk Index scores how fragile a single import is from five inputs — the four supply dimensions plus the buffer — all on the same 0–100 fragility scale, so the weights are the only thing that differs. Structural fragility (0.67 of the score) blends the four supply dimensions, with Route carrying the largest weight — 0.34 against 0.22 each for the others, because dependence on a contested maritime chokepoint is a higher-severity, harder-to-mitigate risk. — Source concentration: how few suppliers provide it today. — Substitution difficulty: how hard it is to switch if that source is cut. — Route exposure: dependence on a contested chokepoint (Hormuz, Bab-el-Mandeb, Suez). — Counterpart risk: the chance the supplier becomes unwilling or unable to sell. Buffer fragility (0.33 of the score) adds the half a dims-only index misses: the buffer is your reaction time, so a thin buffer is itself a fragility — full credit only past ~180 days of cover. That is why Dolphin gas (30-day buffer) and LEU fuel (540-day) land at very different DRIs even with comparable dimensions." },
+    { n: "3", t: "What does non-compensatory mean?", d: "Strong sectors cannot average away a more-exposed one — and the rule applies at both levels. Within a sector, the anchor import — the one with the highest DRI × consequence, the most fragile import that matters — carries 60% of the sector score. Nationally, Structural Resilience anchors to the most-exposed sector — 60% most-exposed + 40% overall capacity — so one concentrated dependency stays visible behind healthy ones, while still reading the full picture." },
+    { n: "4", t: "How is consequence weighting calculated?", d: "It is computed, not assigned. Each import's 0–1 national-consequence weight is a blend of four publicly-grounded factors — Essentiality (how vital the end-service is), Service reliance (how much of that service rides on this input), Immediacy (continuous-flow vs slow-burn consumable) and Breadth (sectors and population touched) — combined as 0.40·ess + 0.25·svc + 0.20·imm + 0.15·brd. Piped gas scores 1.00 (powers electricity and desalination, continuous, universal); gold doré ~0.23 (a refining margin, narrow). The weight then scales each dependency's pull on its sector score and on Absorb capacity, so it moves only when the underlying facts move. Open any import on the Dependencies view to see its four factors. Distinct from the DRI, which scores supplier fragility, not national importance." },
+    { n: "5", t: "Where do the numbers come from?", d: "Three tiers: live public feeds (ship transits, route & partner-supply news, weather, markets, sanctions, conflict), hand-curated open-source datasets, and explicitly stated assumptions. Every figure carries a source tag identifying its tier, and the status bar shows whether each live feed is currently connected (● Live) or temporarily simulated (○ Sim)." },
+    { n: "6", t: "Does the system recommend actions?", d: "Yes — the Response & pre-mortem view closes the loop from sense → simulate → act. It holds a ranked queue of national responses. Each one is a concrete implementation brief — what gets built, where, with which technology and partners — anchored to a real precedent project and its actual cost and timeline. The one decision per response is how far to go: three scope tiers, from quick stopgap to full build. Live tiers improve today's score; ceiling tiers raise the structural ceiling. Priority ranks the problem, not the plan you pick: it blends how weak the sector is (its DRI), how much the recommended fix would recover, and any time-pressure the weakness can't show on its own — weakness leads. Speed and value-for-money aren't in the ranking; they're the lens for the scope decision." },
+    { n: "7", t: "What is a pre-mortem?", d: "A post-mortem asks why something failed after the fact; a pre-mortem flips the timeline — it assumes a response has already failed and works backwards to explain how, surfacing weak points before you commit. Every recommendation carries one: the named ways it could fail, each with a likelihood, the leading indicator to watch, and a mitigation. A recommendation is only as trustworthy as its failure modes." },
+    { n: "8", t: "What happens when a live feed is unreachable?", d: "The system never quietly substitutes invented data for measured data. Each feed is marked ● Live in the status bar while connected; if a source goes down, that one signal falls back to a clearly-marked simulation (○ Sim) anchored to its last known values — and the driver attribution on the Overview keeps showing exactly which inputs are measured and which are modelled." },
+    { n: "9", t: "Why do the scores show a range and a confidence label?", d: "Complex systems carry real uncertainty, and a single fixed number can imply a precision the model does not have. So every headline and sector score shows a ± range and a confidence label alongside the central value. The range is built by re-running the whole model with each editable assumption — the 0.60 exposure anchor, the 90-day Absorb benchmark, the sovereign-buffer sub-score, the consequence weights and the DRI scores — nudged to the high and low ends of what's reasonable, then seeing how far the score moves. Open any score's explainer to see the ‘what moves it most’ chart: the assumptions are ranked by how much each one widens the range, so you can see where the uncertainty comes from and which one to pin down first. A tighter range earns a higher confidence label." },
+    { n: "10", t: "Why is gas modelled as two prices, not one?", d: "Because the UAE lives in two gas-price worlds at once, and a single market print hides the real risk. Contracted Dolphin gas is a fixed ~$1.50/MMBtu floor; the molecule that would replace it if Dolphin were curtailed is sea-borne LNG, priced off oil at ~12.5% of Brent (~$12 today). Losing Dolphin is therefore a price-basis flip from contract to oil-linked — roughly an 8× reprice of the marginal gas — not a volume gap against a buffer. The dashboard deliberately does not use Henry Hub (US gas, ~$3): it is the wrong price basis for the UAE." },
   ];
   const STEPS = [
-    { t: "Score each import's fragility, the DRI", f: "DRI = 0.67 × route-weighted supply fragility + 0.33 × buffer fragility",
-      d: "We track " + RD.precursors.length + " supplies the UAE cannot function without (gas, desalination membranes, medicines, chips, dollar-clearing and more). Each gets a 0–100 fragility score from four supply dimensions: source concentration, substitution difficulty, route exposure (the most heavily weighted, because shipping chokepoints are the UAE's defining exposure) and counterpart risk, plus its stockpile buffer, because a thin buffer means no time to react.", where: "Dependencies → DRI" },
+    { t: "Score each import's fragility — the DRI", f: "DRI = 0.67 × route-weighted supply fragility + 0.33 × buffer fragility",
+      d: "We track " + RD.precursors.length + " supplies the UAE cannot function without — gas, desalination membranes, medicines, chips, dollar-clearing and more. Each gets a 0–100 fragility score from four supply dimensions — source concentration, substitution difficulty, route exposure (the most heavily weighted, because shipping chokepoints are the UAE's defining exposure) and counterpart risk — plus its stockpile buffer, because a thin buffer means no time to react.", where: "Dependencies → DRI" },
     { t: "Weigh each import's consequence", f: "Consequence = 0.40 essentiality + 0.25 service reliance + 0.20 immediacy + 0.15 breadth",
-      d: "Fragility alone isn't risk, a shaky supply of something trivial doesn't matter. Each import also gets a 0–1 weight for how badly the nation would feel its loss.", where: "Dependencies → Consequence" },
+      d: "Fragility alone isn't risk — a shaky supply of something trivial doesn't matter. Each import also gets a 0–1 weight for how badly the nation would feel its loss.", where: "Dependencies → Consequence" },
     { t: "Roll imports up into 7 sector scores", f: "Sector = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean) · anchor = highest DRI × consequence",
-      d: "A sector's score anchors to its riskiest import, the most fragile one that matters most carries 60%, with the consequence-weighted average of all its imports as the other 40%. Non-compensatory: one critical dependency can never hide behind a portfolio of safer ones.", where: "Overview → Sector resilience" },
-    { t: "Set the calm-day ceiling, Structural Resilience", f: "Structural = 0.60 × most-exposed sector + 0.40 × capacity (Absorb · Recover · Adapt)",
-      d: "The same weakest-link rule, one level up: the single most-exposed sector carries 60%, blended with the country's coping capacity, buffers vs a 90-day benchmark, sovereign firepower and substitutability, and the depth and speed of each sector's structural plan. This is fair-weather strength; it moves monthly, not daily.", where: "Overview → Structural Resilience" },
-    { t: "Subtract today's measured pressure, Live Resilience", f: "Live = ceiling − (throughput + route news + partner news + sea state + market stress + sanctions drift)",
-      d: "Six drag terms, each measured from a live public feed and individually capped, subtract from the ceiling to give strength right now. The gap between the two scores is today's pressure, and exactly where the Response queue points.", where: "Overview → Live Resilience · Response" },
+      d: "A sector's score anchors to its riskiest import — the most fragile one that matters most carries 60% — with the consequence-weighted average of all its imports as the other 40%. Non-compensatory: one critical dependency can never hide behind a portfolio of safer ones.", where: "Overview → Sector resilience" },
+    { t: "Set the calm-day ceiling — Structural Resilience", f: "Structural = 0.60 × most-exposed sector + 0.40 × capacity (Absorb · Recover · Adapt)",
+      d: "The same weakest-link rule, one level up: the single most-exposed sector carries 60%, blended with the country's coping capacity — buffers vs a 90-day benchmark, sovereign firepower and substitutability, and the depth and speed of each sector's structural plan. This is fair-weather strength; it moves monthly, not daily.", where: "Overview → Structural Resilience" },
+    { t: "Subtract today's measured pressure — Live Resilience", f: "Live = ceiling − (throughput + route news + partner news + sea state + market stress + sanctions drift)",
+      d: "Six drag terms, each measured from a live public feed and individually capped, subtract from the ceiling to give strength right now. The gap between the two scores is today's pressure — and exactly where the Response queue points.", where: "Overview → Live Resilience · Response" },
   ];
   const GLOSS = [
-    ["DRI", "Dependency Risk Index, a 0–100 fragility score for one import. Higher means shakier supply."],
+    ["Structural Resilience", "Fair-weather strength — how well the country copes on a calm day. Slow to change."],
+    ["Live Resilience", "Strength right now, after today's events. Moves day to day."],
+    ["The gap", "Today's pressure — how far live strength has dropped below fair-weather strength."],
+    ["DRI", "Dependency Risk Index — a 0–100 fragility score for one import. Higher means shakier supply."],
     ["Consequence", "How badly losing an import would hurt the nation, scored 0 to 1."],
     ["Buffer", "How many days the country can keep going on existing stock if a supply stops."],
-    ["Non-compensatory", "A strong sector can't offset a more-exposed one: the weakest link sets the score, not the average."],
-    ["Sector resilience", "A 0–100 strength score per sector: 100 minus its anchored fragility. The anchor import's DRI carries 60%, the consequence-weighted average of all its imports 40%. The anchor is the import with the highest DRI × consequence, so the weak link that matters sets the score. Runs opposite to DRI, higher is stronger, so the lowest-scoring sector is the most at risk."],
+    ["Sector resilience", "A 0–100 strength score per sector: 100 minus its anchored fragility — the anchor import's DRI carries 60%, the consequence-weighted average of all its imports 40%. The anchor is the import with the highest DRI × consequence, so the weak link that matters always shows. Runs opposite to DRI — higher is stronger, so the lowest-scoring sector is the most at risk."],
     ["Absorb · Recover · Adapt", "The three ways a country copes: take a hit, bounce back, and cut future risk."],
-    ["Structural Resilience", "Fair-weather strength, how well the country copes on a calm day. Slow to change."],
-    ["Live Resilience", "Strength right now, after today's events. Moves day to day."],
-    ["The gap", "Today's pressure, how far live strength sits below fair-weather strength."],
+    ["Non-compensatory", "A strong sector can't hide a weak one — the weakest link always shows in the score."],
     ["Cascade", "A timeline of what would break first if a shock hit, as buffers run down."],
-    ["Pre-mortem", "Imagining a plan has already failed and asking why, to catch weak points before committing."],
+    ["Pre-mortem", "Imagining a plan has already failed and asking why — to catch weak points before committing."],
     ["Live / Sim", "Live = a real data feed is connected. Sim = that feed is down, showing a last-known stand-in."],
   ];
   return (
     <div className="view fade-in">
       <div className="view-head">
-        <div className="view-title">How it works</div>
-        <div className="view-sub">The whole model, laid bare, an illustrative, transparent example, not an official or classified assessment. Nothing here is a black box.</div>
+        <div className="view-title">How this works</div>
+        <div className="view-sub">The whole model, laid bare — an illustrative, transparent example, not an official or classified assessment. Nothing here is a black box.</div>
       </div>
 
       <div style={{ marginBottom: 22 }}>
         <Panel title="The model in five steps" icon="layers" label="START HERE · PLAIN ENGLISH">
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6, margin: "0 0 18px", maxWidth: 900 }}>
-            Every number on this platform is built the same way, from the ground up, five formulas, each consuming the one below. In one sentence: <b style={{ color: "var(--ink)" }}>score what's fragile, weight it by what matters, never let averages hide the weak link, set the calm-day ceiling, subtract today's measured pressure.</b>
+            Every number on this platform is built the same way, from the ground up — five formulas, each consuming the one below. In one sentence: <b style={{ color: "var(--ink)" }}>score what's fragile, weight it by what matters, never let averages hide the weak link, set the calm-day ceiling, subtract today's measured pressure.</b>
           </p>
           <div>
             {STEPS.map((s, i) => (
@@ -961,47 +945,44 @@ function MethodologyView() {
 
       <div style={{ marginBottom: 22 }}>
         <div className="view-head" style={{ marginBottom: 6 }}>
-          <div className="view-title" style={{ fontSize: 19 }}>How the model has performed, and what's left to build</div>
+          <div className="view-title" style={{ fontSize: 19 }}>How the model has performed — and what's left to build</div>
           <div className="view-sub">A measured track record: disruption episodes are detected and recorded by a shared server-side log, then compared against the scenario severities as calibration anchors. This is commentary on the model itself, not on the UAE.</div>
         </div>
         <MaturityRow />
       </div>
 
       <div style={{ marginBottom: 22 }}>
-        <Panel title="Methodology lineage: what this model is built on" icon="book" label="NO SINGLE GLOBAL STANDARD">
+        <Panel title="Methodology lineage — what this model is built on" icon="book" label="NO SINGLE GLOBAL STANDARD">
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.6, margin: "0 0 20px", maxWidth: 980 }}>
-            <span style={{ fontStyle: "italic", color: "var(--faint)" }}>Not essential reading: this section is here to show the model's academic roots.</span> There is <b>no single binding international standard</b> for measuring national resilience, the field is a
-            fragmented ecosystem of competing frameworks: NIST's Resilience Indicator Inventory alone systematically cataloged <b>56 distinct resilience frameworks</b> (<a href="https://nvlpubs.nist.gov/nistpubs/jres/126/jres.126.031.pdf" target="_blank" rel="noopener" className="src-link">Loerzel &amp; Dillard, 2021</a>). So this model can't borrow authority by conforming to one
-            standard. Instead its design deliberately follows the logic of the recognized frameworks below, and where it
+            <span style={{ fontStyle: "italic", color: "var(--faint)" }}>Not essential reading — this section is here to show the model's academic roots.</span> There is <b>no single binding international standard</b> for measuring national resilience — the field is a
+            fragmented ecosystem of competing frameworks, and published reviews have catalogued <b>18+ distinct measures</b>. So this model can't borrow authority by conforming to one
+            standard. Instead its design deliberately follows the logic of the recognised frameworks below — and where it
             invents (the anchored 0–100 scale, the band thresholds) it says so.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 22, marginBottom: 22 }}>
             {[
               ["Institutional guidance", [
-                ["OECD", "Resilience systems analysis (2014); review of national risk assessments across 20 countries (2017)", "https://www.oecd.org/en/publications/guidelines-for-resilience-systems-analysis-how-to-analyze-risk-and-build-a-roadmap-to-resilience_3b1d3efe-en.html"],
-                ["NIST", "Inventory of community-resilience indicators & assessment frameworks", "https://www.nist.gov/community-resilience/assessment-products"],
-                ["UK Cabinet Office", "National Risk Register & Resilience Action Plan, dynamic risk assessment", "https://www.gov.uk/government/publications/national-risk-register-2025"],
-                ["ISO 22316 / 22301", "Organizational resilience & business continuity (adjacent, org-level, not a national standard)", "https://www.iso.org/standard/75106.html"],
+                ["OECD", "Resilience systems analysis (2014); review of national risk assessments across 20 countries (2017)"],
+                ["NIST", "Inventory of community-resilience indicators & assessment frameworks"],
+                ["UK Cabinet Office", "National Risk Register & Resilience Action Plan — dynamic risk assessment"],
+                ["ISO 22316 / 22301", "Organizational resilience & business continuity (adjacent, org-level — not a national standard)"],
               ]],
               ["National-resilience indices", [
-                ["State Resilience Index", "Fund for Peace, capacities & capabilities across 154 countries", "https://fundforpeace.org/SRI/about.html"],
-                ["MVLRI", "Multidimensional Vulnerability & Lack of Resilience, 26 indicators, econ/env/social", "https://ideas.repec.org/p/zbw/glodps/1558.html"],
-                ["Index of Future Readiness", "2025, splits resilience (“bounce back”) from adaptive capacity (“bounce forward”)", "https://arxiv.org/abs/2509.00755"],
+                ["State Resilience Index", "Fund for Peace — capacities & capabilities across 154 countries"],
+                ["MVLRI", "Multidimensional Vulnerability & Lack of Resilience — 26 indicators, econ/env/social"],
+                ["Index of Future Readiness", "2025 — splits resilience (“bounce back”) from adaptive capacity (“bounce forward”)"],
               ]],
               ["Domain models", [
-                ["Bruneau et al. (4 R's)", "Earthquake Spectra 19(4), 2003, the seminal resilience-engineering frame: robustness, redundancy, resourcefulness, rapidity", "https://doi.org/10.1193/1.1623497"],
-                ["FAO RIMA", "Resilience Index Measurement & Analysis, food-security resilience", "https://www.fao.org/agrifood-economics/areas-of-work/rima/en/"],
-                ["Resilient Economies Index", "2025, trade resilience for food/water/energy; import dependence weighted by partner diversity, HDI-adjusted", "https://gca.org/reports/resilient-economies-index/"],
+                ["FAO RIMA", "Resilience Index Measurement & Analysis — food-security resilience"],
+                ["Resilient Economies Index", "2025 — trade resilience for food/water/energy; import dependence weighted by partner diversity, HDI-adjusted"],
               ]],
             ].map(([group, items]) => (
               <div key={group}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--muted)", marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--line)" }}>{group}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-                  {items.map(([n, d, url]) => (
+                  {items.map(([n, d]) => (
                     <div key={n}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 2 }}>
-                        <a href={url} target="_blank" rel="noopener" className="src-link">{n}</a>
-                      </div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 2 }}>{n}</div>
                       <div className="helper" style={{ lineHeight: 1.45 }}>{d}</div>
                     </div>
                   ))}
@@ -1015,9 +996,8 @@ function MethodologyView() {
               {[
                 ["Resilience vs. adaptive capacity", "→ our Structural ceiling vs. Live deviation (per the IFR split)"],
                 ["Import dependence weighted by partner diversity", "→ our DRI (source concentration + substitution difficulty) (per the Resilient Economies Index)"],
-                ["Recover = rapidity + resourcefulness", "→ our Recover blend (financial firepower + re-sourcing ease) (per Bruneau's 4 R's)"],
-                ["Non-compensatory aggregation", "→ weakest-pillar anchoring, so one critical sector stays visible (per OECD/JRC composite-indicator guidance)"],
-                ["Buffers-and-flows propagation", "→ the cascade engine: each import carries a stated buffer in days (per FAO RIMA's buffer logic)"],
+                ["Non-compensatory aggregation", "→ weakest-pillar anchoring, so one critical sector stays visible"],
+                ["Buffers-and-flows propagation", "→ the cascade engine: each import carries a stated buffer in days"],
               ].map(([a, b]) => (
                 <div key={a} style={{ fontSize: 12.5, lineHeight: 1.5 }}>
                   <b style={{ fontWeight: 600 }}>{a}</b> <span className="muted">{b}</span>
@@ -1026,7 +1006,7 @@ function MethodologyView() {
             </div>
           </div>
           <div className="helper" style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-            Sources: OECD (2014, 2017) · NIST Resilience Indicator Inventory (<a href="https://nvlpubs.nist.gov/nistpubs/jres/126/jres.126.031.pdf" target="_blank" rel="noopener" className="src-link">Loerzel &amp; Dillard, 2021</a>) · UK Cabinet Office (2025) · Fund for Peace SRI · FAO RIMA · Bruneau et al., Earthquake Spectra 19(4) (2003) · Global Center on Adaptation, Resilient Economies Index (2025) · Jawad &amp; Sala-i-Martin, Index of Future Readiness (2025). Public frameworks named for lineage; this model is an independent illustrative synthesis, not an implementation of any one of them.
+            Sources: OECD (2014, 2017) · NIST · UK Cabinet Office (2025) · Fund for Peace SRI · FAO RIMA · Global Center on Adaptation, Resilient Economies Index (2025) · Jawad &amp; Sala-i-Martin, Index of Future Readiness (2025). Public frameworks named for lineage; this model is an independent illustrative synthesis, not an implementation of any one of them.
           </div>
         </Panel>
       </div>
@@ -1070,51 +1050,34 @@ function MethodologyView() {
             })}
           </Panel>
           <Panel title="Assumptions ledger" icon="book" label="EDITABLE">
-            {(() => {
-              const GROUPS = [
-                ["Scoring the imports & sectors", [
-                  "DRI = 0.67 × structural fragility (Route 0.34 · Concentration / Substitution / Counterpart 0.22 each) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)). The 180-day horizon is the time to re-source a dependency for good, so a buffer only fully removes fragility once it covers that window",
-                  "Sector = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean); anchor = highest DRI × consequence",
-                  "Buffer days are curated estimates ('est.') or reported policy ('stated'), provenance shown per import in Dependencies",
-                ]],
-                ["The two headline scores", [
-                  "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity (non-compensatory anchor)",
-                  "Capacity = equal-weight Absorb (consequence-weighted buffers vs a 90-day operational-cover benchmark) · Recover (sovereign firepower + re-sourcing ease) · Adapt (plan depth × speed; 2.5 pts & 24 months = full credit, no play = 0). Compensatory by design; scores stocks, money and plans only, redundancy, workforce and institutions are tracked qualitatively in the Control layer",
-                  "Financial firepower = 100 × min(liquidity-weighted deployable sovereign capital / $750bn benchmark, 1); liquidity factors 1.0 / 0.6 / 0.3; benchmark ≈ 18 months of the national import bill (est.)",
-                  "Axis goalposts: 100 = total self-sufficiency (unreachable); ~72 = realistic frontier, display anchors only, feeding no score",
-                  "Score uncertainty = each editable assumption nudged to its high and low ends; the wider the swing, the wider the ± range on the score",
-                ]],
-                ["Live load & feeds", [
-                  "Live Resilience = ceiling − active load (throughput + route news + partner news + sea state + market stress + sanctions drift); each term capped, total floored at 25",
-                  "Partner-supply news counts adverse-only coverage of single/few-source partners, scaled by the highest-consequence import riding on that partner",
-                  "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
-                  "Each news lane has a manually set 'normal' volume. Pressure = (last 2 days' volume ÷ baseline − 1) ÷ 2, capped at 1, so coverage must run 3× normal to register full pressure and one noisy lane can't swamp the score",
-                  "Trends compare stored score snapshots in this browser (24h / 30d); with no old-enough history the UI shows a dash, never a seed",
-                  "OFAC weekly 'new designations' is an illustrative stand-in; only the live total-entity-count drift enters the score",
-                  "Gas is a two-state node: ~$1.50/MMBtu contract floor (est.) vs marginal LNG ≈ 12.5% of Brent, a price-basis flip, not a volume gap; Henry Hub is not used",
-                ]],
-                ["Scenarios & validation", [
-                  "A scenario's overall = 0.60 × the worst-hit sector's drop + 0.40 × the average drop across sectors, always derived from the per-sector drops, never typed in. Only 'Combined Maximum' has hand-authored per-sector drops (a deliberate worst case)",
-                  "The episode log records genuine stress spells: one opens when Live drops 3+ points below baseline with 3+ feeds live, and closes once Live recovers to within 1 point",
-                ]],
-                ["Response engine", [
-                  "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure, each rescaled to its range across the queue",
-                  "Staging responses previews their combined effect. Each contributes a fixed number of points with no assumed interaction, so staged points add up; the resulting live score = today's live + staged points, capped at the (possibly raised) ceiling, relief now can't exceed the best score the system can structurally reach",
-                ]],
-              ];
-              let n = 0;
-              return GROUPS.map(([g, items]) => (
-                <div key={g} style={{ marginBottom: 6 }}>
-                  <div className="label" style={{ padding: "8px 0 2px" }}>{g}</div>
-                  {items.map((a) => { n++; return (
-                    <div key={a} style={{ display: "flex", gap: 10, padding: "7px 0", borderBottom: "1px solid var(--line)", fontSize: 12.5 }}>
-                      <span className="src assumption" style={{ flex: "0 0 auto" }}><span className="d"></span>A{n}</span>
-                      <span>{a}</span>
-                    </div>
-                  ); })}
-                </div>
-              ));
-            })()}
+            {[
+              "Structural Resilience = 0.60 × most-exposed sector + 0.40 × capacity (non-compensatory anchor)",
+              "Sector resilience = 100 − (0.6 × anchor DRI + 0.4 × consequence-weighted mean DRI); anchor = import with the highest DRI × consequence — the same weakest-link rule as the national headline, applied within each sector",
+              "Capacity = equal-weight Absorb (consequence-weighted buffers vs 90-day benchmark) · Recover (sovereign firepower + consequence-weighted re-sourcing ease) · Adapt (per-sector plan depth × speed from the response catalog, consequence-weighted — 2.5 ceiling-pts and 24 months = full credit; no structural play = 0)",
+              "Capacity is deliberately compensatory across its three components (they are complementary coping modes, not substitutable sectors) — and it scores stocks, money and plans only; infrastructure redundancy, workforce continuity, institutional response speed and alliance access are tracked qualitatively in the Control layer but do not enter the score",
+              "Live Resilience = Structural ceiling − today's active load (tracks toward it); active load = maritime throughput + trade-route news + partner-supply news + sea state + market stress + sanctions drift — each term individually capped so no single feed can swamp the score, and the total floored at 25",
+              "Partner-supply news = adverse-only coverage of single/few-source partners (Qatar gas, Taiwan chips, Kazakhstan uranium, China, India, Brazil/Argentina feed grain), scaled by the highest-consequence import riding on that partner and capped — moves Live Resilience, not the structural DRI",
+              "Structural axis goalpost: 100 = autarky (unreachable), ~72 = realistic-frontier marker — a display anchor only, feeds no score",
+              "Financial firepower = 100 × min(liquidity-weighted deployable sovereign capital / $750bn stress benchmark, 1) — deployable figures from the Control layer's sovereign table (~$2.1T verified AUM), liquidity factors High 1.0 / Medium 0.6 / Low 0.3; the benchmark ≈ 18 months of the national import bill (est.), an editable goalpost",
+              "Chokepoint baselines = each strait's own 12-month busy-period norm (90th-percentile daily transits)",
+              "Scenario overall = 0.60 × worst-hit sector delta + 0.40 × mean sector delta — computed from each scenario's sector deltas, never hand-set; Combined Maximum's deltas are a hand-authored worst-case vector",
+              "News-lane 'normal volume' baselines are hand-set per lane (route lanes are disruption-keyed; partner lanes adverse-only); pressure = (2-day volume / baseline − 1) / 2, capped — Google News returns at most ~100 items per lane, so extreme surges saturate",
+              "Headline & sector trends are measured against stored score snapshots in this browser (24h / 30d); with no old-enough history the trend shows a dash, never a seeded delta",
+              "OFAC weekly 'new designations' is an illustrative stand-in (no public delta feed); only the live total-entity-count drift enters the score",
+              "DRI = 0.67 × route-weighted dimension fragility (Route weight 0.34 vs 0.22 each for Concentration / Substitution / Counterpart) + 0.33 × buffer fragility (1 − min(buffer / 180d, 1)) — all five inputs on the same 0–100 scale — a thin buffer is itself a fragility because the buffer is your reaction time",
+              "Buffer days are curated estimates, not a live inventory feed — most are analyst order-of-magnitude judgements ('est.'); a few (nuclear fuel, strategic grain) reflect reported policy ('stated'). The tag and provenance show on each import in Dependencies.",
+              "Score uncertainty = how far each editable assumption (0.60 anchor, 90-day benchmark, sovereign firepower ±10, consequence weights, DRI ±4 — spanning the route weighting and 180-day buffer horizon) moves the score when nudged to its high and low ends; the wider the swing, the lower the confidence label",
+              "Gas is a two-state node: contracted Dolphin floor (~$1.50/MMBtu, reported estimate) vs marginal LNG ≈ 12.5% of Brent — losing Dolphin is a price-basis flip, not a volume gap; Henry Hub is not used",
+              "Episode log: a disruption episode opens when the live score falls 3+ pts below its recent baseline with ≥3 feeds live, and closes on recovery to within 1 pt — the rules run centrally on one shared log (monitored every 6 h around the clock, every 10 min while a dashboard is open), so the record is identical for all visitors and simulated readings never enter it",
+              "Calibration: a measured episode can be applied as a live-drag multiplier (measured ÷ anchor, clamped 0.5–1.5×) — per-browser, revertable, always disclosed in the validation panel; scenario sector deltas stay curated",
+              "Response priority = 0.50 weakness + 0.30 payoff + 0.20 time-pressure, each factor rescaled to its range across the queue so the stated weights hold in practice (speed & value-for-money inform the scope decision, not the ranking)",
+              "Response effects are independent & additive: Live′ = min(Ceiling′, live + staged points)",
+            ].map((a, i, arr) => (
+              <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: i < arr.length - 1 ? "1px solid var(--line)" : "none", fontSize: 12.5 }}>
+                <span className="src assumption" style={{ flex: "0 0 auto" }}><span className="d"></span>A{i + 1}</span>
+                <span>{a}</span>
+              </div>
+            ))}
           </Panel>
         </div>
       </div>

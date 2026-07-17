@@ -61,12 +61,9 @@ window.LIVE = (function () {
   RD.chokepoints.forEach((c) => { ckState[c.id] = c.vessels; });
 
   // leading-indicator anchors. fmt turns the number into the displayed value.
-  // NOTE: only Brent is animated here — it eases toward its real market feed.
-  // The OFAC "new designations" stat is an illustrative ASSUMPTION with no live
-  // delta feed, so it is deliberately NOT animated: a value badged "Assumption"
-  // must not jitter like live data. It holds at its stated value.
   const IND = {
     brent:      { anchor: 93.0, vol: 0.32, pull: 0.05, dp: 2, pre: "$", lo: 70,  hi: 130, pct: true, ref: 89.5 },
+    sanctions:  { anchor: 2.4,  vol: 0.45, pull: 0.10, dp: 0, pre: "",  lo: 0,   hi: 6,   pct: false, int: true, ref: 2.4 },
   };
   const indState = {};
   RD.indicators.forEach((i) => {
@@ -148,32 +145,6 @@ window.LIVE = (function () {
       }
     })();
 
-    // 2c) conflict intensity — leading indicator from the live GDELT feed.
-    // NOT a Live-score driver (the six drags are); this is forward-looking
-    // counterpart-risk context. Each state is judged against its OWN 30-day
-    // baseline so spikes are comparable across high- and low-volume states.
-    (function () {
-      const ind = RD.indicators.find((x) => x.id === "conflict");
-      if (!ind) return;
-      const acled = REAL.acled;
-      const isLive = REAL.status.acled === "live" && acled && acled.byCountry;
-      if (!isLive) { ind.status = "moderate"; ind.valueText = "—"; ind.statusText = "feed offline"; ind.states = []; return; }
-      const BASE = { Iran: 40000, Russia: 30000, Yemen: 1800, Sudan: 1400 };
-      const bandOf = (p) => p >= 0.66 ? "critical" : p >= 0.40 ? "high" : p > 0.15 ? "moderate" : "good";
-      const states = Object.keys(acled.byCountry).map((c) => {
-        const ratio = acled.byCountry[c] / (BASE[c] || acled.byCountry[c] || 1);
-        return { c: c, ratio: ratio, band: bandOf(clamp((ratio - 0.5) / 2, 0, 1)) };
-      }).sort((a, b) => b.ratio - a.ratio);
-      if (!states.length) return;
-      ind.states = states;
-      const top = states[0];
-      const pressure = clamp((top.ratio - 0.5) / 2, 0, 1);
-      ind.status = bandOf(pressure);
-      const pct = Math.round((top.ratio - 1) * 100);
-      ind.valueText = (pct >= 0 ? "+" : "") + pct + "%";
-      ind.statusText = top.c + " · vs normal";
-    })();
-
     // 3) Live Stress — decomposed into named drivers, real feeds add live drag
     const ck = {};
     RD.chokepoints.forEach((c) => { ck[c.id] = c.drop; });
@@ -205,15 +176,13 @@ window.LIVE = (function () {
     newsDrag = clamp(newsDrag, 0, 5);
 
     // (c2) partner-supply news — REAL (GDELT): above-normal ADVERSE coverage of a
-    // SUPPLY PARTNER's disruption, prioritized by supply concentration — the
-    // single- and few-source dependencies lead (Qatar gas, Kazakhstan fuel),
-    // then China processing, India APIs, the Brazil/Argentina feed-grain belt,
-    // and US export-control policy (the binding risk for chips AND the six
-    // other US-sourced precursors — RO membranes, ERD, turbines, water chems,
-    // GNSS, USD clearing). Negative-sentiment
+    // SUPPLY PARTNER's disruption, prioritised by supply concentration — the
+    // single- and few-source dependencies lead (Qatar gas, Taiwan chips,
+    // Kazakhstan fuel), then China processing, India APIs and the Brazil/
+    // Argentina feed-grain belt. Negative-sentiment
     // gated upstream, so positive coverage of the same topic adds no drag.
     // Weighted by the consequence of the imports that ride on each partner.
-    const PARTNER_LANES = { qatar: ["gas"], us: ["chips", "ro", "erd", "turbines", "waterchem", "gps", "usdclearing"], kazakhstan: ["leu"], china: ["solarpv", "libattery", "devices"], india: ["api"], feedgrain: ["feed"] };
+    const PARTNER_LANES = { qatar: ["gas"], taiwan: ["chips"], kazakhstan: ["leu"], china: ["solarpv", "libattery", "devices"], india: ["api"], feedgrain: ["feed"] };
     let partnerDrag = 0; const partnerHot = [];
     if (REAL.news) {
       for (const lane in PARTNER_LANES) {
@@ -254,8 +223,8 @@ window.LIVE = (function () {
     const pts = (v) => "−" + v.toFixed(2) + " pts";
     RD.headline.live.formula = "Live = ceiling − (throughput + route news + partner news + sea state + market stress + sanctions drift)" + (calScale !== 1 ? " × " + calScale.toFixed(2) + " calibration" : "");
     RD.headline.live.inputs = [
-      { k: "Structural ceiling", v: ceiling.toFixed(1) + ", the day's maximum, from the structural model", src: "curated" },
-      { k: "Maritime throughput", v: pts(throughputDrag) + " · transit calls vs each strait's 12-month norm; per % drop: Hormuz ×0.047 · Red Sea ×0.020 · Suez ×0.004", src: "ais" },
+      { k: "Structural ceiling", v: ceiling.toFixed(1) + " — the day's maximum, from the structural model", src: "curated" },
+      { k: "Maritime throughput", v: pts(throughputDrag) + " · transit calls vs each strait's 12-month norm, ×0.55/0.30/0.15 (Hormuz/Red Sea/Suez)", src: "ais" },
       { k: "Trade-route news", v: pts(newsDrag) + " · closure / conflict coverage above each route's normal volume", src: "gdelt" },
       { k: "Partner-supply news", v: pts(partnerDrag) + " · adverse coverage of single-source partners, negative-sentiment gated", src: "gdelt" },
       { k: "Sea state", v: pts(seaStateDrag) + " · wave height above 1.2 m on chokepoint approaches", src: "meteo" },
@@ -277,7 +246,7 @@ window.LIVE = (function () {
       const tv = vols.reduce((a, b) => a + b, 0);
       reads.gdelt = tv + " articles/2d \u00b7 " + (newsDrag > 0.05 ? "above-normal coverage" : "coverage at/below normal");
     }
-    reads.partner = REAL.news ? (partnerHot.length ? "above-normal: " + partnerHot.join(" \u00b7 ") : "partner coverage at/below normal") : "modeled baseline";
+    reads.partner = REAL.news ? (partnerHot.length ? "above-normal: " + partnerHot.join(" \u00b7 ") : "partner coverage at/below normal") : "feed connecting\u2026";
     if (REAL.meteo && REAL.meteo.sea) {
       let mx = 0;
       for (const id in REAL.meteo.sea) { const sv = REAL.meteo.sea[id]; if (sv && sv.wave != null) mx = Math.max(mx, sv.wave); }
@@ -344,29 +313,15 @@ window.LIVE = (function () {
   const CONFLICT_BAND = (p) => p >= 0.66 ? "critical" : p >= 0.40 ? "high" : p > 0.15 ? "moderate" : "good";
   // free-text source strings ("Canada / Russia") → ACLED country names we track
   const COUNTRY_ALIASES = { "russia": "Russia", "sudan": "Sudan", "yemen": "Yemen", "iran": "Iran" };
-  // Hand-set 30-day "normal" conflict-coverage baselines per country (GDELT article
-  // volume). Absolute volume isn't comparable across countries — Iran draws ~20×
-  // the ambient coverage of Sudan — so conflict pressure is measured against each
-  // country's OWN baseline, the same way the news lanes work. Editable estimates.
-  const CONFLICT_BASELINE = { Iran: 40000, Russia: 30000, Yemen: 1800, Sudan: 1400 };
   // partner-supply news lanes (GDELT) keyed by a substring of the import's source
-  const NEWS_PARTNER_ALIASES = { "qatar": "qatar", "taiwan": "taiwan", "kazakhstan": "kazakhstan", "china": "china", "india": "india", "united states": "us" };
+  const NEWS_PARTNER_ALIASES = { "qatar": "qatar", "taiwan": "taiwan", "kazakhstan": "kazakhstan", "china": "china", "india": "india" };
   // live news-pressure on a supply partner, for the Dependencies drawer. Returns
   // tracked:false when the import's source isn't a news-watched partner, so the
-  // UI falls back to the curated counterpart score honestly. `forceLane` lets a
-  // precursor watch a DIFFERENT partner than its displayed source country when
-  // that's where the real risk mechanism sits (e.g. chips: sourced from Taiwan,
-  // but the binding risk is US export-control policy, so it watches "us").
-  function partnerNewsFor(source, forceLane) {
+  // UI falls back to the curated counterpart score honestly.
+  function partnerNewsFor(source) {
     const hay = String(source || "").toLowerCase();
     const news = REAL.news;
     const liveOk = REAL.status.gdelt === "live" && !!news;
-    if (forceLane) {
-      const d = news && news[forceLane];
-      const label = forceLane === "us" ? "United States" : forceLane;
-      if (d && d.score != null) return { tracked: true, live: liveOk, lane: forceLane, score: d.score, vol: d.vol, band: CONFLICT_BAND(d.score), partner: label, headlines: d.headlines || [] };
-      return { tracked: true, live: false, lane: forceLane, score: 0, vol: null, band: "good", partner: label, headlines: [] };
-    }
     for (const key in NEWS_PARTNER_ALIASES) {
       if (hay.includes(key)) {
         const lane = NEWS_PARTNER_ALIASES[key];
@@ -389,14 +344,10 @@ window.LIVE = (function () {
       }
     }
     if (!matched.length) return { live: !!live, tracked: false, events: null, pressure: 0, band: "good", country: null };
-    // a precursor with several sources takes the most conflict-exposed one,
-    // ranked by how far each runs above its own baseline (not raw volume)
-    matched.forEach((m) => { m.ratio = m.events / (CONFLICT_BASELINE[m.country] || m.events || 1); });
-    matched.sort((a, b) => b.ratio - a.ratio);
+    // a precursor with several sources takes the most conflict-exposed one
+    matched.sort((a, b) => b.events - a.events);
     const top = matched[0];
-    // pressure = deviation above this country's normal coverage. At baseline
-    // (ratio 1) ≈ 0.25 (moderate); 1.5× ≈ high; 2×+ ≈ critical; below half ≈ calm.
-    const pressure = Math.max(0, Math.min(1, (top.ratio - 0.5) / 2));
+    const pressure = Math.max(0, Math.min(1, Math.log10(top.events + 1) / Math.log10(3000)));
     return { live: true, tracked: true, events: top.events, pressure, band: CONFLICT_BAND(pressure), country: top.country, since: acled.since };
   }
 
