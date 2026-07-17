@@ -19,6 +19,7 @@
 (function () {
   if (window.__MA_LOADED) return;
   window.__MA_LOADED = true;
+  try { if (localStorage.getItem("ma_exclude") === "1") return; } catch (e) {}
 
   var ENDPOINT = "/.netlify/functions/analytics";
   var HEARTBEAT_MS = 15000;   // flush accrued time on this cadence

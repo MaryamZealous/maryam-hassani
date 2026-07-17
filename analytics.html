@@ -79,6 +79,7 @@
       <div>
         <div class="an-meta" id="meta">loading…</div>
         <button class="refresh" id="refresh">Refresh</button>
+        <button class="refresh" id="excl"></button>
       </div>
     </div>
 
@@ -229,6 +230,20 @@
         render(SAMPLE);
       });
   }
+  function excluded(){ try { return localStorage.getItem("ma_exclude") === "1"; } catch(e){ return false; } }
+  function syncExcl(){
+    var on = excluded();
+    var b = document.getElementById("excl");
+    b.textContent = on ? "✓ My visits excluded" : "Don’t count my visits";
+    b.style.borderColor = on ? "var(--blue)" : "";
+    b.style.color = on ? "var(--blue-deep)" : "";
+  }
+  document.getElementById("excl").addEventListener("click", function(){
+    try { if (excluded()) localStorage.removeItem("ma_exclude"); else localStorage.setItem("ma_exclude", "1"); } catch(e){}
+    syncExcl();
+  });
+  syncExcl();
+
   document.getElementById("refresh").addEventListener("click", function(){ load(false); });
   load(false);
   </script>

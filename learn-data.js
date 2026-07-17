@@ -21,7 +21,7 @@ window.LEARN = {
     { id: "firnas", label: "Abbas ibn Firnas", type: "thinker", cluster: "poly", x: 0.38, y: 0.66,
       note: "Legendary inventor and engineer who made the earliest recorded scientific attempts at human flight — a thousand years before the Wright brothers." },
     { id: "khaldun", label: "Ibn Khaldun", type: "thinker", cluster: "poly", x: 0.60, y: 0.50,
-      note: "The father of modern sociology, historiography, and economics — famous for analyzing the dynamics of civilizations in his masterpiece, the Muqaddimah." },
+      note: "The father of modern sociology, historiography, and economics. In his masterpiece, the Muqaddimah, Ibn Khaldun was the polymath who first mapped the roughly 100-year cycle of national supremacy — how group solidarity (ʿasabiyyah) lets a dynasty rise, then how comfort and complacency erode it over about three generations until the next power takes its place. The original theory of why empires rise and fall." },
     { id: "battuta", label: "Ibn Battuta", type: "thinker", cluster: "poly", x: 0.50, y: 0.61,
       note: "Extraordinary scholar and traveler who covered over 73,000 miles across Africa, the Middle East, and Asia, documenting medieval civilizations as he went." },
     { id: "wisdom", label: "House of Wisdom", type: "idea", cluster: "poly", x: 0.49, y: 0.38,
@@ -132,6 +132,24 @@ window.LEARN = {
       note: "Kishimi and Koga on Adlerian psychology, in dialogue form — freedom as the willingness to be disliked, and happiness as a present-tense choice." },
     { id: "prophet", label: "The Prophet", type: "book", cluster: "live", x: 0.59, y: 0.84,
       note: "Kahlil Gibran's prose-poetry on love, work, and freedom — a wanderer's parting wisdom on how to live, read and reread the world over." },
+    { id: "beyondgoodevil", label: "Beyond Good and Evil", type: "book", cluster: "live", x: 0.68, y: 0.78,
+      note: "Friedrich Nietzsche's assault on inherited morality — a call to think past 'good' and 'evil' as given categories and to answer for your own values instead of borrowing them." },
+    { id: "ai2040", url: "https://ai-2040.com/", label: "AI 2040", type: "site", cluster: "world", x: 0.99, y: 0.16,
+      note: "A forward look at where artificial intelligence is taking the next decade — the technologies, shifts and second-order effects worth planning for now rather than reacting to later. ai-2040.com" },
+
+    // ---- AI, power & history (added books) ----
+    { id: "atlasai", label: "Atlas of AI", type: "book", cluster: "world", x: 0.97, y: 0.37,
+      note: "Kate Crawford on what AI is really made of — the minerals, labor, data, water and energy behind the 'cloud.' A foundational map of the AI supply chain and the physical cost of the abstract, and a direct cousin of the resilience system's whole argument. @_katecrawford_" },
+    { id: "empireai", label: "Empire of AI", type: "book", cluster: "world", x: 0.96, y: 0.24,
+      note: "Karen Hao's critical, investigative account of how modern empires are being built around AI — the concentration of power, labor and resources behind the handful of companies racing to own the technology." },
+    { id: "oppression", label: "Algorithms of Oppression", type: "book", cluster: "world", x: 0.93, y: 0.55,
+      note: "Safiya Noble on how search engines encode racism and bias — published before ChatGPT, but the essential early argument that 'neutral' algorithms and machine learning carry the prejudices of the systems that build them." },
+    { id: "destiny", label: "Destiny Disrupted", type: "book", cluster: "world", x: 0.57, y: 0.12,
+      note: "Tamim Ansary's highly readable history of the world through Islamic eyes — a compelling reframing of the events we think we know, told from the center of a different map." },
+
+    // ---- How to Live (added book) ----
+    { id: "twentyfour7", label: "24/7", type: "book", cluster: "live", x: 0.92, y: 0.93,
+      note: "Jonathan Crary on late capitalism and the ends of sleep — how a culture of non-stop speed and visibility (the movement against dromology) colonizes the last refuges of rest, and why an always-on life is a harmful one." },
 
     // ---- Ideas (concepts that thread the map together) ----
     { id: "algorithms", label: "Algorithms", type: "idea", cluster: "poly", x: 0.33, y: 0.24,
@@ -207,5 +225,14 @@ window.LEARN = {
     ["hypatia","kindi"],["hypatia","khwarizmi"],["hypatia","3b1b"],
     ["duchatelet","3b1b"],["duchatelet","veritasium"],["duchatelet","algorithms"],
     ["davinci","firnas"],["davinci","astrulabi"],["davinci","veritasium"],["davinci","hypatia"],
+    // ---- added books — AI, power, history & the always-on life ----
+    ["atlasai","materialworld"],["atlasai","surveillance"],["atlasai","algorithms"],["atlasai","comingwave"],["atlasai","empireai"],
+    ["empireai","surveillance"],["empireai","philosopher"],["empireai","comingwave"],["empireai","algorithms"],
+    ["oppression","wmd"],["oppression","algorithms"],["oppression","surveillance"],
+    ["destiny","khaldun"],["destiny","battuta"],["destiny","sapiens"],["destiny","lessons21"],["destiny","fihri"],
+    ["twentyfour7","freedom"],["twentyfour7","surveillance"],["twentyfour7","bravenew"],["twentyfour7","academy"],
+    // ---- Nietzsche & AI 2040 ----
+    ["beyondgoodevil","academy"],["beyondgoodevil","freedom"],["beyondgoodevil","meditations"],["beyondgoodevil","courage"],
+    ["ai2040","comingwave"],["ai2040","empireai"],["ai2040","atlasai"],["ai2040","surveillance"],
   ],
 };
