@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>رَمسَتي · Ramsati — Arabic Coach</title>
+<meta name="description" content="Maryam's personal Arabic coach: flashcards, grammar drills, writing corrections, and Emirati speaking practice." />
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>html,body{margin:0;background:#10201D;}#root{min-height:100vh;}</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* localStorage-backed replacement for the Claude artifact storage API */
+window.storage = {
+  async get(key) { const v = localStorage.getItem("ramsati:" + key); return v == null ? null : { key, value: v, shared: false }; },
+  async set(key, value) { localStorage.setItem("ramsati:" + key, value); return { key, value, shared: false }; },
+  async delete(key) { localStorage.removeItem("ramsati:" + key); return { key, deleted: true, shared: false }; },
+  async list(prefix) { const keys = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith("ramsati:" + (prefix || ""))) keys.push(k.slice(8)); } return { keys, prefix, shared: false }; },
+};
+</script>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+
+
+/* ================= DATA =================
+   src: "notes" = from Maryam's Drive docs, "new" = complementary vocab */
+
+const CARDS = [
+  // ---- Her notes: media / economy / general professional ----
+  { id: "c1", ar: "السِّياق", tr: "as-siyāq", root: "س و ق", en: "context", note: "في سياق = in the context of", em: "السياق", emTr: "as-siyāq", exM: "لكي يكون مساعد الذكاء الاصطناعي ذا قيمة لا بد أن يفهم سياق الشركة وسير عملها.", exE: "لازم نفهم السياق قبل لا نحكم على الموضوع.", exEn: "We must understand the context before judging the matter.", src: "notes", topic: "General" },
+  { id: "c2", ar: "عُنصُر", tr: "ʿunṣur", root: "ع ن ص ر", en: "element / component", note: "plural: عناصر (ʿanāṣir)", em: "عنصر", emTr: "ʿunṣur", exM: "يستفيد العامل عندما يعرف كل عناصر المشروع.", exE: "هالمشروع فيه عناصر وايد مهمة.", exEn: "This project has very important components.", src: "notes", topic: "Work" },
+  { id: "c3", ar: "المِحوَر", tr: "al-miḥwar", root: "ح و ر", en: "main theme / axis", note: "plural: محاور · محور النقاش = focus of discussion", em: "المحور", emTr: "al-miḥwar", exM: "المحور الأساسي للمشروع هو وضع الاستراتيجية.", exE: "محور اجتماعنا اليوم عن الذكاء الاصطناعي.", exEn: "The focus of our meeting today is AI.", src: "notes", topic: "Work" },
+  { id: "c4", ar: "بارِز", tr: "bāriz", root: "ب ر ز", en: "prominent / remarkable", note: "verb: يبرز (yabruz) = to stand out", em: "بارز", emTr: "bāriz", exM: "الشغل المخلص يبرز.", exE: "دور الإمارات بارز في مجال التكنولوجيا.", exEn: "The UAE's role is prominent in technology.", src: "notes", topic: "General" },
+  { id: "c5", ar: "المَوارِد", tr: "al-mawārid", root: "و ر د", en: "resources", note: "الموارد البشرية = human resources", em: "الموارد", emTr: "al-mawārid", exM: "الموارد البشرية مهمة جداً لتطوير البلدان.", exE: "نحتاج نوزع الموارد صح عشان ننجز بسرعة.", exEn: "We need to allocate resources properly to deliver fast.", src: "notes", topic: "Work" },
+  { id: "c6", ar: "التَّضَخُّم", tr: "at-taḍakhkhum", root: "ض خ م", en: "inflation", note: "ضخم = huge; same root", em: "التضخم", emTr: "at-taḍakhkhum", exM: "يظن الخبراء أن الأزمة الاقتصادية تنتج تضخماً عالمياً.", exE: "التضخم أثّر على أسعار كل شي هالفترة.", exEn: "Inflation affected the prices of everything lately.", src: "notes", topic: "Economy" },
+  { id: "c7", ar: "السَّيطَرة", tr: "as-sayṭara", root: "س ط ر", en: "control / dominance", note: "يسيطر على = to control", em: "السيطرة", emTr: "as-sayṭara", exM: "الوضع تحت السيطرة.", exE: "لا تشيل هم، كل شي تحت السيطرة.", exEn: "Don't worry, everything is under control.", src: "notes", topic: "General" },
+  { id: "c8", ar: "اِستِثنائي", tr: "istithnāʾī", root: "ث ن ي", en: "exceptional", note: "استثناء = exception", em: "استثنائي", emTr: "istithnāʾī", exM: "فازت الشركة بجائزة المنصة الاستثنائية لاستخدام الذكاء الاصطناعي.", exE: "الفريق سوّى شغل استثنائي بهالمشروع.", exEn: "The team did exceptional work on this project.", src: "notes", topic: "Work" },
+  { id: "c9", ar: "مُلهِم", tr: "mulhim", root: "ل ه م", en: "inspiring", note: "مُلهِم = inspiring · مُلهَم = inspired (watch the vowel!)", em: "ملهم", emTr: "mulhim", exM: "معروف حول العالم أن قيادة الإمارات ملهمة.", exE: "كلمة سموه كانت وايد ملهمة للفريق.", exEn: "His Highness's speech was very inspiring for the team.", src: "notes", topic: "General" },
+  { id: "c10", ar: "حافِز", tr: "ḥāfiz", root: "ح ف ز", en: "incentive / motivation", note: "plural: حوافز (ḥawāfiz)", em: "حافز", emTr: "ḥāfiz", exM: "لكي تستمر في العمل لا بد أن تحافظ على الحافز.", exE: "النجاح الصغير يعطيك حافز تكمل.", exEn: "A small success gives you motivation to continue.", src: "notes", topic: "Work" },
+  { id: "c11", ar: "أدَوات", tr: "adawāt", root: "أ د و", en: "tools", note: "singular: أداة (adāh)", em: "أدوات", emTr: "adawāt", exM: "من أهم المهارات أن تعرف أي أدوات تحتاج في سير عملك اليومي.", exE: "نستخدم أدوات ذكية تسهّل علينا الشغل.", exEn: "We use smart tools that make our work easier.", src: "notes", topic: "Tech" },
+  { id: "c12", ar: "البَرمَجة", tr: "al-barmaja", root: "ب ر م ج", en: "programming", note: "مبرمج = programmer · برنامج = program", em: "البرمجة", emTr: "al-barmaja", exM: "التقدم في مجال البرمجة من أعظم نتائج تطور التكنولوجيا.", exE: "الحين حتى اللي ما يعرف برمجة يقدر يبني تطبيق بالذكاء الاصطناعي.", exEn: "Now even someone who doesn't know programming can build an app with AI.", src: "notes", topic: "Tech" },
+  { id: "c13", ar: "رُقاقات", tr: "ruqāqāt", root: "ر ق ق", en: "chips (semiconductors)", note: "also: شرائح إلكترونية", em: "رقاقات", emTr: "ruqāqāt", exM: "الحصول على الرقاقات من أصعب تحديات السباق التكنولوجي.", exE: "الرقاقات المتطورة هي أساس تدريب النماذج الضخمة.", exEn: "Advanced chips are the basis of training large models.", src: "notes", topic: "Tech" },
+  { id: "c14", ar: "تُتيح", tr: "tutīḥ", root: "ت و ح", en: "to make available / enable", note: "أتاح، يتيح · متاح = available", em: "تتيح", emTr: "tutīḥ", exM: "البنية المعرفية تتيح للإنسان والذكاء الاصطناعي أن يعملا معاً بسهولة.", exE: "هالخاصية تتيح لك تشوف كل البيانات بمكان واحد.", exEn: "This feature lets you see all the data in one place.", src: "notes", topic: "Tech" },
+  { id: "c15", ar: "قُدرة", tr: "qudra", root: "ق د ر", en: "ability / capability", note: "plural: قدرات · قادر على = capable of", em: "قدرة", emTr: "qudra", exM: "القدرة على تحقيق المهام هي الاستعداد للتعلم وتطبيق المعرفة.", exE: "قدرات النماذج اللغوية تتطور بسرعة وايد.", exEn: "The capabilities of language models are developing very fast.", src: "notes", topic: "Tech" },
+  { id: "c16", ar: "ثَغرة", tr: "thaghra", root: "ث غ ر", en: "gap / vulnerability", note: "in security: ثغرة أمنية · فجوة = gap (bigger)", em: "ثغرة", emTr: "thaghra", exM: "كل المشاريع فيها ثغرة في المعرفة.", exE: "الفريق سكّر الثغرة الأمنية قبل لا تصير مشكلة.", exEn: "The team closed the security gap before it became a problem.", src: "notes", topic: "Tech" },
+  { id: "c17", ar: "قَراصِنة", tr: "qarāṣina", root: "ق ر ص", en: "hackers / pirates", note: "singular: قرصان", em: "قراصنة", emTr: "qarāṣina", exM: "فريق الأمن السيبراني اصطاد مجموعة من القراصنة.", exE: "القراصنة دايماً يدورون أي ثغرة بالنظام.", exEn: "Hackers are always looking for any gap in the system.", src: "notes", topic: "Tech" },
+  { id: "c18", ar: "اِستَغنى عن", tr: "istaghnā ʿan", root: "غ ن ي", en: "to dispense with / lay off", note: "opposite use: لا غنى عنه = indispensable", em: "استغنى عن", emTr: "istaghnā ʿan", exM: "الشركات الكبيرة استغنت عن كثير من الموظفين.", exE: "التكنولوجيا ما بتستغني عن الإنسان، بس بتغير طبيعة شغله.", exEn: "Technology won't dispense with humans; it will change the nature of their work.", src: "notes", topic: "Work" },
+  { id: "c19", ar: "نُسخة", tr: "nuskha", root: "ن س خ", en: "version / copy", note: "نسخة تجريبية = pilot version · نسخة مرئية = vision model", em: "نسخة", emTr: "nuskha", exM: "الفرق كبير جداً بين الإصدار الجديد والقديم.", exE: "خلنا نجرب نسخة تجريبية الشهر الياي ونشوف النتايج.", exEn: "Let's try a pilot version next month and see the results.", src: "notes", topic: "Tech" },
+  { id: "c20", ar: "يَنتَقِد", tr: "yantaqid", root: "ن ق د", en: "to criticize", note: "انتقاد = criticism · ينقض = to overturn an argument", em: "ينتقد", emTr: "yantaqid", exM: "دائماً أسهل أن تنتقد لكن الأفضل اكتشاف حل.", exE: "بدال ما ننتقد، خلنا نقترح حلول عملية.", exEn: "Instead of criticizing, let's suggest practical solutions.", src: "notes", topic: "Work" },
+  { id: "c21", ar: "مُبادَرة", tr: "mubādara", root: "ب د ر", en: "initiative", note: "مبادر = proactive person", em: "مبادرة", emTr: "mubādara", exM: "لا بد أن تكون مبادراً في الحياة.", exE: "أطلقنا مبادرة يديدة تخدم المتعاملين.", exEn: "We launched a new initiative serving customers.", src: "notes", topic: "Work" },
+  { id: "c22", ar: "تُؤَدّي إلى", tr: "tuʾaddī ilā", root: "أ د ي", en: "leads to", note: "also: يؤدي مهام = performs tasks", em: "تؤدي إلى", emTr: "tuʾaddī ilā", exM: "بناء المنتج لحل مشكلة معقدة يؤدي إلى نتيجة ذات قيمة.", exE: "هالخطوة بتؤدي إلى نتايج أحسن إن شاء الله.", exEn: "This step will lead to better results, God willing.", src: "notes", topic: "General" },
+  { id: "c23", ar: "مَهَمّة", tr: "mahamma", root: "ه م م", en: "task / mission", note: "مَهَمّة (noun, task) vs مُهِمّة (adj, important)", em: "مهمة", emTr: "mahamma", exM: "مهمة الفريق أن تكون نتيجة المشروع جيدة.", exE: "عندي كم مهمة لازم أخلصها قبل نهاية اليوم.", exEn: "I have a few tasks I must finish before the end of the day.", src: "notes", topic: "Work" },
+  { id: "c24", ar: "مِلَفّ / مُجَلَّد", tr: "milaff / mujallad", root: "ل ف ف", en: "file / folder", note: "شاركنا مجلد المستندات = we shared the documents folder", em: "ملف / فولدر", emTr: "milaff", exM: "بعد الاجتماع شاركنا مجلد المستندات.", exE: "طرشلي الملف على الإيميل لو سمحت.", exEn: "Send me the file by email, please.", src: "notes", topic: "Work" },
+  { id: "c25", ar: "يُنتِج", tr: "yuntij", root: "ن ت ج", en: "to produce", note: "إنتاجية = productivity · منتج = product", em: "ينتج", emTr: "yuntij", exM: "المصنع الجديد ينتج بضائع عالية الجودة.", exE: "الأدوات الذكية ترفع إنتاجية الموظف.", exEn: "Smart tools raise employee productivity.", src: "notes", topic: "Work" },
+  { id: "c26", ar: "نِسبِيّاً", tr: "nisbiyyan", root: "ن س ب", en: "relatively", note: "نسبة = ratio / percentage", em: "نسبياً", emTr: "nisbiyyan", exM: "اخترت الخيار الأنسب نسبياً من بين الخيارات المتاحة.", exE: "التكلفة نسبياً معقولة مقارنة بالفايدة.", exEn: "The cost is relatively reasonable compared to the benefit.", src: "notes", topic: "General" },
+  { id: "c27", ar: "مَجّاني", tr: "majjānī", root: "م ج ن", en: "free of charge", note: "مجاناً = for free (adverb)", em: "مجاني / ببلاش", emTr: "majjānī", exM: "المنتجات الجديدة متوفرة مجاناً في البداية لإظهار القيمة.", exE: "النسخة الأساسية مجانية والمميزات باشتراك.", exEn: "The basic version is free and the features are by subscription.", src: "notes", topic: "Work" },
+  // ---- Her tech docs ----
+  { id: "c28", ar: "مِنَصّة", tr: "minaṣṣa", root: "ن ص ص", en: "platform", note: "منصة ذكية = smart platform", em: "منصة", emTr: "minaṣṣa", exM: "المنصة تعتمد على قاعدة معرفية قوية.", exE: "هالمنصة تسهّل الإجراءات بشكل أسرع.", exEn: "This platform makes procedures faster.", src: "notes", topic: "Tech" },
+  { id: "c29", ar: "لَوحة التَّحَكُّم", tr: "lawḥat at-taḥakkum", root: "ح ك م", en: "dashboard", note: "يتحكم في = to control", em: "لوحة التحكم", emTr: "lawḥat at-taḥakkum", exM: "لوحة التحكم تعرض كل المعلومات المهمة للمستخدم.", exE: "لوحة التحكم تبين كل التفاصيل المهمة.", exEn: "The dashboard shows all the important details.", src: "notes", topic: "Tech" },
+  { id: "c30", ar: "قاعِدة بَيانات", tr: "qāʿidat bayānāt", root: "ق ع د", en: "database", note: "قاعدة معرفية = knowledge base", em: "قاعدة بيانات", emTr: "qāʿidat bayānāt", exM: "النظام يجمع البيانات ويحفظها بشكل آمن.", exE: "كل المعلومات محفوظة بقاعدة بيانات ذكية.", exEn: "All the information is stored in a smart database.", src: "notes", topic: "Tech" },
+  { id: "c31", ar: "تَدَفُّق البَيانات", tr: "tadaffuq al-bayānāt", root: "د ف ق", en: "data flow", note: "سير الإجراءات = process flow", em: "تدفق البيانات", emTr: "tadaffuq al-bayānāt", exM: "مخطط البيانات يوضح سير المعلومات داخل النظام.", exE: "المخطط يوضح تدفق البيانات من البداية للنهاية.", exEn: "The diagram shows the data flow from start to finish.", src: "notes", topic: "Tech" },
+  { id: "c32", ar: "واجِهة المُستَخدِم", tr: "wājihat al-mustakhdim", root: "و ج ه", en: "user interface", note: "تصميم بديهي = intuitive design", em: "واجهة المستخدم", emTr: "wājihat al-mustakhdim", exM: "تُعزَّز واجهة المستخدم بتصميم بديهي يسهّل التجربة اليومية.", exE: "المستخدم يقدر يدخل المنصة من أي مكان.", exEn: "The user can access the platform from anywhere.", src: "notes", topic: "Tech" },
+  { id: "c33", ar: "البُنية المَعرِفِيّة", tr: "al-bunya al-maʿrifiyya", root: "ب ن ي", en: "knowledge infrastructure", note: "بنية تحتية = infrastructure", em: "البنية المعرفية", emTr: "al-bunya al-maʿrifiyya", exM: "نبني بنية معرفية لكل شركة، وهي الأساس لبناء الحلول.", exE: "البنية المعرفية تساعد الجهات تطور شغلها بشكل أسرع.", exEn: "Knowledge infrastructure helps entities develop their work faster.", src: "notes", topic: "Tech" },
+  { id: "c34", ar: "إدارة المَعرِفة", tr: "idārat al-maʿrifa", root: "ع ر ف", en: "knowledge management", note: "مشاركة المعرفة = knowledge sharing", em: "إدارة المعرفة", emTr: "idārat al-maʿrifa", exM: "نحن نبني نظاماً ذكياً لإدارة المعرفة والبيانات.", exE: "إدارة المعرفة تخلي الخبرة تنتقل بين الفرق.", exEn: "Knowledge management lets expertise transfer between teams.", src: "notes", topic: "Tech" },
+  { id: "c35", ar: "تَحليل البَيانات", tr: "taḥlīl al-bayānāt", root: "ح ل ل", en: "data analysis", note: "في الوقت الفعلي = in real time", em: "تحليل البيانات", emTr: "taḥlīl al-bayānāt", exM: "يحلل النظام البيانات في الوقت الفعلي.", exE: "تحليل البيانات يساعدنا ناخذ قرارات أدق.", exEn: "Data analysis helps us make more accurate decisions.", src: "notes", topic: "Tech" },
+  { id: "c36", ar: "رَقمي", tr: "raqmī", root: "ر ق م", en: "digital", note: "أرشيف رقمي = digital archive · رقم = number", em: "رقمي", emTr: "raqmī", exM: "نحول الاحتياجات الحكومية إلى تطبيقات رقمية.", exE: "التحول الرقمي غيّر طريقة تعاملنا مع الخدمات.", exEn: "Digital transformation changed how we deal with services.", src: "notes", topic: "Tech" },
+  // ---- Newer additions from her full Arabic Terms doc ----
+  { id: "c57", ar: "العَميل", tr: "al-ʿamīl", root: "ع م ل", en: "client / customer", note: "plural: عملاء · also: agent in AI (وكيل is clearer)", em: "العميل", emTr: "al-ʿamīl", exM: "يجب أن تشارك العميل في جميع مراحل بناء المنتج.", exE: "نشرك العميل بكل مرحلة من مراحل المشروع.", exEn: "We involve the client in every stage of the project.", src: "notes", topic: "Work" },
+  { id: "c58", ar: "تَنسيق", tr: "tansīq", root: "ن س ق", en: "coordination", note: "ينسّق مع = to coordinate with", em: "تنسيق", emTr: "tansīq", exM: "التنسيق بين الجهات الحكومية من أهم عناصر التقدم.", exE: "نحتاج تنسيق أكثر بين الفرق عشان ما يصير تكرار.", exEn: "We need more coordination between teams so there is no duplication.", src: "notes", topic: "Work" },
+  { id: "c59", ar: "مَدعوم", tr: "madʿūm", root: "د ع م", en: "supported / backed", note: "دعم = support · مدعوم بالذكاء الاصطناعي = AI-powered", em: "مدعوم", emTr: "madʿūm", exM: "المشروع الجديد مدعوم من كبار المسؤولين.", exE: "المنصة مدعومة بالذكاء الاصطناعي.", exEn: "The platform is powered by AI.", src: "notes", topic: "Work" },
+  { id: "c60", ar: "تَخصيص", tr: "takhṣīṣ", root: "خ ص ص", en: "customization / allocation", note: "يخصص = to customize / allocate · same root as خصوصية", em: "تخصيص", emTr: "takhṣīṣ", exM: "الشركات الكبيرة تحتاج إلى تخصيص التطبيقات.", exE: "نخصص الحل على حسب احتياج كل عميل.", exEn: "We customize the solution according to each client's needs.", src: "notes", topic: "Tech" },
+  { id: "c61", ar: "حالات الاِستِخدام", tr: "ḥālāt al-istikhdām", root: "ح و ل", en: "use cases", note: "حالة استخدام = a use case", em: "حالات الاستخدام", emTr: "ḥālāt al-istikhdām", exM: "نعمل معهم من أجل بناء حلول تخدم حالات الاستخدام هذه.", exE: "نبدأ بورشة عمل عشان نفهم حالات الاستخدام عند العميل.", exEn: "We start with a workshop to understand the client's use cases.", src: "notes", topic: "Tech" },
+  { id: "c62", ar: "نَقلة جِذريّة", tr: "naqla jidhriyya", root: "ج ذ ر", en: "radical shift", note: "= تحول نوعي · جذر = root (same word as word roots!)", em: "نقلة جذرية", emTr: "naqla jidhriyya", exM: "الذكاء الاصطناعي نقلة جذرية في مجال العمل.", exE: "هالتقنية نقلة جذرية بطريقة شغلنا.", exEn: "This technology is a radical shift in how we work.", src: "notes", topic: "AI" },
+  { id: "c63", ar: "خَلفِيّة", tr: "khalfiyya", root: "خ ل ف", en: "background", note: "خلف = behind · عندي خلفية في = I have a background in", em: "خلفية", emTr: "khalfiyya", exM: "لدي خلفية في مجال الذكاء الاصطناعي وأتعلم شيئاً جديداً يومياً.", exE: "عندي خلفية بالمجال بس أتعلم شي يديد كل يوم.", exEn: "I have a background in the field but I learn something new every day.", src: "notes", topic: "General" },
+  { id: "c64", ar: "ثِقة", tr: "thiqa", root: "و ث ق", en: "trust / confidence", note: "واثق = confident · موثوق = trustworthy", em: "ثقة", emTr: "thiqa", exM: "الهدف بناء الثقة من خلال الشفافية لا من خلال السلطة.", exE: "الشفافية هي اللي تبني الثقة مع العميل.", exEn: "Transparency is what builds trust with the client.", src: "notes", topic: "General" },
+  { id: "c65", ar: "شيفرة", tr: "shīfra", root: "—", en: "code (source code)", note: "شيفرة مفتوحة المصدر = open source", em: "شيفرة / كود", emTr: "shīfra", exM: "إذا وفرت الشركة شيفرة التطبيق للجمهور سيؤدي ذلك إلى الابتكار.", exE: "الكود مفتوح المصدر يشجع المطورين على الابتكار.", exEn: "Open-source code encourages developers to innovate.", src: "notes", topic: "Tech" },
+  { id: "c66", ar: "حَوسَبة", tr: "ḥawsaba", root: "ح س ب", en: "computing", note: "حاسوب = computer · الحوسبة السحابية = cloud computing", em: "حوسبة", emTr: "ḥawsaba", exM: "مراكز البيانات من أهم البنى التحتية لتأمين الحوسبة.", exE: "الحوسبة السحابية وفرت علينا تكاليف وايد.", exEn: "Cloud computing saved us a lot of costs.", src: "notes", topic: "Tech" },
+  { id: "c67", ar: "في غُضون", tr: "fī ghuḍūn", root: "غ ض ن", en: "within (a time period)", note: "في غضون أسبوع = within a week · = خلال", em: "في غضون / خلال", emTr: "fī ghuḍūn", exM: "لا بد أن نبني المنصة في غضون أسبوع.", exE: "بنسلم النسخة الأولى في غضون أسبوعين.", exEn: "We will deliver the first version within two weeks.", src: "notes", topic: "Work" },
+  { id: "c68", ar: "تَوليد", tr: "tawlīd", root: "و ل د", en: "generation (of content)", note: "يولّد = to generate · توليدي = generative", em: "توليد", emTr: "tawlīd", exM: "الذكاء الاصطناعي يولد الصور والنصوص المتماسكة.", exE: "النموذج يولد نصوص وصور حسب الطلب.", exEn: "The model generates text and images on demand.", src: "notes", topic: "AI" },
+  { id: "c69", ar: "مُتَماسِك", tr: "mutamāsik", root: "م س ك", en: "coherent", note: "يمسك = to hold · نص متماسك = coherent text", em: "متماسك", emTr: "mutamāsik", exM: "لكي أكتب نصوصاً متماسكة لا بد أن أمارس أكثر.", exE: "عرضها كان متماسك وواضح من البداية للنهاية.", exEn: "Her presentation was coherent and clear from start to finish.", src: "notes", topic: "General" },
+  { id: "c70", ar: "مَنظومة", tr: "manẓūma", root: "ن ظ م", en: "system / ecosystem", note: "نظام = system · منظومة = integrated system", em: "منظومة", emTr: "manẓūma", exM: "نضيف منظومات الشركة إلى البنية المعرفية ليفهم الذكاء الاصطناعي سياقها.", exE: "نبني منظومة متكاملة تخدم العميل من أول خطوة.", exEn: "We build an integrated system serving the client from step one.", src: "notes", topic: "Tech" },
+  { id: "c71", ar: "اِستِقطاب", tr: "istiqṭāb", root: "ق ط ب", en: "attracting (talent)", note: "يستقطب = to attract · استقطاب الكفاءات = talent acquisition", em: "استقطاب", emTr: "istiqṭāb", exM: "فريق الشركة موجود في الفعاليات الجامعية لاستقطاب موظفين.", exE: "نشارك بالفعاليات عشان نستقطب الكفاءات الوطنية.", exEn: "We participate in events to attract national talent.", src: "notes", topic: "Work" },
+  { id: "c72", ar: "الإحصائِيّات", tr: "al-iḥṣāʾiyyāt", root: "ح ص ي", en: "statistics", note: "إحصاء = census / counting", em: "الإحصائيات", emTr: "al-iḥṣāʾiyyāt", exM: "البيانات الضخمة مفيدة لفهم وإصدار الإحصائيات.", exE: "الإحصائيات تبين لنا وين نقدر نتحسن.", exEn: "Statistics show us where we can improve.", src: "notes", topic: "Tech" },
+  { id: "c73", ar: "مُكافَحة", tr: "mukāfaḥa", root: "ك ف ح", en: "combating / fighting", note: "مكافحة الجرائم الإلكترونية = fighting cybercrime", em: "مكافحة", emTr: "mukāfaḥa", exM: "الفريق يعمل على مكافحة الجرائم الإلكترونية.", exE: "النظام يساعد بمكافحة الاحتيال المالي.", exEn: "The system helps combat financial fraud.", src: "notes", topic: "Tech" },
+  { id: "c74", ar: "تَحديث", tr: "taḥdīth", root: "ح د ث", en: "update", note: "يحدّث = to update · حديث = modern / recent", em: "تحديث", emTr: "taḥdīth", exM: "أنزلت الشركة تحديثاً جديداً للتطبيق.", exE: "نزل تحديث يديد للتطبيق أمس.", exEn: "A new update for the app was released yesterday.", src: "notes", topic: "Tech" },
+  { id: "c75", ar: "على نَحو غَير مَسبوق", tr: "ʿalā naḥw ghayr masbūq", root: "س ب ق", en: "in an unprecedented way", note: "سبق = to precede · غير مسبوق = unprecedented", em: "بشكل غير مسبوق", emTr: "bshakil ghayr masbūq", exM: "يتطور الذكاء الاصطناعي على نحو غير مسبوق.", exE: "التطور بهالمجال صاير بشكل غير مسبوق.", exEn: "Development in this field is happening in an unprecedented way.", src: "notes", topic: "AI" },
+  { id: "c76", ar: "خَوادِم", tr: "khawādim", root: "خ د م", en: "servers", note: "singular: خادم · same root as خدمة (service)", em: "خوادم / سيرفرات", emTr: "khawādim", exM: "تُخزَّن النماذج في خوادم موزعة حول العالم.", exE: "الخوادم شغالة على مدار الساعة.", exEn: "The servers run around the clock.", src: "notes", topic: "Tech" },
+  { id: "c77", ar: "مُعالِج", tr: "muʿālij", root: "ع ل ج", en: "processor", note: "يعالج = to process / treat · معالجة البيانات = data processing", em: "معالج", emTr: "muʿālij", exM: "يحتاج النظام إلى معالج سريع وذاكرة كبيرة.", exE: "المعالج القوي يسرّع تدريب النماذج.", exEn: "A powerful processor speeds up model training.", src: "notes", topic: "Tech" },
+  { id: "c78", ar: "يُعَزِّز", tr: "yuʿazziz", root: "ع ز ز", en: "to strengthen / reinforce", note: "تعزيز = strengthening · عزيز = dear / mighty", em: "يعزز", emTr: "yuʿazziz", exM: "هذا التعاون يعزز قدراتنا التنافسية.", exE: "هالشراكة تعزز مكانتنا بالسوق.", exEn: "This partnership strengthens our position in the market.", src: "notes", topic: "Work" },
+  { id: "c79", ar: "وِفقاً لِـ", tr: "wifqan li", root: "و ف ق", en: "according to", note: "Emirati: حسب · وفقاً للتقرير = according to the report", em: "حسب", emTr: "ḥasab", exM: "وفقاً للتقرير، تحسّن الأداء بنسبة كبيرة.", exE: "حسب التقرير، الأداء تحسن وايد.", exEn: "According to the report, performance improved a lot.", src: "notes", topic: "General" },
+  { id: "c80", ar: "أَجرى", tr: "ajrā", root: "ج ر ي", en: "to conduct (a study, interview)", note: "يُجري مقابلة = conducts an interview · Emirati: سوّى", em: "سوّى", emTr: "sawwā", exM: "أجرينا دراسة شاملة قبل إطلاق المنصة.", exE: "سوّينا دراسة شاملة قبل الإطلاق.", exEn: "We conducted a comprehensive study before the launch.", src: "notes", topic: "Work" },
+  { id: "c81", ar: "مَعايير", tr: "maʿāyīr", root: "ع ي ر", en: "standards / criteria", note: "singular: معيار · = مقاييس", em: "معايير", emTr: "maʿāyīr", exM: "نلتزم بأعلى معايير الجودة والأمان.", exE: "نمشي على أعلى المعايير بكل مشاريعنا.", exEn: "We follow the highest standards in all our projects.", src: "notes", topic: "Work" },
+  { id: "c82", ar: "أداء", tr: "adāʾ", root: "أ د ي", en: "performance", note: "same root as يؤدي (to perform / lead to)", em: "أداء", emTr: "adāʾ", exM: "يراقب الفريق أداء الخادم على مدار الساعة.", exE: "الأداء تحسن وايد بعد التحديث الأخير.", exEn: "Performance improved a lot after the last update.", src: "notes", topic: "Tech" },
+  { id: "c83", ar: "الصُّمود", tr: "aṣ-ṣumūd", root: "ص م د", en: "resilience", note: "مرونة = flexibility/resilience · نظام الصمود الذكي = your project!", em: "الصمود", emTr: "aṣ-ṣumūd", exM: "المرونة لا تُبنى أثناء الأزمات، بل قبلها بسنوات.", exE: "الصمود ينبنى قبل الأزمة، مو وقتها.", exEn: "Resilience is built before the crisis, not during it.", src: "notes", topic: "AI" },
+  { id: "c84", ar: "تَمكين", tr: "tamkīn", root: "م ك ن", en: "empowerment / enabling", note: "يمكّن من = enables to · ممكن = possible", em: "تمكين", emTr: "tamkīn", exM: "تمكين الموظفين أساس رفع الإنتاجية.", exE: "التدريب المستمر يمكّن الفريق ينجز أكثر.", exEn: "Continuous training enables the team to achieve more.", src: "notes", topic: "Work" },
+  { id: "c85", ar: "تُسَلِّط الضَّوء على", tr: "tusalliṭ aḍ-ḍawʾ ʿalā", root: "س ل ط", en: "to highlight / shed light on", note: "ضوء = light · same root as سلطة (authority)", em: "تسلط الضوء على", emTr: "tsalliṭ aḍ-ḍaw ʿalā", exM: "يسلط التقرير الضوء على أهم الإنجازات.", exE: "حاب أسلط الضوء على ثلاث نقاط رئيسية.", exEn: "I'd like to highlight three main points.", src: "notes", topic: "Presenting" },
+  { id: "c86", ar: "لا غِنى عَنه", tr: "lā ghinā ʿanh", root: "غ ن ي", en: "indispensable", note: "opposite of استغنى عن (to dispense with) — same root", em: "ما نستغني عنه", emTr: "mā nistaghnī ʿanh", exM: "البيانات لا غنى عنها لاتخاذ قرارات دقيقة.", exE: "البيانات شي ما نقدر نستغني عنه.", exEn: "Data is something we cannot do without.", src: "notes", topic: "AI" },
+  { id: "c87", ar: "سَلاسِل التَّزويد", tr: "salāsil at-tazwīd", root: "ز و د", en: "supply chains", note: "سلسلة = chain · يزوّد = to supply", em: "سلاسل التزويد", emTr: "salāsil at-tazwīd", exM: "الأزمات العالمية تختبر سلاسل التزويد.", exE: "النظام يتابع سلاسل التزويد بالقطاعات الحيوية.", exEn: "The system tracks supply chains in the vital sectors.", src: "notes", topic: "Economy" },
+  // ---- Tech verbs from her conjugation table ----
+  { id: "v1", ar: "نَفَّذَ", tr: "naffadha", root: "ن ف ذ", en: "to implement / execute", note: "الماضي نفّذ · المضارع يُنفِّذ · المصدر التنفيذ", em: "ينفذ", emTr: "ynaffidh", exM: "ننفذ الخطة على مراحل ثلاث.", exE: "بننفذ المشروع على مراحل.", exEn: "We will implement the project in phases.", src: "notes", topic: "Verbs" },
+  { id: "v2", ar: "دَمَجَ", tr: "damaja", root: "د م ج", en: "to integrate / merge", note: "الماضي دمج · المضارع يدمُج · المصدر الدمج / التكامل", em: "يدمج", emTr: "yadmuj", exM: "يدمج النظام بيانات المصادر المتعددة.", exE: "النظام يدمج البيانات من أكثر من مصدر.", exEn: "The system integrates data from more than one source.", src: "notes", topic: "Verbs" },
+  { id: "v3", ar: "اِختَبَرَ", tr: "ikhtabara", root: "خ ب ر", en: "to test", note: "الماضي اختبر · المضارع يختبِر · المصدر الاختبار · same root as خبرة (experience)", em: "يختبر", emTr: "yakhtabir", exM: "تختبر الفرقة الواجهة يومياً.", exE: "نختبر النظام عدل قبل ما نطلقه.", exEn: "We test the system thoroughly before launching it.", src: "notes", topic: "Verbs" },
+  { id: "v4", ar: "نَشَرَ", tr: "nashara", root: "ن ش ر", en: "to deploy / publish", note: "الماضي نشر · المضارع يَنشُر · المصدر النشر · منشور = post", em: "ينشر", emTr: "yanshur", exM: "نشرنا التحديث في الإصدار الأخير.", exE: "نشرنا التحديث اليديد أمس.", exEn: "We deployed the new update yesterday.", src: "notes", topic: "Verbs" },
+  { id: "v5", ar: "راقَبَ", tr: "rāqaba", root: "ر ق ب", en: "to monitor", note: "الماضي راقب · المضارع يُراقِب · المصدر المراقبة", em: "يراقب", emTr: "yrāqib", exM: "يراقب الفريق أداء الخادم على مدار الساعة.", exE: "نراقب الأداء أول بأول.", exEn: "We monitor performance continuously.", src: "notes", topic: "Verbs" },
+  { id: "v6", ar: "حَلَّلَ", tr: "ḥallala", root: "ح ل ل", en: "to analyze", note: "الماضي حلّل · المضارع يُحلِّل · المصدر التحليل", em: "يحلل", emTr: "yḥallil", exM: "يحلل النظام البيانات في الوقت الفعلي.", exE: "النظام يحلل البيانات لحظة بلحظة.", exEn: "The system analyzes data moment by moment.", src: "notes", topic: "Verbs" },
+  { id: "v7", ar: "حَسَّنَ", tr: "ḥassana", root: "ح س ن", en: "to optimize / improve", note: "الماضي حسّن · المضارع يُحسِّن · المصدر التحسين", em: "يحسن", emTr: "yḥassin", exM: "نحسّن الخوارزمية باستمرار.", exE: "قاعدين نحسن الأداء شوي شوي.", exEn: "We are improving the performance bit by bit.", src: "notes", topic: "Verbs" },
+  { id: "v8", ar: "أَتمَتَ", tr: "atmata", root: "—", en: "to automate", note: "الماضي أتمت · المضارع يُؤتمِت · المصدر الأتمتة", em: "يؤتمت", emTr: "yuʾatmit", exM: "نؤتمت العملية لتقليل الأخطاء البشرية.", exE: "أتمتنا الإجراءات المتكررة عشان نوفر الوقت.", exEn: "We automated the repetitive procedures to save time.", src: "notes", topic: "Verbs" },
+  { id: "v9", ar: "أَمَّنَ", tr: "ammana", root: "أ م ن", en: "to secure", note: "الماضي أمّن · المضارع يُؤمِّن · المصدر التأمين / الحماية", em: "يأمّن", emTr: "yʾammin", exM: "يؤمّن التشفير البيانات المنقولة.", exE: "التشفير يأمّن البيانات وقت النقل.", exEn: "Encryption secures the data during transfer.", src: "notes", topic: "Verbs" },
+  { id: "v10", ar: "وَسَّعَ", tr: "wassaʿa", root: "و س ع", en: "to scale / expand", note: "الماضي وسّع · المضارع يُوسِّع · المصدر التوسيع", em: "يوسع", emTr: "ywassiʿ", exM: "يمكّننا السحاب من توسيع الطاقة فوراً.", exE: "السحابة تخلينا نوسع النظام بسرعة.", exEn: "The cloud lets us scale the system quickly.", src: "notes", topic: "Verbs" },
+  { id: "v11", ar: "ضاعَفَ", tr: "ḍāʿafa", root: "ض ع ف", en: "to double / multiply", note: "الماضي ضاعف · المضارع يُضاعِف · المصدر المضاعفة · ضِعف = double", em: "يضاعف", emTr: "yḍāʿif", exM: "ضاعف التحديث سرعة المعالجة.", exE: "التحديث الأخير ضاعف السرعة.", exEn: "The latest update doubled the speed.", src: "notes", topic: "Verbs" },
+  // ---- New complementary: AI & presenting ----
+  { id: "c37", ar: "الذَّكاء الاِصطِناعي", tr: "adh-dhakāʾ al-iṣṭināʿī", root: "ص ن ع", en: "artificial intelligence", note: "اصطناعي = artificial, from صنع (to make)", em: "الذكاء الاصطناعي", emTr: "adh-dhakāʾ al-iṣṭināʿī", exM: "أصبح استخدام الذكاء الاصطناعي ضرورة لا غنى عنها.", exE: "الذكاء الاصطناعي بيغير شكل الشغل بالسنوات الياية.", exEn: "AI will change the shape of work in the coming years.", src: "new", topic: "AI" },
+  { id: "c38", ar: "نَموذَج لُغَوي", tr: "namūdhaj lughawī", root: "ن م ذ ج", en: "language model", note: "plural: نماذج · نماذج لغوية ضخمة = large language models", em: "نموذج لغوي", emTr: "namūdhaj lughawī", exM: "طوّر علماء الحوسبة نماذج لغوية ضخمة قادرة على فهم سياق الجملة.", exE: "النموذج اللغوي يقدر يجاوب ويلخص ويترجم بعد.", exEn: "The language model can answer, summarize, and also translate.", src: "new", topic: "AI" },
+  { id: "c39", ar: "تَعَلُّم الآلة", tr: "taʿallum al-āla", root: "ع ل م", en: "machine learning", note: "تعلم عميق = deep learning", em: "تعلم الآلة", emTr: "taʿallum al-āla", exM: "تعلم الآلة يعتمد على تدريب النماذج بالبيانات.", exE: "النظام يتعلم من البيانات ويتحسن مع الوقت.", exEn: "The system learns from data and improves over time.", src: "new", topic: "AI" },
+  { id: "c40", ar: "خوارِزمِيّة", tr: "khawārizmiyya", root: "—", en: "algorithm", note: "named after الخوارزمي, the Muslim mathematician", em: "خوارزمية", emTr: "khawārizmiyya", exM: "الخوارزمية تحدد كيف يعالج النظام البيانات.", exE: "الخوارزمية ترتب النتايج حسب أهميتها للمستخدم.", exEn: "The algorithm ranks results by their importance to the user.", src: "new", topic: "AI" },
+  { id: "c41", ar: "البَيانات الضَّخمة", tr: "al-bayānāt aḍ-ḍakhma", root: "ض خ م", en: "big data", note: "same root as التضخم (inflation)!", em: "البيانات الضخمة", emTr: "al-bayānāt aḍ-ḍakhma", exM: "يعتمد المهندسون على أدوات متطورة لتحليل كميات البيانات الضخمة.", exE: "البيانات الضخمة تحتاج بنية تحتية قوية.", exEn: "Big data needs strong infrastructure.", src: "new", topic: "AI" },
+  { id: "c43", ar: "التَّحَوُّل الرَّقمي", tr: "at-taḥawwul ar-raqmī", root: "ح و ل", en: "digital transformation", note: "تحوّل = to transform / shift", em: "التحول الرقمي", emTr: "at-taḥawwul ar-raqmī", exM: "هذا النوع من المشاريع يتماشى مع توجهاتنا في التحول الرقمي.", exE: "التحول الرقمي من أهم أولويات الدولة.", exEn: "Digital transformation is one of the country's top priorities.", src: "new", topic: "AI" },
+  { id: "c44", ar: "الأَمن السّيبراني", tr: "al-amn as-sībrānī", root: "أ م ن", en: "cybersecurity", note: "أمن البيانات = data security", em: "الأمن السيبراني", emTr: "al-amn as-sībrānī", exM: "يشرف على هذه الأنظمة فريق الأمن السيبراني.", exE: "فريق الأمن السيبراني يراقب النظام على مدار الساعة.", exEn: "The cybersecurity team monitors the system around the clock.", src: "new", topic: "AI" },
+  { id: "c45", ar: "تَوليدي", tr: "tawlīdī", root: "و ل د", en: "generative", note: "يولّد = to generate · from ولد (to give birth)", em: "توليدي", emTr: "tawlīdī", exM: "الذكاء الاصطناعي التوليدي ينشئ نصوصاً وصوراً جديدة.", exE: "الذكاء الاصطناعي التوليدي يقدر يكتب ويصمم ويلخص.", exEn: "Generative AI can write, design, and summarize.", src: "new", topic: "AI" },
+  { id: "c46", ar: "تَدريب النَّموذَج", tr: "tadrīb an-namūdhaj", root: "د ر ب", en: "model training", note: "مدرَّب على = trained on", em: "تدريب النموذج", emTr: "tadrīb an-namūdhaj", exM: "تدريب النماذج يتطلب بيانات ضخمة وقدرات حوسبية عالية.", exE: "النموذج مدرّب على بيانات وايد متنوعة.", exEn: "The model is trained on very diverse data.", src: "new", topic: "AI" },
+  { id: "c47", ar: "التَّنَبُّؤ", tr: "at-tanabbuʾ", root: "ن ب أ", en: "prediction", note: "يتنبأ بـ = to predict · نبأ = news", em: "التنبؤ", emTr: "at-tanabbuʾ", exM: "يستطيع الذكاء الاصطناعي أن يتنبأ بمواعيد الصيانة المناسبة.", exE: "النموذج يتنبأ بالنتايج بدقة عالية.", exEn: "The model predicts outcomes with high accuracy.", src: "new", topic: "AI" },
+  { id: "c48", ar: "حَوكَمة البَيانات", tr: "ḥawkamat al-bayānāt", root: "ح ك م", en: "data governance", note: "same root as حكومة (government) and تحكم (control)", em: "حوكمة البيانات", emTr: "ḥawkamat al-bayānāt", exM: "حوكمة البيانات تضمن الاستخدام المسؤول للمعلومات.", exE: "الحوكمة تضمن إن البيانات تنستخدم بشكل مسؤول.", exEn: "Governance ensures data is used responsibly.", src: "new", topic: "AI" },
+  { id: "c49", ar: "الخُصوصِيّة", tr: "al-khuṣūṣiyya", root: "خ ص ص", en: "privacy", note: "خاص = private · خاصّةً = especially", em: "الخصوصية", emTr: "al-khuṣūṣiyya", exM: "البيانات تبقى خاصة بالشركة ولا نستخدمها في أي مكان آخر.", exE: "خصوصية المتعاملين خط أحمر عندنا.", exEn: "Customer privacy is a red line for us.", src: "new", topic: "AI" },
+  { id: "c50", ar: "كَفاءة", tr: "kafāʾa", root: "ك ف أ", en: "efficiency / competence", note: "كفاءات = talents · كفء = competent", em: "كفاءة", emTr: "kafāʾa", exM: "الأتمتة ترفع كفاءة العمليات التشغيلية.", exE: "الهدف نرفع الكفاءة ونقلل التكاليف.", exEn: "The goal is to raise efficiency and reduce costs.", src: "new", topic: "Work" },
+  { id: "c51", ar: "يَعرِض", tr: "yaʿriḍ", root: "ع ر ض", en: "to present / display", note: "عرض تقديمي = presentation · عرض سعر = price quote", em: "يعرض", emTr: "yaʿriḍ", exM: "سأعرض عليكم أهم نتائج المشروع.", exE: "إذا تسمحون، بعرض عليكم ملخص التقرير.", exEn: "If you allow, I will present the report summary to you.", src: "new", topic: "Presenting" },
+  { id: "c52", ar: "يُوَضِّح", tr: "yuwaḍḍiḥ", root: "و ض ح", en: "to clarify / explain", note: "واضح = clear · توضيح = clarification", em: "يوضح", emTr: "yuwaḍḍiḥ", exM: "هذا المخطط يوضح مراحل المشروع.", exE: "ممكن أوضح نقطة صغيرة قبل ننتقل؟", exEn: "May I clarify a small point before we move on?", src: "new", topic: "Presenting" },
+  { id: "c53", ar: "يُلَخِّص", tr: "yulakhkhiṣ", root: "ل خ ص", en: "to summarize", note: "ملخص = summary · باختصار = in short", em: "يلخص", emTr: "yulakhkhiṣ", exM: "سألخص أهم النقاط في ثلاث دقائق.", exE: "بلخص لكم الفكرة بكم نقطة سريعة.", exEn: "I'll summarize the idea for you in a few quick points.", src: "new", topic: "Presenting" },
+  { id: "c54", ar: "يُطَبِّق", tr: "yuṭabbiq", root: "ط ب ق", en: "to apply / implement", note: "تطبيق = application (also the app!) · قابل للتطبيق = feasible", em: "يطبق", emTr: "yuṭabbiq", exM: "سنطبق الحل على مرحلة تجريبية أولاً.", exE: "بنطبق النظام اليديد على مراحل.", exEn: "We will implement the new system in phases.", src: "new", topic: "Work" },
+  { id: "c55", ar: "يُطَوِّر", tr: "yuṭawwir", root: "ط و ر", en: "to develop", note: "الماضي طوّر · المضارع يُطوِّر · المصدر التطوير", em: "يطور", emTr: "yuṭawwir", exM: "تطوّر الفرقة تطبيقاً جديداً للمدفوعات.", exE: "قاعدين نطور المنصة بناءً على ملاحظات المستخدمين.", exEn: "We are developing the platform based on user feedback.", src: "new", topic: "Verbs" },
+  { id: "c56", ar: "يَتَعاوَن", tr: "yataʿāwan", root: "ع و ن", en: "to collaborate", note: "تعاون = collaboration · بالتعاون مع = in collaboration with", em: "يتعاون", emTr: "yataʿāwan", exM: "نتعاون مع جهات حكومية وخاصة لتنفيذ المبادرة.", exE: "نشتغل ويا شركاء من القطاعين الحكومي والخاص.", exEn: "We work with partners from both the government and private sectors.", src: "new", topic: "Work" },
+];
+
+const PHRASE_GROUPS = [
+  {
+    id: "vip", title: "مخاطبة الشخصيات المهمة", sub: "Addressing VIPs — from your Business Protocol lessons",
+    items: [
+      { ar: "السلام عليكم طويل العمر", tr: "as-salām ʿalaykum ṭawīl il-ʿumur", en: "Peace be upon you (respectful greeting to a Sheikh/VIP)", when: "Opening greeting to a senior figure" },
+      { ar: "لبّيه طال عمرك", tr: "labbēh ṭāl ʿumrak", en: "At your service, may your life be long", when: "When a Sheikh calls you by name — respond immediately with this" },
+      { ar: "شو توجيهاتكم بخصوص المشروع؟", tr: "shū tawjīhātkum bkhuṣūṣ il-mashrūʿ?", en: "What are your directives regarding the project?", when: "Asking a VIP's opinion — never say شو رايك" },
+      { ar: "إذا معاليكم جاهزين، نبدأ على بركة الله", tr: "idhā maʿālīkum jāhzīn, nibda ʿalā barakat illāh", en: "If Your Excellency is ready, we begin with God's blessing", when: "Starting a meeting with a Minister — use plural إنتوا / معاليكم, never انته" },
+      { ar: "معاليكم، حبيت أبشّركم إن المشروع تم اعتماده", tr: "maʿālīkum, ḥabbēt abashshirkum inn il-mashrūʿ tamm iʿtimādah", en: "Your Excellency, I'm pleased to inform you the project was approved", when: "Delivering good news" },
+      { ar: "للأسف حصل تأخير بسيط خارج عن إرادتنا", tr: "lil-asaf ḥaṣal taʾkhīr basīṭ khārij ʿan irādatnā", en: "Unfortunately there was a slight delay beyond our control", when: "Delivering bad news tactfully" },
+      { ar: "إن شاء الله بندرس الموضوع من كل زاوية وبنوافيكم بالتفاصيل", tr: "in shāʾ allāh bindaris il-mawḍūʿ min kill zāwya w binwāfīkum bit-tafāṣīl", en: "We will study the matter from every angle and get back to you with details", when: "Polite indirect refusal — never say ما نقدر نسوي هالشي" },
+      { ar: "نتمنى من معاليكم الاطلاع والتوجيه بالّي تشوفونه مناسب", tr: "nitmannā min maʿālīkum il-iṭṭilāʿ wit-tawjīh bil-lī tshūfūnah munāsib", en: "We hope Your Excellency will review and direct as you see fit", when: "Requesting guidance or approval" },
+      { ar: "بيكون شرف كبير لنا حضور معاليكم الفعالية", tr: "bīkūn sharaf kabīr lanā ḥuḍūr maʿālīkum il-faʿāliyya", en: "It would be a great honor for us if Your Excellency attends the event", when: "Extending an invitation" },
+      { ar: "في أمان الله معاليكم، نوّرتونا وشرّفتونا", tr: "fī amān illāh maʿālīkum, nawwartūnā w sharraftūnā", en: "Go with God's protection, you honored us with your presence", when: "Farewell to a VIP — avoid يلا مع السلامة" },
+      { ar: "شي تأمرون طويل العمر؟", tr: "shay tāmrūn ṭawīl il-ʿumur?", en: "Is there anything you'd like to command?", when: "Closing a conversation with a senior figure" },
+      { ar: "من عيوني", tr: "min ʿyūnī", en: "With pleasure (lit. from my eyes)", when: "Responding to a request — culturally preferred over a thumbs-up gesture" },
+    ],
+  },
+  {
+    id: "meet", title: "في الاجتماعات", sub: "Meetings — from your notes",
+    items: [
+      { ar: "مشكورين على وقتكم اليوم", tr: "mashkūrīn ʿalā waqtkum il-yōm", en: "Thank you for your time today", when: "Opening a meeting" },
+      { ar: "إذا تسمحون، حابّة أشارك فكرة بسيطة", tr: "idhā tismaḥūn, ḥābba ashārik fikra basīṭa", en: "If you allow me, I'd like to share a simple idea", when: "Asking for the floor politely" },
+      { ar: "مع كامل احترامي، عندي وجهة نظر بسيطة", tr: "maʿ kāmil iḥtirāmī, ʿindī wijhat naẓar basīṭa", en: "With all due respect, I have a small point of view", when: "Introducing a different view" },
+      { ar: "أتفق وياك على هالنقطة", tr: "attafiq wiyyāk ʿalā han-nuqṭa", en: "I agree with you on this point", when: "Agreeing — note ويّا = with (Emirati)" },
+      { ar: "أتفهم وجهة نظرك، لكن أشوف الموضوع من زاوية ثانية", tr: "atfahham wijhat naẓarak, lākin ashūf il-mawḍūʿ min zāwya thānya", en: "I understand your view, but I see it from another angle", when: "Disagreeing politely" },
+      { ar: "بس للتأكيد، تقصد إن...؟", tr: "bass lit-taʾkīd, tiqṣid inn...?", en: "Just to confirm, you mean that...?", when: "Checking understanding — buys you thinking time too" },
+      { ar: "خلني أتأكد من المعلومة وأرد عليكم", tr: "khallnī at'akkad min il-maʿlūma w arudd ʿalēkum", en: "Let me verify the information and get back to you", when: "When you don't know the answer — confident, not defensive" },
+      { ar: "من وجهة نظري، الموضوع وايد مهم ويحتاج تحسين", tr: "min wijhat naẓarī, il-mawḍūʿ wāyid muhimm w yiḥtāj taḥsīn", en: "From my perspective, this matter is very important and needs improvement", when: "Giving your opinion — وايد = very (Emirati)" },
+      { ar: "أقترح إننا نحدد الأولويات بالبداية", tr: "aqtariḥ innanā nḥaddid il-awlawiyyāt bil-bidāya", en: "I suggest we define priorities first", when: "Making a suggestion" },
+      { ar: "مشكور على الملاحظة، وبشتغل عليها", tr: "mashkūr ʿalā il-mulāḥaẓa, w bashtaghil ʿalēhā", en: "Thank you for the feedback, I'll work on it", when: "Receiving criticism professionally" },
+      { ar: "استفدت وايد من الاجتماع اليوم", tr: "istafadt wāyid min il-ijtimāʿ il-yōm", en: "I benefited a lot from today's meeting", when: "Closing a meeting" },
+    ],
+  },
+  {
+    id: "pres", title: "العرض والديمو", sub: "Presenting & demos — built for your AI work",
+    items: [
+      { ar: "إذا تسمحون لي، حابّة أقدم عرض تقديمي عن الذكاء الاصطناعي", tr: "idhā tismaḥūn lī, ḥābba aqaddim ʿarḍ taqdīmī ʿan idh-dhakāʾ il-iṣṭināʿī", en: "If you allow me, I'd like to give a presentation about AI", when: "Opening a presentation" },
+      { ar: "المشروع اللي بنعرضه اليوم هو منصة تفاعلية تستخدم الذكاء الاصطناعي", tr: "il-mashrūʿ illī binʿarḍah il-yōm huwa minaṣṣa tafāʿuliyya tistakhdim idh-dhakāʾ il-iṣṭināʿī", en: "The project we're presenting today is an interactive platform that uses AI", when: "Introducing a demo — from your protocol materials" },
+      { ar: "المنصة تخدم أصحاب القرار وتسرّع علينا جمع البيانات وتحليلها", tr: "il-minaṣṣa tikhdim aṣḥāb il-qarār w tsarriʿ ʿalēnā jamʿ il-bayānāt w taḥlīlhā", en: "The platform serves decision-makers and speeds up data collection and analysis", when: "Stating the value proposition" },
+      { ar: "كل مؤشر قابل للتفسير ويرتبط بمصادره وافتراضاته", tr: "kill muʾashshir qābil lit-tafsīr w yirtabiṭ bmaṣādrah w iftirāḍātah", en: "Every indicator is explainable and linked to its sources and assumptions", when: "Explaining transparency — from your Resilience System post" },
+      { ar: "خلنا نجرب نسخة تجريبية خلال الشهر الياي ونشوف النتايج", tr: "khallnā njarrib nuskha tajrībiyya khilāl ish-shahar il-yāy w nshūf in-natāyij", en: "Let's try a pilot version during the coming month and see the results", when: "Proposing next steps — الياي = coming (Emirati)" },
+      { ar: "هالنوع من المشاريع يتماشى مع توجهاتنا في التحول الرقمي", tr: "han-nōʿ min il-mashārīʿ yitmāshā maʿ tawajjuhātnā fit-taḥawwul ir-raqmī", en: "This type of project aligns with our digital transformation direction", when: "Linking to strategy" },
+      { ar: "سؤال ممتاز، خلني أوضح هالنقطة بمثال", tr: "suʾāl mumtāz, khallnī awaḍḍiḥ han-nuqṭa bmithāl", en: "Excellent question, let me clarify this point with an example", when: "Handling audience questions" },
+      { ar: "النموذج مدرّب على بيانات متنوعة ويتحسن مع الاستخدام", tr: "in-namūdhaj mudarrab ʿalā bayānāt mutanawwiʿa w yitḥassan maʿ al-istikhdām", en: "The model is trained on diverse data and improves with use", when: "Explaining how AI works, simply" },
+      { ar: "خصوصية البيانات وأمنها أولوية أساسية في التصميم", tr: "khuṣūṣiyyat il-bayānāt w amanhā awlawiyya asāsiyya fit-taṣmīm", en: "Data privacy and security are a core priority in the design", when: "Answering the inevitable privacy question" },
+      { ar: "مثل ما قال صاحب السمو الشيخ محمد بن راشد: نحن لا ننتظر المستقبل، بل نصنعه", tr: "mithil mā qāl ṣāḥib is-sumuww ish-shēkh Muḥammad bin Rāshid: naḥnu lā nantaẓir il-mustaqbal, bal naṣnaʿuh", en: "As HH Sheikh Mohammed bin Rashid said: We don't wait for the future, we make it", when: "Quoting leadership adds weight and credibility — from your protocol lesson" },
+    ],
+  },
+];
+
+/* ================= GRAMMAR (from her Arabic Grammar + المضاف إليه والصفة tabs) ================= */
+const LESSONS = [
+  {
+    id: "idafa", title: "الإضافة (المضاف إليه)", en: "The possessive chain (Idafa)",
+    body: [
+      { h: "What it is", t: "English says: the teacher's book. Arabic just puts two nouns together — no of, no 's:", ar: "كتابُ المعلمِ · بابُ الفصلِ · شاشةُ الحاسوبِ" },
+      { h: "The two parts", t: "المضاف = the thing owned (first noun) · المضاف إليه = the owner (second noun).", ar: "كتابُ + المعلمِ" },
+      { h: "Rule 1 — No ال on the first noun. Ever.", t: "The owner carries the ال, not the thing owned.", ar: "✗ الكتابُ المعلمِ → ✓ كتابُ المعلمِ" },
+      { h: "Rule 2 — Second noun is always مجرور (kasra)", t: "Definite or indefinite, it takes kasra:", ar: "كتابُ معلمٍ (a teacher's book) · كتابُ المعلمِ (the teacher's book)" },
+      { h: "Rule 3 — The whole phrase is definite if the second noun is", t: "And nothing can come between the two nouns.", ar: "فريقُ الأمنِ · مركزُ القيادةِ · منصةُ التعلُّمِ" },
+      { h: "Dialect → فصحى", t: "You'd naturally say the dialect version — here is the fusha form:", ar: "كتابو المعلم → كتابُ المعلمِ · شنطة البنت → حقيبةُ البنتِ" },
+    ],
+  },
+  {
+    id: "sifa", title: "الصفة (النعت)", en: "The adjective",
+    body: [
+      { h: "What it is", t: "The صفة describes the noun before it (الموصوف) and follows it in four things: definiteness, gender, number, and case.", ar: "جهازٌ ذكيٌّ · الشبكةُ السريعةُ · أجهزةٍ ذكيةٍ" },
+      { h: "Definiteness must match", t: "Definite noun → definite adjective. Indefinite → indefinite.", ar: "✓ المنصةُ الذكيةُ · ✓ منصةٌ ذكيةٌ · ✗ منصةٌ الذكيةُ" },
+      { h: "The golden rule for things (غير العاقل)", t: "Non-human plurals take a FEMININE SINGULAR adjective. This is the mistake everyone makes:", ar: "كتبٌ جديدةٌ (not جدد) · طاولاتٌ نظيفةٌ · نماذجُ لغويةٌ ضخمةٌ" },
+      { h: "Human plurals agree normally", t: "People take plural adjectives:", ar: "بناتٌ جميلاتٌ · موظفون متميزون" },
+    ],
+  },
+  {
+    id: "vs", title: "إضافة أم صفة؟", en: "Idafa or adjective? The test",
+    body: [
+      { h: "The quick test", t: "Ask: does the second word OWN/SPECIFY the first (whose? what of?), or DESCRIBE it (what kind?).", ar: "فريقُ الأمنِ = the team OF security (إضافة) · الأمنُ السيبرانيُّ = cyber security (صفة)" },
+      { h: "Signal 1", t: "In idafa the first noun never has ال and the second is مجرور. A sifa copies its noun's ال and case.", ar: "مراكزُ البياناتِ العملاقةُ = centers(مضاف) of-data(مضاف إليه) giant(صفة للمراكز)" },
+      { h: "Signal 2", t: "From your doc's tech text — both together:", ar: "تطبيقاتُ الهاتفِ الذكيِّ · معاملاتُ البنكِ الإلكترونيِّ · ملفاتُ المعلوماتِ السريةِ" },
+      { h: "Why it matters for you", t: "Almost every tech term you present with is one of these two structures. Say them right and your Arabic instantly sounds structured: تحليلُ البياناتِ (idafa), الذكاءُ الاصطناعيُّ (sifa), قاعدةُ بياناتٍ ذكيةٌ (both)." },
+    ],
+  },
+  {
+    id: "basics", title: "أساسيات الجملة والنفي", en: "Sentence types, negation & dialect swaps",
+    body: [
+      { h: "Two sentence types", t: "اسمية starts with a noun, فعلية starts with a verb. In فعلية the verb stays singular:", ar: "ذهب الطالبُ · ذهب الطلابُ (verb stays!) — but: الطلابُ ذهبوا" },
+      { h: "Negation map", t: "Each tense has its word:", ar: "ما شربت / لم أشرب = didn't · لا أشرب = don't · لن أشرب = will not · ليس جيداً = not good" },
+      { h: "Future", t: "Dialect بـ becomes سـ / سوف in fusha:", ar: "بروح باچر → سأذهبُ غداً" },
+      { h: "Dialect → فصحى swaps from your notes", t: "The upgrades you flagged yourself:", ar: "بس → لكن · مال / حق → لِـ (ليس جيداً للشكر → هذا لي) · وايد → جداً / كثيراً" },
+      { h: "Form change trick", t: "Adding أ to a past verb changes who does what (form IV, causative):", ar: "نزلتُ = I went down · أنزلتُ أمي = I brought my mother down · حضر = attended · أحضر = brought · حضّر = prepared" },
+    ],
+  },
+];
+
+const DRILL_ID = [
+  { s: "انقطع اتصالُ ***الإنترنتِ*** فجأة", a: 0, w: "الإنترنت specifies which connection — ownership/specification = مضاف إليه, always majrūr." },
+  { s: "اشترى الطالب برنامجاً ***تعليمياً*** جديداً", a: 1, w: "It describes the program and copies its indefiniteness — صفة." },
+  { s: "طوّرت الشركة تطبيقاً ***ذكياً*** للترجمة", a: 1, w: "What kind of app? A smart one — صفة." },
+  { s: "أرسل المدير ملفاً سرياً إلى فريقِ ***التطويرِ***", a: 0, w: "The team OF development — specification = مضاف إليه." },
+  { s: "يحتاج النظام إلى معالجٍ ***سريعٍ***", a: 1, w: "Describes the processor and matches its kasra — صفة." },
+  { s: "توفر منصةُ ***التعلُّمِ*** دروساً تفاعلية", a: 0, w: "Platform OF learning — مضاف إليه. Note منصة has no ال (Rule 1)." },
+  { s: "المنصةُ ***الإلكترونيةُ*** توفر دروساً", a: 1, w: "Copies the ال and the ḍamma of المنصة — صفة." },
+  { s: "يستعمل مبرمجو ***الألعابِ*** محركات متطورة", a: 0, w: "Programmers OF games — مضاف إليه." },
+  { s: "ترسل الطائراتُ ***المسيَّرةُ*** صوراً دقيقة", a: 1, w: "Describes the drones, matches ال and case — صفة." },
+  { s: "ترسل الطائرات صوراً إلى مركزِ ***القيادةِ***", a: 0, w: "Center OF command — مضاف إليه." },
+  { s: "يشرف عليها فريقُ ***الأمنِ*** السيبراني", a: 0, w: "Team OF security = مضاف إليه. (And السيبراني after it is a صفة of الأمن!)" },
+  { s: "فريق الأمنِ ***السيبرانيِّ*** يراقب الأنظمة", a: 1, w: "Describes الأمن and copies its kasra — صفة." },
+  { s: "تُخزَّن النماذج في مراكزِ ***البياناتِ*** العملاقة", a: 0, w: "Centers OF data — مضاف إليه." },
+  { s: "طوّر العلماء نماذج لغوية ***ضخمةً***", a: 1, w: "Non-human plural نماذج takes feminine singular adjective — صفة." },
+];
+
+const DRILL_FIX = [
+  { q: "The teacher's book — which is correct?", opts: ["كتابُ المعلمِ", "الكتابُ المعلمِ"], a: 0, w: "المضاف never takes ال. The owner carries the ال, not the thing owned." },
+  { q: "The classroom door:", opts: ["البابُ الفصلِ", "بابُ الفصلِ"], a: 1, w: "Same rule — no ال on the first noun of an idafa." },
+  { q: "New books (non-human plural + adjective):", opts: ["كتبٌ جديدةٌ", "كتبٌ جددٌ"], a: 0, w: "Non-human plurals take a feminine singular صفة: كتب جديدة، طاولات نظيفة." },
+  { q: "Clean tables:", opts: ["طاولاتٌ نظيفاتٌ", "طاولاتٌ نظيفةٌ"], a: 1, w: "طاولات is non-human → feminine singular adjective." },
+  { q: "The team's plan:", opts: ["خطةُ الفريقِ", "الخطةُ الفريقِ"], a: 0, w: "Idafa: خطة (no ال) + الفريقِ (majrūr, carries the ال)." },
+  { q: "كتابُ المعلمِ means:", opts: ["a teacher's book", "the teacher's book"], a: 1, w: "The whole idafa is definite because the second noun المعلم is definite (Rule 3)." },
+  { q: "I will not attend:", opts: ["لن أحضر", "ما حضرت", "لا أحضر"], a: 0, w: "لن + present = future negation. ما/لم = past, لا = present habitual." },
+  { q: "I didn't sleep early:", opts: ["لن أنام مبكراً", "لم أنم مبكراً"], a: 1, w: "لم (or ما + past) negates the past: لم أنم / ما نمت." },
+  { q: "Verbal sentence with a plural subject:", opts: ["ذهبوا الطلابُ", "ذهب الطلابُ"], a: 1, w: "When the verb comes first, it stays singular: ذهب الطالب، ذهب الطلاب." },
+  { q: "Nominal sentence version:", opts: ["الطلابُ ذهبوا", "الطلابُ ذهب"], a: 0, w: "When the noun comes first, the verb agrees fully: الطلاب ذهبوا." },
+  { q: "بس in فصحى is:", opts: ["لكن", "بل"], a: 0, w: "Your own note: replace بس with لكن in formal speech." },
+  { q: "بروح باچر in فصحى:", opts: ["سأذهبُ غداً", "بأذهبُ غداً"], a: 0, w: "Dialect بـ future becomes سـ / سوف: سأذهب غداً." },
+];
+
+const ROLEPLAYS = [
+  { id: "interview", icon: "🎙️", title: "مقابلة إعلامية", en: "Media interview", desc: "A journalist interviews you about AI and technology in the UAE.", sys: "an Emirati TV journalist interviewing the user about artificial intelligence, technology, and their work. Ask sharp but friendly questions, one at a time." },
+  { id: "resilience", icon: "🛡️", title: "اعرضي نظام الصمود", en: "Present your Resilience System", desc: "Present your UAE Resilience Intelligence System — the interviewer knows nothing and asks how it works, what signals it tracks, and why it matters.", sys: "a curious senior official being briefed on the user's real project: the UAE Resilience Intelligence System — a model tracking critical imports across 7 sectors (energy, water, food, health, defense, logistics, finance) using live public signals (Strait of Hormuz shipping, commodity markets, sanctions lists, news), with explainable scores, shock propagation modeling, and staged response options. Ask her to explain each aspect in Arabic, one question at a time (what it does, how scores are explainable, what happens in a shock scenario, why resilience is built before crises). Help her build fluent Arabic explanations of her own project." },
+  { id: "minister", icon: "🏛️", title: "عرض أمام معالي الوزير", en: "Presenting to a Minister", desc: "Present your AI project to His Excellency. Protocol matters.", sys: "His Excellency a Minister (معالي الوزير) receiving a project briefing. The user must use formal protocol (معاليكم, plural address, diplomatic phrasing). Point out protocol slips gently. Ask questions a minister would ask: timelines, budget, impact." },
+  { id: "demo", icon: "💻", title: "أسئلة بعد الديمو", en: "Post-demo Q&A", desc: "You just demoed an AI platform. The audience has questions.", sys: "an audience member at a tech demo asking the user questions about their AI platform: how it works, data privacy, accuracy, cost. One question at a time, sometimes skeptical." },
+  { id: "free", icon: "💬", title: "محادثة حرة", en: "Free conversation", desc: "Open chat with your coach in Emirati Arabic on any topic.", sys: "a friendly Emirati colleague chatting casually about work, tech, and daily life." },
+];
+
+const INTERVALS = [0, 1, 3, 7, 14, 30, 60];
+const NEW_PER_DAY = 5;
+const STORE_KEY = "arabic-coach-state-v1";
+
+/* ================= HELPERS ================= */
+const dayStr = (d = new Date()) => d.toISOString().slice(0, 10);
+const shuffle = (a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+
+const defaultState = () => ({ srs: {}, streak: { last: null, count: 0 }, learnedToday: { day: null, ids: [] }, reviewsDone: 0, customCards: [], mistakes: [], ttsVoice: null });
+
+async function loadState() {
+  try {
+    const r = await window.storage.get(STORE_KEY);
+    if (!r) return defaultState();
+    return { ...defaultState(), ...JSON.parse(r.value) };
+  } catch { return defaultState(); }
+}
+async function saveState(s) {
+  try { await window.storage.set(STORE_KEY, JSON.stringify(s)); } catch (e) { console.error("save failed", e); }
+}
+
+const allCards = (state) => [...CARDS, ...(state.customCards || [])];
+const dueCards = (state) => { const t = dayStr(); return allCards(state).filter((c) => state.srs[c.id] && state.srs[c.id].due <= t); };
+const newCards = (state) => {
+  const list = allCards(state).filter((c) => !state.srs[c.id]);
+  return [...list.filter((c) => c.custom), ...list.filter((c) => !c.custom)];
+};
+
+async function askClaude(system, messages, maxTokens = 1200) {
+  const res = await fetch("/.netlify/functions/claude", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ system, messages, max_tokens: maxTokens }),
+  });
+  const data = await res.json();
+  return (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
+}
+const parseJSON = (t) => JSON.parse(t.replace(/```json|```/g, "").trim());
+
+/* ---- audio: text-to-speech + pronunciation check ---- */
+const stripHarakat = (s) => (s || "").replace(/[\u064B-\u0652\u0670\u0640]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/\s+/g, " ").trim();
+
+let AR_VOICE = null;
+let VOICES_LOADED = false;
+let PREF_VOICE_NAME = null;
+function loadVoices() {
+  try {
+    const vs = window.speechSynthesis.getVoices() || [];
+    if (vs.length > 0) VOICES_LOADED = true;
+    AR_VOICE = (PREF_VOICE_NAME && vs.find((x) => x.name === PREF_VOICE_NAME))
+      || vs.find((x) => x.lang && x.lang.toLowerCase().startsWith("ar"))
+      || vs.find((x) => (x.name || "").toLowerCase().includes("arabic"))
+      || null;
+  } catch {}
+}
+
+function speakAr(text, rate = 0.85, on = () => {}) {
+  const synth = window.speechSynthesis;
+  if (!synth) { on("error"); return; }
+  loadVoices();
+  if (VOICES_LOADED && !AR_VOICE) { on("novoice"); return; }
+  let started = false;
+  const u = new SpeechSynthesisUtterance(text);
+  if (AR_VOICE) u.voice = AR_VOICE;
+  u.lang = (AR_VOICE && AR_VOICE.lang) || "ar-SA";
+  u.rate = rate;
+  u.onstart = () => { started = true; on("start"); };
+  u.onend = () => on("end");
+  u.onerror = () => { if (!started) on("error"); else on("end"); };
+
+  // Chrome jams if speak() follows cancel() immediately — clear, wait a beat, then speak
+  synth.cancel();
+  let tries = 0;
+  const attempt = () => {
+    tries++;
+    if ((synth.speaking || synth.pending) && tries < 6) { synth.cancel(); setTimeout(attempt, 130); return; }
+    try { synth.resume(); synth.speak(u); synth.resume(); } catch { on("error"); return; }
+    setTimeout(() => { if (!started && !synth.speaking && !synth.pending) on("error"); }, 2500);
+  };
+  setTimeout(attempt, 170);
+}
+
+function SpeakBtn({ text, dark, size = 17, slow }) {
+  const [st, setSt] = useState("idle"); // idle | busy | fail | novoice
+  const click = (e) => {
+    e.stopPropagation();
+    setSt("busy");
+    speakAr(text, slow ? 0.65 : 0.85, (ev) => {
+      if (ev === "start") setSt("busy");
+      if (ev === "end") setSt("idle");
+      if (ev === "error") { setSt("fail"); setTimeout(() => setSt((s) => (s === "fail" ? "idle" : s)), 3000); }
+      if (ev === "novoice") { setSt("novoice"); setTimeout(() => setSt((s) => (s === "novoice" ? "idle" : s)), 6000); }
+    });
+  };
+  const titles = {
+    idle: "Listen", busy: "Playing…",
+    fail: "Audio didn't start — tap again",
+    novoice: "No Arabic voice on this device. Mac: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices → download Arabic. Windows: Settings → Time & Language → Speech → Add voices. Phones usually have it built in.",
+  };
+  return (
+    <button onClick={click} title={titles[st]} style={{ background: "none", border: "none", cursor: "pointer", fontSize: size, padding: "0 4px", lineHeight: 1, opacity: st === "busy" ? 0.5 : 1, filter: dark ? "none" : "saturate(.8)" }}>
+      {st === "novoice" || st === "fail" ? "🔇" : "🔊"}
+    </button>
+  );
+}
+
+function PronounceCheck({ target }) {
+  const [st, setSt] = useState(null); // null | "listening" | "unsupported" | {ok, heard}
+  const start = (e) => {
+    e.stopPropagation();
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { setSt("unsupported"); return; }
+    try {
+      const r = new SR();
+      r.lang = "ar-SA"; r.interimResults = false; r.maxAlternatives = 5;
+      setSt("listening");
+      r.onresult = (ev) => {
+        const alts = Array.from(ev.results[0]).map((a) => stripHarakat(a.transcript));
+        const t = stripHarakat(target);
+        const ok = alts.some((a) => a.includes(t) || t.includes(a));
+        setSt({ ok, heard: ev.results[0][0].transcript });
+      };
+      r.onerror = () => setSt("unsupported");
+      r.onend = () => setSt((s) => (s === "listening" ? null : s));
+      r.start();
+    } catch { setSt("unsupported"); }
+  };
+  return (
+    <div onClick={(e) => e.stopPropagation()} style={{ borderTop: `1px dashed ${T.cardLine}`, paddingTop: 10 }}>
+      {st === null && (
+        <button onClick={start} style={{ background: "#EAE2CF", border: `1px solid ${T.cardLine}`, color: T.ink, borderRadius: 10, padding: "9px 14px", fontSize: 13.5, fontWeight: 600, cursor: "pointer", width: "100%" }}>🎤 Say it out loud — check my pronunciation</button>
+      )}
+      {st === "listening" && (
+        <div style={{ textAlign: "center", color: T.goldDark, fontSize: 14, fontWeight: 600, padding: "6px 0" }}>🎤 Listening… <span className="ar" style={{ fontSize: 16 }}>{target}</span></div>
+      )}
+      {st === "unsupported" && (
+        <div style={{ color: T.inkSoft, fontSize: 12.5, lineHeight: 1.6 }}>Mic check isn't available in this browser — use the keyboard-dictation trick instead: open any notes app, tap the mic, and say the word. If it types the right word, your pronunciation is clear.</div>
+      )}
+      {st && st.heard !== undefined && (
+        <div style={{ fontSize: 13.5, lineHeight: 1.6 }}>
+          {st.ok
+            ? <span style={{ color: "#3E7A5C", fontWeight: 700 }}>✓ Clear — I heard «<span className="ar">{st.heard}</span>»</span>
+            : <span style={{ color: T.goldDark, fontWeight: 600 }}>I heard «<span className="ar">{st.heard}</span>» — listen again 🔊 and try slower</span>}
+          <button onClick={start} style={{ background: "none", border: "none", color: T.inkSoft, fontSize: 12.5, cursor: "pointer", textDecoration: "underline", marginRight: 8, padding: 0, display: "block", marginTop: 4 }}>Try again</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================= THEME ================= */
+const T = {
+  bg: "#10201D", surface: "#1A2E2A", surface2: "#22383380", line: "#2E4640",
+  card: "#F4EEE1", cardLine: "#DFD6C2", ink: "#22302C", inkSoft: "#5C6B62",
+  text: "#EAE5D8", soft: "#A8B5A9", gold: "#CFA24E", goldDark: "#A97F35",
+  green: "#5FA986", red: "#C0655A", blue: "#7BA6B5", purple: "#9B8AC4",
+};
+
+const FONT_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap');
+* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+body { margin: 0; }
+.ar { font-family: 'IBM Plex Sans Arabic', sans-serif; direction: rtl; }
+.ar-display { font-family: 'Amiri', serif; direction: rtl; }
+.ltr { direction: ltr; }
+.fade-in { animation: fadeIn .35s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fade-in { animation: none; } }
+button { font-family: inherit; }
+input, textarea { font-family: inherit; }
+::-webkit-scrollbar { width: 0; height: 0; }
+`;
+
+/* ================= SMALL PIECES ================= */
+const RootChips = ({ root, dark }) => {
+  if (!root || root === "—") return null;
+  const letters = root.split(" ");
+  return (
+    <div className="flex items-center gap-1 justify-center" dir="rtl">
+      <span style={{ fontSize: 10, color: dark ? T.soft : T.inkSoft, letterSpacing: 1, marginLeft: 6 }} className="ltr">ROOT</span>
+      {letters.map((l, i) => (
+        <span key={i} className="ar" style={{ background: dark ? T.surface2 : "#EAE2CF", border: `1px solid ${dark ? T.line : T.cardLine}`, color: dark ? T.gold : T.goldDark, borderRadius: 8, padding: "2px 9px", fontSize: 16, fontWeight: 600 }}>{l}</span>
+      ))}
+    </div>
+  );
+};
+
+const Tag = ({ children, color }) => (
+  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase", color: color || T.gold, border: `1px solid ${color || T.gold}44`, borderRadius: 20, padding: "3px 10px" }}>{children}</span>
+);
+
+const Btn = ({ children, onClick, kind = "primary", full, small, disabled }) => {
+  const styles = {
+    primary: { background: T.gold, color: "#221A0C", border: "none" },
+    ghost: { background: "transparent", color: T.text, border: `1px solid ${T.line}` },
+    dark: { background: T.surface, color: T.text, border: `1px solid ${T.line}` },
+    green: { background: T.green, color: "#0E1F18", border: "none" },
+  };
+  return (
+    <button onClick={onClick} disabled={disabled} style={{ ...styles[kind], opacity: disabled ? 0.5 : 1, borderRadius: 12, padding: small ? "8px 14px" : "13px 18px", fontSize: small ? 13 : 15, fontWeight: 600, width: full ? "100%" : "auto", cursor: "pointer" }}>
+      {children}
+    </button>
+  );
+};
+
+const BackBtn = ({ onClick, label = "Back" }) => (
+  <button onClick={onClick} style={{ background: "none", border: "none", color: T.soft, fontSize: 14, cursor: "pointer", padding: 0 }}>← {label}</button>
+);
+
+/* ================= FLASHCARD ================= */
+function Flashcard({ card, onGrade, learnMode }) {
+  const [flipped, setFlipped] = useState(false);
+  useEffect(() => setFlipped(false), [card.id]);
+  return (
+    <div className="fade-in">
+      <div onClick={() => setFlipped(!flipped)} style={{ background: T.card, border: `1px solid ${T.cardLine}`, borderRadius: 20, padding: "26px 20px", minHeight: 340, cursor: "pointer", boxShadow: "0 12px 30px rgba(0,0,0,.35)" }}>
+        {!flipped ? (
+          <div className="flex flex-col items-center justify-center gap-4" style={{ minHeight: 300 }}>
+            <Tag color={card.custom ? "#7E6BA8" : card.src === "notes" ? T.goldDark : "#4E7D8C"}>{card.custom ? "My word" : card.src === "notes" ? "From your notes" : "New · " + card.topic}</Tag>
+            <div className="flex items-center gap-2" dir="rtl">
+              <div className="ar-display" style={{ fontSize: 50, color: T.ink, lineHeight: 1.3, textAlign: "center" }}>{card.ar}</div>
+              <SpeakBtn text={card.ar} size={22} />
+            </div>
+            <div className="ltr" style={{ color: T.inkSoft, fontSize: 16, fontStyle: "italic" }}>{card.tr}</div>
+            <RootChips root={card.root} />
+            <div style={{ color: T.inkSoft, fontSize: 12, marginTop: 8 }}>Try to recall the meaning, then tap to check</div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="ltr" style={{ color: T.inkSoft, fontSize: 13, fontStyle: "italic" }}>{card.tr}</span>
+              <span className="flex items-center gap-1"><SpeakBtn text={card.ar} /><span className="ar-display" style={{ fontSize: 26, color: T.ink }}>{card.ar}</span></span>
+            </div>
+            <div className="ltr" style={{ fontSize: 22, fontWeight: 700, color: T.ink }}>{card.en}</div>
+            {card.note && <div className="ar" style={{ fontSize: 13.5, color: T.inkSoft, background: "#EAE2CF", borderRadius: 10, padding: "8px 12px" }}>{card.note}</div>}
+            <div style={{ borderTop: `1px dashed ${T.cardLine}`, paddingTop: 10 }}>
+              <div className="ltr" style={{ fontSize: 10, letterSpacing: 1, color: T.goldDark, fontWeight: 700, marginBottom: 3 }}>MSA · فصحى <SpeakBtn text={card.exM} size={14} slow /></div>
+              <div className="ar" style={{ fontSize: 16, color: T.ink, lineHeight: 1.8 }}>{card.exM}</div>
+            </div>
+            <div>
+              <div className="ltr" style={{ fontSize: 10, letterSpacing: 1, color: T.goldDark, fontWeight: 700, marginBottom: 3 }}>EMIRATI · إماراتي {card.em && card.em !== card.ar ? `· ${card.em}` : ""} <SpeakBtn text={card.exE} size={14} slow /></div>
+              <div className="ar" style={{ fontSize: 16, color: T.ink, lineHeight: 1.8 }}>{card.exE}</div>
+              <div className="ltr" style={{ fontSize: 13, color: T.inkSoft, marginTop: 3 }}>{card.exEn}</div>
+            </div>
+            <PronounceCheck target={card.ar} />
+          </div>
+        )}
+      </div>
+      {flipped && (
+        <div className="flex gap-2 mt-4">
+          {learnMode ? (
+            <Btn full onClick={() => onGrade("good")}>Got it — next</Btn>
+          ) : (
+            <>
+              <button onClick={() => onGrade("again")} style={gradeBtn(T.red)}>Again<br /><span style={{ fontSize: 10, opacity: 0.8 }}>today</span></button>
+              <button onClick={() => onGrade("good")} style={gradeBtn(T.gold)}>Good<br /><span style={{ fontSize: 10, opacity: 0.8 }}>later</span></button>
+              <button onClick={() => onGrade("easy")} style={gradeBtn(T.green)}>Easy<br /><span style={{ fontSize: 10, opacity: 0.8 }}>much later</span></button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+const gradeBtn = (c) => ({ flex: 1, background: "transparent", border: `1.5px solid ${c}`, color: c, borderRadius: 12, padding: "10px 6px", fontSize: 14, fontWeight: 700, cursor: "pointer", lineHeight: 1.3 });
+
+/* ================= REVIEW SESSION ================= */
+function ReviewSession({ state, setState, mode, onDone }) {
+  const [queue, setQueue] = useState(() => {
+    if (mode === "learn") {
+      const today = dayStr();
+      const already = state.learnedToday.day === today ? state.learnedToday.ids.length : 0;
+      return newCards(state).slice(0, Math.max(0, NEW_PER_DAY - already));
+    }
+    return shuffle(dueCards(state));
+  });
+  const [done, setDone] = useState(0);
+
+  if (queue.length === 0) {
+    return (
+      <div className="fade-in text-center" style={{ padding: "48px 20px" }}>
+        <div style={{ fontSize: 44 }}>{done > 0 ? "🌟" : "✅"}</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: T.text, marginTop: 12 }}>{done > 0 ? `${done} card${done > 1 ? "s" : ""} done` : mode === "learn" ? "No new cards left for today" : "Nothing due right now"}</div>
+        <div style={{ color: T.soft, fontSize: 14, marginTop: 6 }}>{mode === "learn" ? "Come back tomorrow for 5 more, or add your own words." : "Reviews come back as words start to fade — that's the science."}</div>
+        <div className="mt-6"><Btn onClick={onDone} kind="ghost">Back</Btn></div>
+      </div>
+    );
+  }
+
+  const card = queue[0];
+  const grade = (g) => {
+    const today = dayStr();
+    const s = { ...state, srs: { ...state.srs }, learnedToday: { ...state.learnedToday } };
+    const cur = s.srs[card.id] || { box: 0 };
+    let box = cur.box;
+    if (mode === "learn") box = 1;
+    else if (g === "again") box = 0;
+    else if (g === "good") box = Math.min(box + 1, INTERVALS.length - 1);
+    else box = Math.min(box + 2, INTERVALS.length - 1);
+    const due = new Date(); due.setDate(due.getDate() + INTERVALS[box]);
+    s.srs[card.id] = { box, due: dayStr(due) };
+    if (mode === "learn") {
+      if (s.learnedToday.day !== today) s.learnedToday = { day: today, ids: [] };
+      s.learnedToday.ids = [...s.learnedToday.ids, card.id];
+    }
+    s.reviewsDone = (s.reviewsDone || 0) + 1;
+    if (s.streak.last !== today) {
+      const y = new Date(); y.setDate(y.getDate() - 1);
+      s.streak = { last: today, count: s.streak.last === dayStr(y) ? s.streak.count + 1 : 1 };
+    }
+    setState(s); saveState(s);
+    setQueue(g === "again" && mode !== "learn" ? [...queue.slice(1), card] : queue.slice(1));
+    setDone(done + 1);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <BackBtn onClick={onDone} />
+        <span style={{ color: T.soft, fontSize: 13 }}>{queue.length} left</span>
+      </div>
+      <Flashcard card={card} onGrade={grade} learnMode={mode === "learn"} />
+    </div>
+  );
+}
+
+/* ================= ADD YOUR OWN WORD ================= */
+function AddWord({ state, setState, onBack }) {
+  const [word, setWord] = useState("");
+  const [hint, setHint] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [err, setErr] = useState(null);
+
+  const generate = async () => {
+    if (!word.trim() || busy) return;
+    setBusy(true); setErr(null); setPreview(null);
+    try {
+      const text = await askClaude(
+        `You are an Arabic lexicographer creating a flashcard for a UAE national professional in AI/tech learning MSA + Emirati dialect. Return ONLY valid JSON, no markdown fences, no commentary, with exactly these keys:
+{"ar":"the word in MSA Arabic with harakat on ambiguous letters","tr":"academic transliteration","root":"trilateral root as space-separated letters like س و ق, or — if none/loanword","en":"concise English meaning","note":"one short usage/conjugation note (Arabic+English mix ok, e.g. plural form, verb forms, related words)","em":"the Emirati dialect equivalent word (same word if identical)","emTr":"Emirati transliteration","exM":"one natural MSA example sentence, professional/tech context where possible","exE":"one natural Emirati dialect example sentence","exEn":"English translation of the Emirati example","topic":"one of: AI, Tech, Work, Presenting, Economy, Verbs, General"}`,
+        [{ role: "user", content: `Word: ${word}${hint ? `\nUser's note about it: ${hint}` : ""}` }]
+      );
+      const c = parseJSON(text);
+      setPreview({ ...c, id: "u" + Date.now(), src: "notes", custom: true });
+    } catch (e) { setErr("Couldn't generate the card — try again."); }
+    setBusy(false);
+  };
+
+  const save = () => {
+    const s = { ...state, customCards: [...(state.customCards || []), preview] };
+    setState(s); saveState(s);
+    setPreview(null); setWord(""); setHint("");
+  };
+
+  return (
+    <div className="fade-in flex flex-col gap-3">
+      <BackBtn onClick={onBack} />
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Add a word you came across</div>
+      <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>Heard it in a meeting, a podcast, or a headline? Type it and the coach builds the full card — root, pronunciation, Emirati form, examples — and drops it into your rotation as the next new card.</div>
+      <input value={word} onChange={(e) => setWord(e.target.value)} placeholder="اكتب الكلمة… e.g. استدامة" className="ar" style={inputStyle} />
+      <input value={hint} onChange={(e) => setHint(e.target.value)} placeholder="Optional: where you heard it / what you think it means" className="ltr" style={{ ...inputStyle, direction: "ltr", fontSize: 13.5 }} />
+      <Btn full onClick={generate} disabled={busy || !word.trim()}>{busy ? "Building the card…" : "Generate card"}</Btn>
+      {err && <div style={{ color: T.red, fontSize: 13 }}>{err}</div>}
+      {preview && (
+        <div className="fade-in flex flex-col gap-3">
+          <Flashcard card={preview} onGrade={() => {}} learnMode={false} />
+          <div className="flex gap-2">
+            <Btn full kind="green" onClick={save}>Save & add to rotation</Btn>
+            <Btn kind="ghost" onClick={generate}>Redo</Btn>
+          </div>
+        </div>
+      )}
+      {(state.customCards || []).length > 0 && !preview && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ color: T.soft, fontSize: 12, letterSpacing: 1, fontWeight: 700 }}>MY WORDS · {state.customCards.length}</div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            {state.customCards.map((c) => (
+              <span key={c.id} className="ar" style={{ background: T.surface, border: `1px solid ${T.line}`, color: T.text, borderRadius: 20, padding: "5px 13px", fontSize: 14 }}>{c.ar}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+const inputStyle = { background: T.surface, border: `1px solid ${T.line}`, borderRadius: 12, padding: "13px 14px", color: T.text, fontSize: 16, outline: "none", width: "100%" };
+
+/* ================= BROWSE ================= */
+function Browse({ state, onBack }) {
+  const [topic, setTopic] = useState("All");
+  const cards = allCards(state);
+  const topics = ["All", "My words", ...new Set(cards.map((c) => c.topic))];
+  const list = topic === "All" ? cards : topic === "My words" ? cards.filter((c) => c.custom) : cards.filter((c) => c.topic === topic);
+  return (
+    <div className="fade-in">
+      <div style={{ marginBottom: 10 }}><BackBtn onClick={onBack} /></div>
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
+        {topics.map((t) => (
+          <button key={t} onClick={() => setTopic(t)} style={{ whiteSpace: "nowrap", background: topic === t ? T.gold : T.surface, color: topic === t ? "#221A0C" : T.soft, border: `1px solid ${topic === t ? T.gold : T.line}`, borderRadius: 20, padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{t}</button>
+        ))}
+      </div>
+      <div className="flex flex-col gap-2">
+        {list.map((c) => (
+          <details key={c.id} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }}>
+            <summary className="flex items-center justify-between" style={{ cursor: "pointer", listStyle: "none" }}>
+              <span className="ltr" style={{ color: T.soft, fontSize: 13 }}>{c.en}</span>
+              <span className="ar" style={{ color: T.text, fontSize: 19, fontWeight: 600 }}>{c.ar}</span>
+            </summary>
+            <div style={{ marginTop: 10, borderTop: `1px solid ${T.line}`, paddingTop: 10 }} className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="ltr" style={{ color: T.soft, fontSize: 13, fontStyle: "italic" }}>{c.tr}</span>
+                <RootChips root={c.root} dark />
+              </div>
+              {c.note && <div className="ar" style={{ color: T.soft, fontSize: 13 }}>{c.note}</div>}
+              <div className="ar" style={{ color: T.text, fontSize: 14.5, lineHeight: 1.8 }}>{c.exE}</div>
+              <div className="ltr" style={{ color: T.soft, fontSize: 12.5 }}>{c.exEn}</div>
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ================= VOCAB QUIZ ================= */
+function Quiz({ state, onBack }) {
+  const [qs, setQs] = useState(null);
+  const [i, setI] = useState(0);
+  const [picked, setPicked] = useState(null);
+  const [score, setScore] = useState(0);
+  const cards = allCards(state);
+
+  const start = (dir) => {
+    const pool = shuffle(cards).slice(0, 8);
+    setQs(pool.map((c) => {
+      const wrong = shuffle(cards.filter((x) => x.id !== c.id)).slice(0, 3);
+      return { card: c, opts: shuffle([c, ...wrong]), dir };
+    }));
+    setI(0); setScore(0); setPicked(null);
+  };
+
+  if (!qs) return (
+    <div className="fade-in flex flex-col gap-3">
+      <BackBtn onClick={onBack} />
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Vocabulary quiz</div>
+      <div style={{ color: T.soft, fontSize: 14, lineHeight: 1.6 }}>Active recall under light pressure — the closest thing to being asked on the spot.</div>
+      <Btn full onClick={() => start("ar2en")}><span className="ar" style={{ fontSize: 16 }}>عربي</span> → English &nbsp;·&nbsp; recognize</Btn>
+      <Btn full kind="dark" onClick={() => start("en2ar")}>English → <span className="ar" style={{ fontSize: 16 }}>عربي</span> &nbsp;·&nbsp; produce (harder)</Btn>
+    </div>
+  );
+
+  if (i >= qs.length) return (
+    <div className="fade-in text-center" style={{ padding: "40px 16px" }}>
+      <div style={{ fontSize: 44 }}>{score >= 6 ? "🏆" : "📚"}</div>
+      <div style={{ color: T.text, fontSize: 22, fontWeight: 700, marginTop: 10 }}>{score} / {qs.length}</div>
+      <div style={{ color: T.soft, fontSize: 14, marginTop: 6 }}>{score >= 6 ? "Strong — ماشاءالله!" : "The ones you missed will show up again in reviews."}</div>
+      <div className="flex gap-2 justify-center mt-6">
+        <Btn onClick={() => setQs(null)}>Again</Btn>
+        <Btn kind="ghost" onClick={onBack}>Done</Btn>
+      </div>
+    </div>
+  );
+
+  const q = qs[i];
+  const prompt = q.dir === "ar2en" ? q.card.ar : q.card.en;
+  const pick = (o) => { if (picked) return; setPicked(o.id); if (o.id === q.card.id) setScore(score + 1); };
+
+  return (
+    <div className="fade-in">
+      <div className="flex justify-between mb-3" style={{ color: T.soft, fontSize: 13 }}>
+        <span>Question {i + 1} / {qs.length}</span><span>{score} correct</span>
+      </div>
+      <div style={{ background: T.card, borderRadius: 16, padding: "26px 16px", textAlign: "center", marginBottom: 14 }}>
+        <div className={q.dir === "ar2en" ? "ar-display" : "ltr"} style={{ fontSize: q.dir === "ar2en" ? 38 : 24, fontWeight: q.dir === "ar2en" ? 400 : 700, color: T.ink }}>{prompt}</div>
+        {q.dir === "ar2en" && <div className="ltr" style={{ color: T.inkSoft, fontSize: 14, fontStyle: "italic", marginTop: 4 }}>{q.card.tr}</div>}
+      </div>
+      <div className="flex flex-col gap-2">
+        {q.opts.map((o) => {
+          let bg = T.surface, bd = T.line;
+          if (picked) {
+            if (o.id === q.card.id) { bg = "#1F3A2E"; bd = T.green; }
+            else if (o.id === picked) { bg = "#3A211E"; bd = T.red; }
+          }
+          return (
+            <button key={o.id} onClick={() => pick(o)} className={q.dir === "en2ar" ? "ar" : "ltr"} style={{ background: bg, border: `1.5px solid ${bd}`, color: T.text, borderRadius: 12, padding: "13px 14px", fontSize: q.dir === "en2ar" ? 18 : 15, textAlign: q.dir === "en2ar" ? "right" : "left", cursor: "pointer" }}>{q.dir === "ar2en" ? o.en : o.ar}</button>
+          );
+        })}
+      </div>
+      {picked && (
+        <div className="mt-4">
+          {picked !== q.card.id && <div className="ar" style={{ color: T.soft, fontSize: 13.5, marginBottom: 10, lineHeight: 1.8 }}>{q.card.exE}</div>}
+          <Btn full onClick={() => { setI(i + 1); setPicked(null); }}>{i + 1 === qs.length ? "See score" : "Next"}</Btn>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================= GRAMMAR ================= */
+function Grammar({ onBack }) {
+  const [view, setView] = useState(null); // null | lesson id | "drill1" | "drill2"
+
+  if (view === "drill1") return <GrammarDrill items={shuffle(DRILL_ID).slice(0, 10)} type="id" onBack={() => setView(null)} />;
+  if (view === "drill2") return <GrammarDrill items={shuffle(DRILL_FIX).slice(0, 10)} type="fix" onBack={() => setView(null)} />;
+
+  const lesson = LESSONS.find((l) => l.id === view);
+  if (lesson) return (
+    <div className="fade-in flex flex-col gap-3">
+      <BackBtn onClick={() => setView(null)} label="Grammar" />
+      <div className="ar" style={{ color: T.gold, fontSize: 24, fontWeight: 700 }}>{lesson.title}</div>
+      <div style={{ color: T.soft, fontSize: 13 }}>{lesson.en}</div>
+      {lesson.body.map((b, i) => (
+        <div key={i} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "13px 15px" }}>
+          <div style={{ color: T.text, fontSize: 14.5, fontWeight: 700 }}>{b.h}</div>
+          {b.t && <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6, marginTop: 4 }}>{b.t}</div>}
+          {b.ar && <div className="ar" style={{ color: T.gold, fontSize: 17, lineHeight: 2, marginTop: 6, background: T.surface2, borderRadius: 10, padding: "8px 12px" }}>{b.ar}</div>}
+        </div>
+      ))}
+      <Btn full onClick={() => setView(lesson.id === "basics" ? "drill2" : "drill1")}>Drill this</Btn>
+    </div>
+  );
+
+  return (
+    <div className="fade-in flex flex-col gap-3">
+      <BackBtn onClick={onBack} />
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Grammar & structure</div>
+      <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>Straight from your Arabic Grammar and المضاف إليه والصفة lessons — read short, then drill.</div>
+      <div style={{ color: T.gold, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginTop: 4 }}>LESSONS</div>
+      {LESSONS.map((l) => (
+        <button key={l.id} onClick={() => setView(l.id)} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "13px 15px", textAlign: "right", cursor: "pointer" }}>
+          <div className="ar" style={{ color: T.text, fontSize: 17, fontWeight: 700 }}>{l.title}</div>
+          <div className="ltr" style={{ color: T.soft, fontSize: 12, marginTop: 2, textAlign: "left" }}>{l.en}</div>
+        </button>
+      ))}
+      <div style={{ color: T.gold, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginTop: 4 }}>DRILLS</div>
+      <Btn full onClick={() => setView("drill1")}>إضافة أم صفة؟ · Identify the structure</Btn>
+      <Btn full kind="dark" onClick={() => setView("drill2")}>صحّح الخطأ · Pick the correct form</Btn>
+    </div>
+  );
+}
+
+function GrammarDrill({ items, type, onBack }) {
+  const [i, setI] = useState(0);
+  const [picked, setPicked] = useState(null);
+  const [score, setScore] = useState(0);
+
+  if (i >= items.length) return (
+    <div className="fade-in text-center" style={{ padding: "40px 16px" }}>
+      <div style={{ fontSize: 44 }}>{score >= items.length * 0.7 ? "🏆" : "📖"}</div>
+      <div style={{ color: T.text, fontSize: 22, fontWeight: 700, marginTop: 10 }}>{score} / {items.length}</div>
+      <div style={{ color: T.soft, fontSize: 14, marginTop: 6 }}>{score >= items.length * 0.7 ? "The structures are sticking." : "Reread the lesson and run it again — this is the highest-value grammar for your presentations."}</div>
+      <div className="mt-6"><Btn kind="ghost" onClick={onBack}>Done</Btn></div>
+    </div>
+  );
+
+  const it = items[i];
+  const opts = type === "id" ? ["مضاف إليه", "صفة (نعت)"] : it.opts;
+  const pick = (idx) => { if (picked !== null) return; setPicked(idx); if (idx === it.a) setScore(score + 1); };
+  const parts = type === "id" ? it.s.split("***") : null;
+
+  return (
+    <div className="fade-in">
+      <div className="flex items-center justify-between mb-3">
+        <BackBtn onClick={onBack} />
+        <span style={{ color: T.soft, fontSize: 13 }}>{i + 1} / {items.length} · {score} ✓</span>
+      </div>
+      <div style={{ background: T.card, borderRadius: 16, padding: "22px 16px", marginBottom: 14 }}>
+        {type === "id" ? (
+          <>
+            <div className="ltr" style={{ color: T.inkSoft, fontSize: 12, marginBottom: 8, textAlign: "center" }}>What is the highlighted word?</div>
+            <div className="ar" style={{ fontSize: 21, color: T.ink, lineHeight: 2, textAlign: "center" }}>
+              {parts[0]}<span style={{ color: T.goldDark, fontWeight: 700, borderBottom: `2px solid ${T.goldDark}` }}>{parts[1]}</span>{parts[2]}
+            </div>
+          </>
+        ) : (
+          <div className="ltr" style={{ fontSize: 16, color: T.ink, fontWeight: 600, textAlign: "center" }}>{it.q}</div>
+        )}
+      </div>
+      <div className="flex flex-col gap-2">
+        {opts.map((o, idx) => {
+          let bg = T.surface, bd = T.line;
+          if (picked !== null) {
+            if (idx === it.a) { bg = "#1F3A2E"; bd = T.green; }
+            else if (idx === picked) { bg = "#3A211E"; bd = T.red; }
+          }
+          return (
+            <button key={idx} onClick={() => pick(idx)} className="ar" style={{ background: bg, border: `1.5px solid ${bd}`, color: T.text, borderRadius: 12, padding: "13px 14px", fontSize: 17, cursor: "pointer" }}>{o}</button>
+          );
+        })}
+      </div>
+      {picked !== null && (
+        <div className="mt-3">
+          <div style={{ background: T.surface2, border: `1px solid ${T.line}`, borderRadius: 12, padding: "10px 13px", color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>{it.w}</div>
+          <div className="mt-3"><Btn full onClick={() => { setI(i + 1); setPicked(null); }}>{i + 1 === items.length ? "See score" : "Next"}</Btn></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================= WRITING COACH ================= */
+function Writing({ state, setState, onBack }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [fb, setFb] = useState(null);
+  const [err, setErr] = useState(null);
+  const [showLog, setShowLog] = useState(false);
+  const [promptWord, setPromptWord] = useState(null);
+
+  const learnedPool = allCards(state).filter((c) => state.srs[c.id]);
+  const suggestions = shuffle(learnedPool.length >= 3 ? learnedPool : allCards(state)).slice(0, 3);
+
+  const check = async () => {
+    if (!text.trim() || busy) return;
+    setBusy(true); setErr(null); setFb(null);
+    try {
+      const raw = await askClaude(
+        `You are an expert Arabic writing coach for Maryam, a UAE professional in AI. She writes sentences in Arabic (MSA or Emirati). Analyze her writing and return ONLY valid JSON, no fences:
+{"corrected":"her text fully corrected in MSA with proper grammar","issues":[{"type":"short Arabic grammar label e.g. الإضافة, الصفة, تصريف الفعل, النفي, أسلوب, إملاء","fix":"1-line English explanation of the mistake and the rule, quoting her words"}],"emirati":"how she would say the corrected version naturally in Emirati dialect","upgrade":"one more polished/professional MSA version suitable for a presentation","praise":"one short specific thing she did well (English)"}
+If her writing is already correct, issues should be an empty array and corrected equals her text. Max 4 issues, most important first. Refer to her grammar lessons: idafa (المضاف لا يأخذ ال), adjective agreement (non-human plural takes feminine singular), negation words, sentence types.`,
+        [{ role: "user", content: (promptWord ? `Target word she was asked to use: ${promptWord}\n` : "") + "Her writing:\n" + text }]
+      );
+      const parsed = parseJSON(raw);
+      setFb(parsed);
+      if (parsed.issues && parsed.issues.length > 0) {
+        const entry = { d: dayStr(), orig: text.trim(), corrected: parsed.corrected, lessons: parsed.issues.map((x) => x.type).join(" · ") };
+        const s = { ...state, mistakes: [entry, ...(state.mistakes || [])].slice(0, 60) };
+        setState(s); saveState(s);
+      }
+    } catch (e) { setErr("Couldn't check it — try again."); }
+    setBusy(false);
+  };
+
+  if (showLog) return (
+    <div className="fade-in flex flex-col gap-3">
+      <BackBtn onClick={() => setShowLog(false)} label="Writing" />
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>My corrections · {(state.mistakes || []).length}</div>
+      <div style={{ color: T.soft, fontSize: 13 }}>Your personal error patterns — reread these weekly; they are your highest-value review material.</div>
+      {(state.mistakes || []).length === 0 && <div style={{ color: T.soft, fontSize: 14 }}>No corrections yet — write something!</div>}
+      {(state.mistakes || []).map((m, i) => (
+        <div key={i} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }}>
+          <div className="flex items-center justify-between">
+            <span style={{ color: T.soft, fontSize: 11 }}>{m.d}</span>
+            <span className="ar" style={{ color: T.purple, fontSize: 12 }}>{m.lessons}</span>
+          </div>
+          <div className="ar" style={{ color: T.red, fontSize: 14.5, lineHeight: 1.9, marginTop: 6, textDecoration: "line-through", textDecorationColor: "#C0655A88" }}>{m.orig}</div>
+          <div className="ar" style={{ color: T.green, fontSize: 15, lineHeight: 1.9, marginTop: 2 }}>{m.corrected}</div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="fade-in flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <BackBtn onClick={onBack} />
+        <button onClick={() => setShowLog(true)} style={{ background: "none", border: `1px solid ${T.line}`, color: T.soft, fontSize: 12.5, borderRadius: 20, padding: "5px 12px", cursor: "pointer" }}>My corrections · {(state.mistakes || []).length}</button>
+      </div>
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Writing coach</div>
+      <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>Write 1-3 sentences — free, or using one of your words below. The coach corrects grammar and structure, names the rule (الإضافة، الصفة…), and every mistake is saved as personal learning material.</div>
+      <div className="flex flex-wrap gap-2">
+        {suggestions.map((c) => (
+          <button key={c.id} onClick={() => setPromptWord(promptWord === c.ar ? null : c.ar)} className="ar" style={{ background: promptWord === c.ar ? T.gold : T.surface, color: promptWord === c.ar ? "#221A0C" : T.text, border: `1px solid ${promptWord === c.ar ? T.gold : T.line}`, borderRadius: 20, padding: "6px 14px", fontSize: 15, cursor: "pointer" }}>استخدمي: {c.ar}</button>
+        ))}
+      </div>
+      <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} placeholder={promptWord ? `اكتبي جملة فيها كلمة ${promptWord}…` : "اكتبي جملة أو أكثر…"} className="ar" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.9 }} />
+      <Btn full onClick={check} disabled={busy || !text.trim()}>{busy ? "يصحح…" : "Check my writing"}</Btn>
+      {err && <div style={{ color: T.red, fontSize: 13 }}>{err}</div>}
+      {fb && (
+        <div className="fade-in flex flex-col gap-2">
+          {fb.praise && <div style={{ background: "#1F3A2E", border: `1px solid ${T.green}55`, borderRadius: 12, padding: "10px 13px", color: T.green, fontSize: 13.5 }}>✓ {fb.praise}</div>}
+          {(fb.issues || []).length === 0 ? (
+            <div style={{ background: T.surface, borderRadius: 12, padding: "12px 14px", color: T.text, fontSize: 14 }}>ممتاز — no corrections needed. Try a longer or more complex sentence.</div>
+          ) : (
+            <>
+              <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 12, padding: "12px 14px" }}>
+                <div style={{ color: T.gold, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>CORRECTED</div>
+                <div className="ar" style={{ color: T.text, fontSize: 16.5, lineHeight: 2 }}>{fb.corrected}</div>
+              </div>
+              {fb.issues.map((x, i) => (
+                <div key={i} style={{ background: T.surface2, border: `1px solid ${T.line}`, borderRadius: 12, padding: "10px 13px" }}>
+                  <span className="ar" style={{ color: T.purple, fontSize: 13.5, fontWeight: 700 }}>{x.type}</span>
+                  <div className="ltr" style={{ color: T.soft, fontSize: 13, lineHeight: 1.6, marginTop: 3 }}>{x.fix}</div>
+                </div>
+              ))}
+            </>
+          )}
+          {fb.emirati && (
+            <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 12, padding: "12px 14px" }}>
+              <div style={{ color: T.gold, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>HOW YOU'D SAY IT · إماراتي</div>
+              <div className="ar" style={{ color: T.text, fontSize: 15.5, lineHeight: 2 }}>{fb.emirati}</div>
+            </div>
+          )}
+          {fb.upgrade && (
+            <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 12, padding: "12px 14px" }}>
+              <div style={{ color: T.gold, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>PRESENTATION-GRADE VERSION</div>
+              <div className="ar" style={{ color: T.text, fontSize: 15.5, lineHeight: 2 }}>{fb.upgrade}</div>
+            </div>
+          )}
+          <Btn full kind="ghost" onClick={() => { setText(""); setFb(null); }}>Write another</Btn>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================= PRACTICE HUB ================= */
+function PracticeHub({ state, setState, forced, clearForced }) {
+  const [view, setView] = useState(forced || null);
+  useEffect(() => { if (forced) { setView(forced); clearForced(); } }, [forced]);
+
+  if (view === "quiz") return <Quiz state={state} onBack={() => setView(null)} />;
+  if (view === "grammar") return <Grammar onBack={() => setView(null)} />;
+  if (view === "write") return <Writing state={state} setState={setState} onBack={() => setView(null)} />;
+
+  return (
+    <div className="fade-in flex flex-col gap-3">
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Practice</div>
+      <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>Three ways to turn knowledge into on-the-spot ability.</div>
+      {[
+        { id: "quiz", icon: "⚡", t: "Vocabulary quiz", d: "Active recall in both directions — recognize and produce" },
+        { id: "grammar", icon: "🏗️", t: "Grammar & structure", d: "الإضافة والصفة, sentence types, negation — lessons and drills from your docs" },
+        { id: "write", icon: "✍️", t: "Writing coach", d: "Write sentences, get corrected by rule, and build your personal mistake log" },
+      ].map((x) => (
+        <button key={x.id} onClick={() => setView(x.id)} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 16, padding: "15px 16px", textAlign: "left", cursor: "pointer" }}>
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: 24 }}>{x.icon}</span>
+            <div>
+              <div style={{ color: T.text, fontSize: 15, fontWeight: 700 }}>{x.t}</div>
+              <div style={{ color: T.soft, fontSize: 12.5, marginTop: 2, lineHeight: 1.5 }}>{x.d}</div>
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ================= SPEAK (AI COACH) ================= */
+function Speak() {
+  const [rp, setRp] = useState(null);
+  const [msgs, setMsgs] = useState([]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const endRef = useRef(null);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs, busy]);
+
+  const send = async (text) => {
+    if (!text.trim() || busy) return;
+    const history = [...msgs, { role: "user", content: text }];
+    setMsgs(history); setInput(""); setBusy(true);
+    try {
+      const reply = await askClaude(
+        `You are ${rp.sys}
+You are also a warm Emirati Arabic language coach for Maryam, a UAE national professional working in AI/technology, building confidence for presentations, interviews, and demos.
+Rules:
+- Speak primarily in Emirati dialect Arabic (with MSA where a formal register is natural). Keep replies SHORT: 2-5 sentences max.
+- If her Arabic has an error or unnatural phrasing, first show a brief correction: ✏️ بدال «...» الأفضل «...» with a 1-line English note. Praise what was good. Then continue the roleplay with ONE follow-up question.
+- If she writes in English, gently answer and give her the Emirati way to say it, then ask her to try in Arabic.
+- Occasionally teach one useful word inline with English gloss in parentheses.
+- Never break character except for the coaching corrections.`,
+        history, 1000
+      );
+      setMsgs([...history, { role: "assistant", content: reply || "…" }]);
+    } catch (e) {
+      setMsgs([...history, { role: "assistant", content: "Connection issue — try sending again." }]);
+    }
+    setBusy(false);
+  };
+
+  if (!rp) return (
+    <div className="fade-in flex flex-col gap-3">
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Speaking coach</div>
+      <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>Roleplay real situations with a coach that replies in Emirati, corrects you gently, and pushes back with follow-up questions. <b style={{ color: T.gold }}>Tip:</b> tap the mic on your phone keyboard and dictate in Arabic — that turns this into true speaking practice.</div>
+      {ROLEPLAYS.map((r) => (
+        <button key={r.id} onClick={() => { setRp(r); setMsgs([]); }} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 16, padding: "15px 16px", textAlign: "left", cursor: "pointer" }}>
+          <div className="flex items-center justify-between">
+            <span style={{ fontSize: 24 }}>{r.icon}</span>
+            <span className="ar" style={{ color: T.gold, fontSize: 18, fontWeight: 700 }}>{r.title}</span>
+          </div>
+          <div style={{ color: T.text, fontSize: 14, fontWeight: 600, marginTop: 6 }}>{r.en}</div>
+          <div style={{ color: T.soft, fontSize: 12.5, marginTop: 2, lineHeight: 1.5 }}>{r.desc}</div>
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="fade-in flex flex-col" style={{ height: "calc(100vh - 150px)" }}>
+      <div className="flex items-center justify-between mb-2">
+        <BackBtn onClick={() => setRp(null)} label="Scenarios" />
+        <span className="ar" style={{ color: T.gold, fontSize: 15, fontWeight: 700 }}>{rp.title}</span>
+      </div>
+      <div className="flex-1 overflow-y-auto flex flex-col gap-2 pb-2">
+        {msgs.length === 0 && (
+          <div style={{ background: T.surface, border: `1px dashed ${T.line}`, borderRadius: 14, padding: 14, color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>
+            Start by greeting and introducing yourself in Arabic — for example:
+            <div className="ar" style={{ color: T.text, fontSize: 15, marginTop: 6, lineHeight: 1.9 }}>السلام عليكم، أنا مريم من فريق الذكاء الاصطناعي...</div>
+            <div className="mt-2"><Btn small kind="ghost" onClick={() => send("السلام عليكم، أنا مريم وأشتغل في مجال الذكاء الاصطناعي. جاهزة نبدأ.")}>Use this opener</Btn></div>
+          </div>
+        )}
+        {msgs.map((m, idx) => (
+          <div key={idx} className="ar" style={{ alignSelf: m.role === "user" ? "flex-start" : "flex-end", maxWidth: "88%", background: m.role === "user" ? T.gold : T.surface, color: m.role === "user" ? "#221A0C" : T.text, border: m.role === "user" ? "none" : `1px solid ${T.line}`, borderRadius: 16, padding: "10px 14px", fontSize: 15, lineHeight: 1.9, whiteSpace: "pre-wrap" }}>{m.content}</div>
+        ))}
+        {busy && <div style={{ alignSelf: "flex-end", color: T.soft, fontSize: 13 }}>يكتب…</div>}
+        <div ref={endRef} />
+      </div>
+      <div className="flex gap-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
+        <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send(input)} placeholder="اكتب أو استخدم مايك الكيبورد…" className="ar" style={{ flex: 1, background: T.surface, border: `1px solid ${T.line}`, borderRadius: 12, padding: "12px 14px", color: T.text, fontSize: 15, outline: "none" }} />
+        <Btn onClick={() => send(input)} disabled={busy}>إرسال</Btn>
+      </div>
+    </div>
+  );
+}
+
+/* ================= PHRASES ================= */
+function Phrases() {
+  const [open, setOpen] = useState("vip");
+  return (
+    <div className="fade-in flex flex-col gap-3">
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Phrase bank</div>
+      <div style={{ color: T.soft, fontSize: 13.5 }}>Your protocol and meeting phrases, ready before you walk into the room.</div>
+      {PHRASE_GROUPS.map((g) => (
+        <div key={g.id} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 16, overflow: "hidden" }}>
+          <button onClick={() => setOpen(open === g.id ? null : g.id)} style={{ width: "100%", background: "none", border: "none", padding: "15px 16px", cursor: "pointer", textAlign: "right" }}>
+            <div className="flex items-center justify-between">
+              <span style={{ color: T.soft, fontSize: 18 }}>{open === g.id ? "−" : "+"}</span>
+              <span className="ar" style={{ color: T.gold, fontSize: 17, fontWeight: 700 }}>{g.title}</span>
+            </div>
+            <div className="ltr" style={{ color: T.soft, fontSize: 12, marginTop: 3, textAlign: "left" }}>{g.sub}</div>
+          </button>
+          {open === g.id && (
+            <div style={{ borderTop: `1px solid ${T.line}` }}>
+              {g.items.map((p, idx) => (
+                <div key={idx} style={{ padding: "13px 16px", borderBottom: idx < g.items.length - 1 ? `1px solid ${T.line}` : "none" }}>
+                  <div className="flex items-start gap-1" dir="rtl">
+                    <div className="ar" style={{ color: T.text, fontSize: 16.5, lineHeight: 1.9, fontWeight: 500, flex: 1 }}>{p.ar}</div>
+                    <SpeakBtn text={p.ar} dark slow />
+                  </div>
+                  <div className="ltr" style={{ color: T.soft, fontSize: 12.5, fontStyle: "italic", marginTop: 2 }}>{p.tr}</div>
+                  <div className="ltr" style={{ color: T.text, fontSize: 13.5, marginTop: 4 }}>{p.en}</div>
+                  <div className="ltr" style={{ color: T.gold, fontSize: 12, marginTop: 4 }}>◈ {p.when}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ================= TODAY ================= */
+function Today({ state, go }) {
+  const due = dueCards(state).length;
+  const today = dayStr();
+  const learned = state.learnedToday.day === today ? state.learnedToday.ids.length : 0;
+  const newLeft = Math.min(NEW_PER_DAY - learned, newCards(state).length);
+  const total = allCards(state).length, started = Object.keys(state.srs).length;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "صباح الخير" : "مساء الخير";
+  const evenDay = new Date().getDate() % 2 === 0;
+  const steps = [
+    { n: "١", t: "Review what's fading", d: due > 0 ? `${due} card${due > 1 ? "s" : ""} due — spaced repetition catches words right before you forget them` : "Nothing due — you're ahead of the forgetting curve", mins: "~8 min", act: due > 0 ? () => go("cards", "review") : null, done: due === 0 },
+    { n: "٢", t: "Learn something new", d: newLeft > 0 ? `${newLeft} new word${newLeft > 1 ? "s" : ""} today — root, Emirati form, examples in context` : "Today's new words done ✓", mins: "~5 min", act: newLeft > 0 ? () => go("cards", "learn") : null, done: newLeft === 0 },
+    evenDay
+      ? { n: "٣", t: "Write & get corrected", d: "2-3 sentences in the Writing coach — every mistake becomes personal learning material", mins: "~7 min", act: () => go("practice", "write"), done: false }
+      : { n: "٣", t: "Drill grammar", d: "إضافة أم صفة؟ — the structure behind almost every tech term you present with", mins: "~7 min", act: () => go("practice", "grammar"), done: false },
+    { n: "٤", t: "Speak out loud", d: "One roleplay round — dictate with your keyboard mic and get corrected in Emirati", mins: "~8 min", act: () => go("speak"), done: false },
+  ];
+  return (
+    <div className="fade-in flex flex-col gap-4">
+      <div>
+        <div className="ar-display" style={{ color: T.gold, fontSize: 34, lineHeight: 1.2 }}>{greet}، مريم</div>
+        <div style={{ color: T.soft, fontSize: 13.5, marginTop: 4 }}>Your 25-30 minutes toward confident Arabic — فصحى ولهجة</div>
+      </div>
+      <div className="flex gap-2">
+        <Stat label="Day streak" value={state.streak.count || 0} icon="🔥" />
+        <Stat label="Due now" value={due} icon="⏳" />
+        <Stat label="In rotation" value={`${started}/${total}`} icon="🗂️" />
+        <Stat label="Corrections" value={(state.mistakes || []).length} icon="✍️" />
+      </div>
+      <div className="flex flex-col gap-2">
+        {steps.map((s) => (
+          <div key={s.n} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 16, padding: "14px 16px", opacity: s.done ? 0.65 : 1 }}>
+            <div className="flex items-start gap-3">
+              <div className="ar" style={{ color: T.gold, fontSize: 22, fontWeight: 700, minWidth: 24, textAlign: "center" }}>{s.n}</div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span style={{ color: T.text, fontSize: 15, fontWeight: 700 }}>{s.t}</span>
+                  <span style={{ color: T.soft, fontSize: 11 }}>{s.mins}</span>
+                </div>
+                <div style={{ color: T.soft, fontSize: 12.5, marginTop: 3, lineHeight: 1.5 }}>{s.d}</div>
+                {s.act && <div className="mt-2"><Btn small onClick={s.act}>{s.done ? "Anyway" : "Start"}</Btn></div>}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: T.surface2, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }}>
+        <div style={{ color: T.gold, fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>WHY THIS ORDER</div>
+        <div style={{ color: T.soft, fontSize: 12.5, lineHeight: 1.6, marginTop: 4 }}>Spaced repetition + active recall lock in vocabulary; grammar drills build structure; writing and speaking output build the on-the-spot fluency. Ten minutes of Emirati podcasts or 4042 Studios on your commute covers the input side.</div>
+      </div>
+    </div>
+  );
+}
+const Stat = ({ label, value, icon }) => (
+  <div style={{ flex: 1, background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 6px", textAlign: "center" }}>
+    <div style={{ fontSize: 15 }}>{icon}</div>
+    <div style={{ color: T.text, fontSize: 17, fontWeight: 700, marginTop: 2 }}>{value}</div>
+    <div style={{ color: T.soft, fontSize: 10, marginTop: 1 }}>{label}</div>
+  </div>
+);
+
+/* ================= VOICE PICKER ================= */
+function VoicePicker({ state, setState, onBack }) {
+  const [voices, setVoices] = useState([]);
+  useEffect(() => {
+    const upd = () => setVoices(window.speechSynthesis?.getVoices() || []);
+    upd();
+    try { window.speechSynthesis.onvoiceschanged = () => { loadVoices(); upd(); }; } catch {}
+    const t = setTimeout(upd, 600);
+    return () => clearTimeout(t);
+  }, []);
+  const arv = voices.filter((v) => (v.lang || "").toLowerCase().startsWith("ar") || (v.name || "").toLowerCase().includes("arab"));
+  const chosen = state.ttsVoice;
+  const choose = (v) => {
+    PREF_VOICE_NAME = v.name;
+    loadVoices();
+    const s = { ...state, ttsVoice: v.name };
+    setState(s); saveState(s);
+    speakAr("مرحباً مريم، أنا صوتك الجديد. يالله نتدرب.", 0.85);
+  };
+  return (
+    <div className="fade-in flex flex-col gap-3">
+      <BackBtn onClick={onBack} />
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Audio & voice</div>
+      <div style={{ color: T.soft, fontSize: 13, lineHeight: 1.6 }}>This browser reports <b style={{ color: T.text }}>{voices.length}</b> voices, of which <b style={{ color: T.text }}>{arv.length}</b> {arv.length === 1 ? "is" : "are"} Arabic. Tap one to select it — it plays a test line so you can judge it.</div>
+      {arv.length === 0 && voices.length > 0 && (
+        <div style={{ background: "#3A2A1E", border: `1px solid ${T.gold}55`, borderRadius: 14, padding: "13px 15px", color: T.text, fontSize: 13.5, lineHeight: 1.7 }}>
+          No Arabic voice is installed on this device, so the browser tries to read Arabic with an English voice — that's the mumbling you heard.<br /><br />
+          <b>Mac:</b> System Settings → Accessibility → Spoken Content → System Voice → Manage Voices → download Arabic (Majed), then fully quit and reopen Chrome.<br />
+          <b>Windows:</b> Settings → Time & Language → Speech → Add voices → Arabic.<br />
+          <b>Phone:</b> almost always has Arabic built in — try the app there.
+        </div>
+      )}
+      {arv.length === 0 && voices.length === 0 && (
+        <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "13px 15px", color: T.soft, fontSize: 13.5, lineHeight: 1.7 }}>
+          The browser hasn't exposed any voices to this app (some embedded views block them). Try opening the artifact in a full browser tab, or use it on your phone.
+        </div>
+      )}
+      {arv.map((v) => (
+        <button key={v.name} onClick={() => choose(v)} style={{ background: chosen === v.name ? "#2A3F33" : T.surface, border: `1.5px solid ${chosen === v.name ? T.green : T.line}`, borderRadius: 14, padding: "13px 15px", textAlign: "left", cursor: "pointer" }}>
+          <div className="flex items-center justify-between">
+            <span style={{ color: T.text, fontSize: 14.5, fontWeight: 600 }}>{chosen === v.name ? "✓ " : ""}{v.name}</span>
+            <span style={{ color: T.soft, fontSize: 12 }}>{v.lang}{v.localService === false ? " · online" : ""}</span>
+          </div>
+        </button>
+      ))}
+      {arv.length > 0 && (
+        <div style={{ color: T.soft, fontSize: 12.5, lineHeight: 1.6 }}>If a voice sounds robotic, try another — quality differs a lot. Your choice is saved and used by every 🔊 in the app.</div>
+      )}
+    </div>
+  );
+}
+
+/* ================= CARDS HUB ================= */
+function CardsHub({ state, setState, forcedMode, clearForced }) {
+  const [mode, setMode] = useState(forcedMode || null);
+  useEffect(() => { if (forcedMode) { setMode(forcedMode); clearForced(); } }, [forcedMode]);
+  const due = dueCards(state).length;
+  const today = dayStr();
+  const learned = state.learnedToday.day === today ? state.learnedToday.ids.length : 0;
+  const newLeft = Math.min(NEW_PER_DAY - learned, newCards(state).length);
+
+  if (mode === "review" || mode === "learn") return <ReviewSession state={state} setState={setState} mode={mode} onDone={() => setMode(null)} />;
+  if (mode === "browse") return <Browse state={state} onBack={() => setMode(null)} />;
+  if (mode === "add") return <AddWord state={state} setState={setState} onBack={() => setMode(null)} />;
+  if (mode === "voice") return <VoicePicker state={state} setState={setState} onBack={() => setMode(null)} />;
+  return (
+    <div className="fade-in flex flex-col gap-3">
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Flashcards</div>
+      <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>Every card carries the word, its root, pronunciation, the Emirati form, and paired MSA + Emirati examples.</div>
+      <Btn full onClick={() => setMode("review")} disabled={due === 0}>Review due · {due}</Btn>
+      <Btn full kind="dark" onClick={() => setMode("learn")} disabled={newLeft === 0}>Learn new · {newLeft} left today</Btn>
+      <Btn full kind="green" onClick={() => setMode("add")}>+ Add a word I came across</Btn>
+      <Btn full kind="ghost" onClick={() => setMode("browse")}>Browse all {allCards(state).length} cards</Btn>
+      <button onClick={() => setMode("voice")} style={{ background: "none", border: "none", color: T.soft, fontSize: 13, cursor: "pointer", padding: "4px 0", textDecoration: "underline" }}>🔊 Audio not working? Voice settings</button>
+    </div>
+  );
+}
+
+/* ================= APP ================= */
+function App() {
+  const [state, setState] = useState(null);
+  const [tab, setTab] = useState("today");
+  const [forcedCards, setForcedCards] = useState(null);
+  const [forcedPractice, setForcedPractice] = useState(null);
+
+  useEffect(() => {
+    loadState().then((s) => {
+      setState(s);
+      if (s.ttsVoice) PREF_VOICE_NAME = s.ttsVoice;
+      loadVoices();
+    });
+    try { loadVoices(); window.speechSynthesis.onvoiceschanged = loadVoices; } catch {}
+  }, []);
+
+  const go = (t, mode) => {
+    setTab(t);
+    if (t === "cards" && mode) setForcedCards(mode);
+    if (t === "practice" && mode) setForcedPractice(mode);
+  };
+
+  if (!state) return (
+    <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <style>{FONT_CSS}</style>
+      <div className="ar-display" style={{ color: T.gold, fontSize: 28 }}>يالله نبدأ…</div>
+    </div>
+  );
+
+  const tabs = [
+    { id: "today", ar: "اليوم", en: "Today" },
+    { id: "cards", ar: "بطاقات", en: "Cards" },
+    { id: "practice", ar: "تمارين", en: "Practice" },
+    { id: "speak", ar: "تكلّم", en: "Speak" },
+    { id: "phrases", ar: "عبارات", en: "Phrases" },
+  ];
+
+  return (
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'IBM Plex Sans', sans-serif" }}>
+      <style>{FONT_CSS}</style>
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "18px 16px 90px" }}>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="ar-display" style={{ color: T.text, fontSize: 21, lineHeight: 1 }}>رَمسَتي</div>
+            <div style={{ color: T.soft, fontSize: 10, letterSpacing: 2, marginTop: 3 }}>RAMSATI · MY WAY OF SPEAKING</div>
+          </div>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", background: T.gold, color: "#221A0C", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15 }} className="ar">م</div>
+        </div>
+        {tab === "today" && <Today state={state} go={go} />}
+        {tab === "cards" && <CardsHub state={state} setState={setState} forcedMode={forcedCards} clearForced={() => setForcedCards(null)} />}
+        {tab === "practice" && <PracticeHub state={state} setState={setState} forced={forcedPractice} clearForced={() => setForcedPractice(null)} />}
+        {tab === "speak" && <Speak />}
+        {tab === "phrases" && <Phrases />}
+      </div>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0C1917EE", backdropFilter: "blur(8px)", borderTop: `1px solid ${T.line}` }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", display: "flex" }}>
+          {tabs.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, background: "none", border: "none", padding: "10px 4px 14px", cursor: "pointer" }}>
+              <div className="ar" style={{ fontSize: 16, fontWeight: 700, color: tab === t.id ? T.gold : T.soft }}>{t.ar}</div>
+              <div style={{ fontSize: 9, letterSpacing: 1, color: tab === t.id ? T.gold : "#5C6E66", marginTop: 1 }}>{t.en.toUpperCase()}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
