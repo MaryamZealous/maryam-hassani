@@ -17,7 +17,6 @@
 .overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}
 </style>
 <script>
-/* show any load/compile/runtime error on screen instead of a black page */
 window.addEventListener("error", function (e) {
   var r = document.getElementById("root");
   if (!r || r.hasChildNodes()) return;
@@ -371,6 +370,11 @@ function SpeakBtn({ text, dark, size = 17, slow }) {
   const [st, setSt] = useState("idle"); // idle | busy | fail | novoice
   const click = (e) => {
     e.stopPropagation();
+    if (st === "busy") {
+      try { window.speechSynthesis.cancel(); } catch {}
+      setSt("idle");
+      return;
+    }
     setSt("busy");
     speakAr(text, slow ? 0.65 : 0.85, (ev) => {
       if (ev === "start") setSt("busy");
@@ -380,13 +384,13 @@ function SpeakBtn({ text, dark, size = 17, slow }) {
     });
   };
   const titles = {
-    idle: "Listen", busy: "Playing…",
+    idle: "Listen", busy: "Tap to stop",
     fail: "Audio didn't start — tap again",
     novoice: "No Arabic voice on this device. Mac: System Settings → Accessibility → Spoken Content → System Voice → Manage Voices → download Arabic. Windows: Settings → Time & Language → Speech → Add voices. Phones usually have it built in.",
   };
   return (
-    <button onClick={click} title={titles[st]} style={{ background: "none", border: "none", cursor: "pointer", fontSize: size, padding: "0 4px", lineHeight: 1, opacity: st === "busy" ? 0.5 : 1, filter: dark ? "none" : "saturate(.8)" }}>
-      {st === "novoice" || st === "fail" ? "🔇" : "🔊"}
+    <button onClick={click} title={titles[st]} style={{ background: "none", border: "none", cursor: "pointer", fontSize: size, padding: "0 4px", lineHeight: 1, filter: dark ? "none" : "saturate(.8)" }}>
+      {st === "novoice" || st === "fail" ? "🔇" : st === "busy" ? "⏹️" : "🔊"}
     </button>
   );
 }
