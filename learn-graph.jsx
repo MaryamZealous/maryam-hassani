@@ -4,7 +4,7 @@
 
 const { useRef, useState, useEffect, useMemo } = React;
 
-const TYPE_LABEL = { thinker: "Thinker", book: "Book", video: "Video", idea: "Idea" };
+const TYPE_LABEL = { thinker: "Thinker", book: "Book", video: "Video", idea: "Idea", site: "Site" };
 const CLUSTER_COLOR = {
   poly:  "#A66A1F",
   sci:   "#138A8A",
@@ -170,6 +170,11 @@ function LearnGraph() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, size.w, size.h);
 
+      // edges fade in once on first paint, in step with the nodes
+      if (revealRef.current.start == null) revealRef.current.start = ts;
+      const edgeProg = reduce ? 1 : Math.min(1, (ts - revealRef.current.start) / 1100);
+      ctx.globalAlpha = edgeProg < 1 ? edgeProg * edgeProg : 1;
+
       const active = hover || selected;
       const activeSet = active ? adj[active] : null;
 
@@ -188,6 +193,7 @@ function LearnGraph() {
         else { ctx.strokeStyle = "rgba(21,20,15,0.06)"; ctx.lineWidth = 0.8; }
         ctx.stroke();
       });
+      ctx.globalAlpha = 1;
 
       // sync DOM node positions
       data.nodes.forEach(n => {
@@ -215,6 +221,17 @@ function LearnGraph() {
   const nodeEls = useRef({});
   const panelRef = useRef(null);
   const panelAnim = useRef({ p: 0 });
+  const revealRef = useRef({ start: null });
+
+  // one-time entrance: soft staggered fade-in of the nodes
+  useEffect(() => {
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const els = data.nodes.map(n => nodeEls.current[n.id]).filter(Boolean);
+    if (reduce || !window.gsap || !els.length) return;
+    gsap.set(els, { opacity: 0 });
+    gsap.to(els, { opacity: 1, duration: 0.5, ease: 'power1.out', stagger: { each: 0.012, from: 'random' },
+      delay: 0.15, onComplete: () => gsap.set(els, { clearProps: 'opacity' }) });
+  }, []);
 
   // dragging
   const drag = useRef(null);
@@ -293,7 +310,7 @@ function LearnGraph() {
       {/* legend / type filter */}
       <div className="lg-legend">
         <span className="lg-legend-k">filter</span>
-        {["thinker","book","video","idea"].map(t => (
+        {["thinker","book","video","idea","site"].map(t => (
           <button key={t} className={"lg-leg-btn" + (filter === t ? " on" : "")}
             onClick={() => setFilter(filter === t ? null : t)}>
             <span className={"lg-leg-mark m-" + t}></span>{TYPE_LABEL[t]}
@@ -315,7 +332,7 @@ function LearnGraph() {
             <h3 className="lg-p-name">{sel.label}</h3>
             <p className="lg-p-note">{sel.note}</p>
             {sel.url && (
-              <a className="lg-p-link" href={sel.url} target="_blank" rel="noopener noreferrer">Visit channel <span className="arr">↗</span></a>
+              <a className="lg-p-link" href={sel.url} target="_blank" rel="noopener noreferrer">{sel.type === "site" ? "Visit site" : "Visit channel"} <span className="arr">↗</span></a>
             )}
             <div className="lg-p-conn-k">Connected to</div>
             <div className="lg-p-conn">

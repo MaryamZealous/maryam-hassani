@@ -114,7 +114,7 @@ function HomeC() {
       <Fractal cfg={{ rx: 0.5, ry: 1.03, tilt: 0, len: 0.37, depth: 10, width: 2.0, ratio: 0.74, spread: 0.38, sway: 0.045, leafDot: false,
         color: (d) => { const f = Math.max(0, Math.min(1, d / 10)), m = 1 - f;
           return `rgba(${Math.round(21 + 22 * m)},${Math.round(20 + 60 * m)},${Math.round(15 + 209 * m)},${(0.055 + m * 0.11).toFixed(3)})`; } }} />
-      <div className="lp-top">
+      <div className="lp-top" data-reveal="none">
         <div className="lp-sig">{COPY.sig}</div>
         <button ref={fbtn} type="button" className="c-disc-btn">
           <span>what is a fractal?</span>
@@ -122,17 +122,17 @@ function HomeC() {
         </button>
       </div>
       <div className="c-stage">
-        <h1 className="c-lead"><span className="q">“You are what you consume”</span></h1>
-        <p className="c-p">What you read, build, put in your body, and give your attention to. The most interesting problems are complex by nature — they never stay in their lane. I am a builder at heart, and I learn by doing.</p>
-        <p className="c-p dim">If you happened to land here, hello. You're reading my inner monologue. Feel free to browse around and find something that speaks to you.</p>
-        <div className="c-cta">
-          <a className="navlink" href={LEARN_HREF}>
+        <h1 className="c-lead" data-split><span className="q">“You are what you consume”</span></h1>
+        <p className="c-p" data-reveal data-reveal-delay="0.15">What you read, build, put in your body, and give your attention to. The most interesting problems are complex by nature — they never stay in their lane. I am a builder at heart, and I learn by doing.</p>
+        <p className="c-p dim" data-reveal data-reveal-delay="0.25">If you happened to land here, hello. You're reading my inner monologue. Feel free to browse around and find something that speaks to you.</p>
+        <div className="c-cta" data-reveal-group>
+          <a className="navlink" href={LEARN_HREF} data-reveal>
             <div className="nl-row">
               <div className="nl-top"><span className="nl-k">Learn</span><span className="nl-arrow">→</span></div>
               <div className="nl-sub">ideas that shape my thoughts</div>
             </div>
           </a>
-          <a className="navlink" href={BUILD_HREF}>
+          <a className="navlink" href={BUILD_HREF} data-reveal>
             <div className="nl-row">
               <div className="nl-top"><span className="nl-k">Build</span><span className="nl-arrow">→</span></div>
               <div className="nl-sub">stuff I built with AI</div>
@@ -140,7 +140,7 @@ function HomeC() {
           </a>
         </div>
       </div>
-      <div className="lp-foot">
+      <div className="lp-foot" data-reveal="none" data-reveal-delay="0.4">
         <span>{COPY.foot}</span>
         <span>deliberate · relentless</span>
       </div>

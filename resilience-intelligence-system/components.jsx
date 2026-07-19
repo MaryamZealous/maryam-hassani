@@ -85,7 +85,7 @@ function Sparkline({ data, w = 84, h = 26, band = "moderate", fluid = false }) {
    the chip says so instead of showing a seeded number. */
 function Trend({ delta, suffix = "", horizon = "24h" }) {
   if (delta == null) return (
-    <span className="trend flat" title={`The measured ${horizon} change appears once enough score history has accumulated in this browser — trends are computed from stored snapshots, never seeded.`}>
+    <span className="trend flat" title={`The measured ${horizon} change appears once enough score history has accumulated in this browser. Trends are computed from stored snapshots, never seeded.`}>
       <Icon name="flat" size={13} />—
       <span className="faint" style={{ fontSize: 10 }}>{horizon} · resilience</span>
     </span>
@@ -94,9 +94,9 @@ function Trend({ delta, suffix = "", horizon = "24h" }) {
   const dir = d > 0.05 ? "up" : d < -0.05 ? "down" : "flat";
   const ic = dir === "up" ? "arrowUp" : dir === "down" ? "arrowDown" : "flat";
   const tip = dir === "up"
-    ? `Resilience rose ${d} pts over the last ${horizon} (vs stored history) — higher is stronger, so this is an improvement.`
+    ? `Resilience rose ${d} pts over the last ${horizon} (vs stored history). Higher is stronger, so this is an improvement.`
     : dir === "down"
-    ? `Resilience fell ${Math.abs(d)} pts over the last ${horizon} (vs stored history) — higher is stronger, so a drop is an erosion.`
+    ? `Resilience fell ${Math.abs(d)} pts over the last ${horizon} (vs stored history). Higher is stronger, so a drop is an erosion.`
     : `Effectively flat over the last ${horizon} (vs stored history).`;
   return (
     <span className={`trend ${dir}`} title={tip}>
@@ -137,15 +137,15 @@ function headlineDrivers(d) {
     const gap = +(RD.headline.structural.value - d.value).toFixed(1);
     return {
       kicker: "Live factors",
-      caption: `${gap} pts under the ${RD.headline.structural.value.toFixed(1)} ceiling — clears as today's load eases`,
+      caption: names ? `${names} pressure is today's main load` : `Load is light today`,
       text: `${names} pressure on the sea routes is the active load today. It reaches the score through measured ship transits, which already reflect how carriers reroute, and leaves live ${gap} pts below the ceiling.`,
     };
   }
   const weakest = RD.sectors.reduce((a, b) => (b.score < a.score ? b : a));
   return {
     kicker: "Drivers · refreshed monthly",
-    caption: `Most-exposed sector: ${weakest.name} ${weakest.score.toFixed(1)} · realistic ceiling ~72, not 100`,
-    text: `Capacity — Absorb · Recover · Adapt — set against the most-exposed sector (${weakest.name} ${weakest.score.toFixed(1)}). Recomputed monthly from public data.`,
+    caption: `Most-exposed sector: ${weakest.name} ${weakest.score.toFixed(1)}`,
+    text: `Capacity, Absorb · Recover · Adapt, set against the most-exposed sector (${weakest.name} ${weakest.score.toFixed(1)}). Recomputed monthly from public data.`,
   };
 }
 
@@ -164,20 +164,19 @@ function ScoreCard({ d }) {
         <span style={{ marginLeft: "auto" }}>
           {d === RD.headline.live ? (
             <span className="src live" role="button" tabIndex={0} style={{ cursor: "pointer" }}
-              title="Live Resilience blends five public feeds — PortWatch, Open-Meteo, Google News, Markets, OFAC; ACLED powers counterpart context on other views"
+              title="Live Resilience blends five public feeds, PortWatch, Open-Meteo, Google News, Markets, OFAC; GDELT conflict coverage powers counterpart context on other views"
               onClick={(e) => { e.stopPropagation(); window.__explain && window.__explain({
                 kicker: "Live feeds · updating continuously", title: "What feeds the Live Resilience score",
-                text: "Live Resilience is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from five public feeds. Maritime throughput (PortWatch) is typically the largest mover, which is why it often leads — but it is never the only input. The news monitor adds two early-warning lanes: trade-route closure coverage and adverse partner-supply coverage (a Qatar, Taiwan, Kazakhstan, China or India supply shock), so a partner disruption registers here before throughput data would confirm it. A sixth feed, ACLED conflict data, deliberately does not enter this score — it powers the live counterpart-risk context on the Dependencies and Control views.",
+                text: "Live Resilience is not a single-source number. It is the structural ceiling minus today's active load, and that load is measured from five public feeds. Maritime throughput (PortWatch) is typically the largest mover, which is why it often leads, but it is never the only input. The news monitor adds two early-warning lanes: trade-route closure coverage and adverse partner-supply coverage (a Qatar, Taiwan, Kazakhstan, China or India supply shock), so a partner disruption registers here before throughput data would confirm it. A sixth feed, ACLED conflict data, deliberately does not enter this score, it powers the live counterpart-risk context on the Dependencies and Control views.",
                 formula: "Active load  =  maritime throughput + sea state + trade-route news + partner-supply news + market stress + sanctions drift",
                 inputs: [
-                  { k: "Maritime throughput — typically the largest driver", v: "chokepoint transit calls vs 12-month norm", src: "ais" },
+                  { k: "Maritime throughput, typically the largest driver", v: "chokepoint transit calls vs 12-month norm", src: "ais" },
                   { k: "Sea state", v: "wave height & wind on the approaches", src: "meteo" },
                   { k: "Trade-route news", v: "closure & conflict coverage", src: "gdelt" },
                   { k: "Partner-supply news", v: "adverse supply-shock coverage on Qatar / Taiwan / Kazakhstan / China / India", src: "gdelt" },
                   { k: "Market stress", v: "Brent & the Brent-linked LNG replacement cost", src: "yfinance" },
                   { k: "Sanctions drift", v: "OFAC SDN updates", src: "ofac" },
                 ],
-                assumption: "PortWatch is the dominant mover, but the active load blends six terms from five live feeds (Google News contributes two lanes) against the structural ceiling — never PortWatch alone. ACLED informs counterpart context, not this score.",
               }); }}>
               <span className="d"></span>5 live feeds
             </span>
@@ -211,11 +210,11 @@ function ScoreCard({ d }) {
           range: d.rangeHalf != null ? { lo, hi, half, confidence: conf } : undefined,
           sensitivity: d.sensitivity,
           links: d.name === "Live Resilience"
-            ? [{ label: "Today's live drivers · Live signals", view: "threats" }, { label: "Stress-test the score · Scenarios", view: "scenarios" }, { label: "Model chain & ledger · How this works", view: "methodology" }]
-            : [{ label: "The imports behind the weak link · Dependencies", view: "dependencies" }, { label: "Raise the ceiling · Response & pre-mortem", view: "act" }, { label: "Model chain & ledger · How this works", view: "methodology" }],
+            ? [{ label: "Today's live drivers · Live signals", view: "threats" }, { label: "Stress-test the score · Scenarios", view: "scenarios" }, { label: "Model chain & ledger · How it works", view: "methodology" }]
+            : [{ label: "The imports behind the weak link · Dependencies", view: "dependencies" }, { label: "Raise the ceiling · Sector responses", view: "act" }, { label: "Model chain & ledger · How it works", view: "methodology" }],
           context: [
             { h: dr.kicker, t: dr.text },
-            d.cap ? { h: "Reading the scale", t: d.cap.lead + " " + d.cap.body } : null,
+            d.cap ? { h: "Reading the scale", t: d.cap.lead + ". " + d.cap.body } : null,
           ].filter(Boolean),
         }); }}>How is this calculated?</button>
       </div>
@@ -232,17 +231,18 @@ function SectorCard({ s, onOpen }) {
   const shi = Math.min(100, +(s.score + shalf).toFixed(1));
   const ps = RD.precursors.filter((p) => p.sector === s.id);
   const cw = ps.reduce((a, p) => a + p.consequence, 0) || 1;
+  const sumSel = ps.reduce((a, p) => a + p.dri * p.consequence, 0);
   const driInputs = ps.map((p) => ({
     k: (p.name === s.topRisk ? "★ " : "") + p.name,
-    v: "DRI " + p.dri + " × consequence " + p.consequence.toFixed(2),
-    go: { view: "dependencies", opts: { sector: s.id, import: p.id }, hint: "Open " + p.name + " in Dependencies — sources, buffer, DRI breakdown" },
+    v: "DRI " + p.dri + " × consequence " + p.consequence.toFixed(2) + " = " + (p.dri * p.consequence).toFixed(1),
+    go: { view: "dependencies", opts: { sector: s.id, import: p.id }, hint: "Open " + p.name + " in Dependencies, sources, buffer, DRI breakdown" },
   }));
   driInputs.push(
-    { k: "★ Anchor — " + s.topRisk, v: "DRI " + s.topDRI + " × 0.6 · selected by DRI × consequence" + (s.topSel != null ? " = " + s.topSel : "") + " — the most fragile import that matters" },
-    { k: "Consequence-weighted mean DRI", v: (s.wmean != null ? s.wmean : s.wdri) + " × 0.4" },
-    { k: "Anchored fragility", v: s.wdri + " / 100" },
-    { k: "Resilience = 100 − " + s.wdri, v: s.score.toFixed(1) + " / 100" },
-    { k: "30d change", v: (RD.trends && RD.trends.sectors && RD.trends.sectors[s.id] != null) ? RD.trends.sectors[s.id].toFixed(1) + " pts — measured from stored score history" : "no stored history yet — accumulates in this browser" },
+    { k: "Step 1 · Pick the anchor ★", v: s.topRisk + ", highest DRI × consequence (" + (s.topSel != null ? s.topSel : "—") + " above). Its raw DRI (" + s.topDRI + ") enters the formula." },
+    { k: "Step 2 · Weighted mean DRI", v: "Σ(DRI × consequence) ÷ Σ consequence = " + sumSel.toFixed(1) + " ÷ " + cw.toFixed(2) + " = " + (s.wmean != null ? s.wmean : s.wdri) },
+    { k: "Step 3 · Anchored fragility", v: (() => { const a = +(0.6 * s.topDRI).toFixed(1); const b = +(s.wdri - a).toFixed(1); return "0.6 × " + s.topDRI + " + 0.4 × " + (s.wmean != null ? s.wmean : s.wdri) + " = " + a.toFixed(1) + " + " + b.toFixed(1) + " = " + s.wdri; })() },
+    { k: "Step 4 · Resilience", v: "100 − " + s.wdri + " = " + s.score.toFixed(1) + " / 100" },
+    { k: "30d change", v: (RD.trends && RD.trends.sectors && RD.trends.sectors[s.id] != null) ? RD.trends.sectors[s.id].toFixed(1) + " pts, measured from stored score history" : "no stored history yet, accumulates in this browser" },
   );
   return (
     <div className={`sector band-${b.key} fade-in`} onClick={() => onOpen(s)}>
@@ -262,16 +262,13 @@ function SectorCard({ s, onOpen }) {
         <span style={{ marginLeft: "auto" }}>
           <Fx payload={{
             kicker: "Sector score · computed", title: s.name + " resilience",
-            text: s.note + " The score is computed, not hand-set — and it is non-compensatory, the same rule the national headline uses: the sector's anchor import (★) carries 60% of the score, so one catastrophic dependency can never hide behind a portfolio of safer ones. The anchor is the import with the highest DRI × consequence — the most fragile import that matters — so a fragile but nationally trivial import can't seize it. The remaining 40% is the consequence-weighted average of all tracked imports, so breadth still counts.",
-            formula: "Sector = 100 − ( 0.6 × anchor DRI + 0.4 × Σ(DRI × consequence) / Σ consequence )   ·   anchor = argmax(DRI × consequence)",
+            text: s.note,
             inputs: driInputs,
-            assumption: "This score is calculated straight from the sector's tracked imports — every input is independently sourced on the Dependencies view, so the score moves only when the underlying dependency data moves. The 0.6 anchor mirrors the national 60/40 rule and is selected by DRI × consequence, so it always lands on the import whose fragility would hurt most; the ★ import's DRI drawer is the first place to look. Edit any import's DRI or consequence and this score, the most-exposed sector and the national headline all recompute.",
             range: s.rangeHalf != null ? { lo: slo, hi: shi, half: shalf, confidence: s.confidence } : undefined,
             sensitivity: s.sensitivity,
             links: [
               { label: "The " + ps.length + " tracked " + s.name + " imports · Dependencies", view: "dependencies", opts: { sector: s.id } },
-              { label: "Responses for " + s.name + " · Response & pre-mortem", view: "act" },
-              { label: "How sector scores roll up · How this works", view: "methodology" },
+              { label: "Responses for " + s.name + " · Sector responses", view: "act", opts: { sector: s.id } },
             ],
           }} />
         </span>
@@ -303,11 +300,11 @@ function Drawer({ payload, onClose }) {
             <div className="drawer-kicker">{payload.kicker || "Explain"}</div>
             <div className="drawer-title">{payload.title}</div>
             {payload.links && payload.links.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 9 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", flexWrap: "wrap", gap: 7, marginTop: 9 }}>
                 {payload.links.map((l, i) => (
-                  <button key={i} className="exp" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}
+                  <button key={i} className="exp" style={{ textAlign: "left", lineHeight: 1.5 }}
                     onClick={() => { onClose(); window.__go && window.__go(l.view, l.opts || {}); }}>
-                    {l.label} →
+                    {l.label}&nbsp;→
                   </button>
                 ))}
               </div>
@@ -376,7 +373,7 @@ function Drawer({ payload, onClose }) {
                     </div>
                   ))}
                 </div>
-                <p className="exp-text" style={{ marginTop: 9 }}>Each bar is one assumption's own contribution to the range — the longest bar is the lever worth pinning down first.</p>
+                <p className="exp-text" style={{ marginTop: 9 }}>Each bar is one assumption's own contribution to the range, the longest bar is the lever worth pinning down first.</p>
               </div>
             );
           })()}
@@ -408,11 +405,11 @@ function IllusBadge() {
       text: "The UAE National Resilience Intelligence System is an ILLUSTRATIVE decision-support model. It combines live, publicly-available data feeds with hand-curated open-source datasets and a set of transparent, documented assumptions.",
       formula: "Live public data  +  Curated open sources  +  Stated assumptions  →  Explainable estimate",
       inputs: [
-        { k: "Live feeds (6)", v: "Five move the Live score — IMF PortWatch transits, Google News trade-route & partner coverage, Open-Meteo sea state, Brent, OFAC sanctions total — plus ACLED conflict for counterpart context", src: "live" },
-        { k: "Curated data", v: RD.precursors.length + " critical imports, " + RD.assets.length + " strategic assets, " + RD.scenarios.length + " scenarios — human-readable CSV", src: "curated" },
-        { k: "Assumptions", v: "Goalposts, weights & buffers — all stated and editable", src: "assumption" },
+        { k: "Live feeds (6)", v: "Five move the Live score, IMF PortWatch transits, Google News trade-route & partner coverage, Open-Meteo sea state, Brent, OFAC sanctions total, plus GDELT conflict coverage for counterpart context", src: "live" },
+        { k: "Curated data", v: RD.precursors.length + " critical imports, " + RD.assets.length + " strategic assets, " + RD.scenarios.length + " scenarios, human-readable CSV", src: "curated" },
+        { k: "Assumptions", v: "Goalposts, weights & buffers, all stated and editable", src: "assumption" },
       ],
-      assumption: "Every number can be traced to its source and method. Nothing here is a classified or official Government of UAE position — it is a transparent worked example of how national resilience could be quantified.",
+      assumption: "Every number can be traced to its source and method. Nothing here is a classified or official Government of UAE position: it is a transparent worked example of how national resilience could be quantified.",
     })}>
       <span className="pulse"></span><b>ILLUSTRATIVE MODEL</b>
       <Icon name="info" size={13} style={{ color: "var(--faint)" }} />

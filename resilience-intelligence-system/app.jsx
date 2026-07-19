@@ -54,10 +54,11 @@ function App() {
   const [view, setView] = useState("overview");
   const [opts, setOpts] = useState({});
   const [drawer, setDrawer] = useState(null);
+  const [railOpen, setRailOpen] = useState(false);
   const [intro, setIntro] = useState(() => !IS_EMBED && !localStorage.getItem("uae_seen"));
   const scrollRef = useRef(null);
 
-  const go = (v, o = {}) => { setView(v); setOpts(o); setDrawer(null); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
+  const go = (v, o = {}) => { setView(v); setOpts(o); setDrawer(null); setRailOpen(false); if (scrollRef.current) scrollRef.current.scrollTop = 0; };
   const explain = (p) => setDrawer(p);
   useEffect(() => { window.__go = go; window.__explain = explain; }, []);
   useEffect(() => { if (window.MA) window.MA.section(intro ? "Welcome screen" : (TITLES[view] || view)); }, [view, intro]);
@@ -85,8 +86,9 @@ function App() {
 
   return (
     <ExplainCtx.Provider value={explain}>
-      <div className="app" data-dir={dir}>
+      <div className={`app${railOpen ? " rail-open" : ""}`} data-dir={dir}>
         {intro && <IntroOverlay onEnter={enter} dir={dir} />}
+        <div className="rail-scrim" onClick={() => setRailOpen(false)}></div>
 
         {/* ---- rail ---- */}
         <nav className="rail">
@@ -146,6 +148,9 @@ function App() {
         {/* ---- main ---- */}
         <div className="main">
           <header className="topbar">
+            <button className="rail-toggle" aria-label="Open navigation" onClick={() => setRailOpen(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+            </button>
             <span className="crumb">{NAV.find((g) => g.items.some((i) => i.id === view)).group} / <b>{TITLES[view]}</b></span>
             <div className="topbar-spacer"></div>
             <div className="live-chips">

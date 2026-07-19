@@ -31,15 +31,16 @@ const QUERIES = {
   qatar:   '("Qatar gas" OR "Dolphin pipeline" OR "Qatar LNG" OR "Qatar Gulf") (halt OR cut OR curtail OR dispute OR tension OR ban OR sanction OR blockade OR conflict)',
   taiwan:  '(Taiwan semiconductor OR TSMC OR "chip export" OR "Taiwan Strait") (halt OR ban OR restrict OR blockade OR tension OR "export control" OR conflict OR invasion)',
   kazakhstan: '(Kazakhstan uranium OR Kazatomprom OR "nuclear fuel export") (halt OR cut OR ban OR disrupt OR suspend OR sanction OR unrest)',
+  us: '("export control" OR "Commerce Department" OR "Bureau of Industry and Security" OR BIS OR "export licence" OR "export license") (UAE OR "United Arab Emirates") (restrict OR ban OR revoke OR halt OR suspend OR tighten OR block)',
   china:   '(China "rare earth" OR gallium OR polysilicon OR "solar export" OR "export controls") (ban OR curb OR restrict OR halt OR suspend)',
   india:   '(India pharmaceutical OR "API export" OR "drug export" OR "generic drug") (ban OR halt OR restrict OR shortage OR curb OR suspend)',
   feedgrain: '("soybean export" OR "soymeal" OR "corn export" OR "grain export" OR "animal feed" OR alfalfa) (ban OR halt OR restrict OR tax OR drought OR shortage OR suspend OR curb)',
   general: '"shipping disruption" OR "port closure" OR "trade route" OR "supply chain disruption"',
 };
 // typical 2-day adverse-article volume per lane — the "normal" baseline to beat
-const BASELINE = { hormuz: 30, redsea: 35, suez: 30, general: 60, qatar: 6, taiwan: 14, kazakhstan: 4, china: 22, india: 9, feedgrain: 8 };
+const BASELINE = { hormuz: 30, redsea: 35, suez: 30, general: 60, qatar: 6, taiwan: 14, kazakhstan: 4, china: 22, india: 9, feedgrain: 8, us: 10 };
 // partner lanes are sentiment-gated; route lanes are already disruption-keyed
-const PARTNER_IDS = new Set(["qatar", "taiwan", "kazakhstan", "china", "india", "feedgrain"]);
+const PARTNER_IDS = new Set(["qatar", "taiwan", "kazakhstan", "china", "india", "feedgrain", "us"]);
 const NEG_RE = /\b(halt|halts|halted|ban|bans|banned|curb|curbs|curtail|cut|cuts|suspend|suspends|disrupt|disrupts|disruption|shortage|sanction|sanctions|restrict|restricts|restriction|embargo|export control|force majeure|outage|strike|attack|seize|seized|tension|tensions|dispute|shutdown|stoppage|crisis|threat|threaten|escalat|blockad|shut|crackdown|standoff|conflict|war|invasion|unrest)\b/i;
 
 /* ---- date + entity helpers ---------------------------------------------- */
@@ -111,6 +112,7 @@ const ROUTE_RE = {
   china:  /china|rare earth|gallium|germanium|polysilicon|solar (module|export|panel)/i,
   india:  /(india|indian).*(pharma|api|drug|generic)|pharmaceutical export|api export/i,
   feedgrain: /(brazil|argentin|soy(bean|meal)?|corn export|grain export|animal feed|alfalfa|fodder)/i,
+  us: /(export control|commerce department|bureau of industry and security|\bbis\b|export licen[cs]e).*(uae|united arab emirates)|(uae|united arab emirates).*(export control|export licen[cs]e)/i,
 };
 async function gdeltOnce() {
   const url = "https://api.gdeltproject.org/api/v2/doc/doc?query="
@@ -130,7 +132,7 @@ async function gdeltBuckets() {
     catch (e) { lastErr = e; if (e.status && e.status !== 429 && e.status !== 503) break; }
   }
   if (!arts) throw lastErr;
-  const hit = { hormuz: [], redsea: [], suez: [], qatar: [], taiwan: [], kazakhstan: [], china: [], india: [], feedgrain: [] };
+  const hit = { hormuz: [], redsea: [], suez: [], qatar: [], taiwan: [], kazakhstan: [], china: [], india: [], feedgrain: [], us: [] };
   for (const a of arts) {
     const hay = `${a.title || ""} ${a.url || ""} ${a.domain || ""}`;
     const neg = NEG_RE.test(hay);
@@ -141,7 +143,7 @@ async function gdeltBuckets() {
     }
   }
   return { hormuz: hit.hormuz, redsea: hit.redsea, suez: hit.suez, qatar: hit.qatar,
-    taiwan: hit.taiwan, kazakhstan: hit.kazakhstan, china: hit.china, india: hit.india, feedgrain: hit.feedgrain, general: arts };
+    taiwan: hit.taiwan, kazakhstan: hit.kazakhstan, china: hit.china, india: hit.india, feedgrain: hit.feedgrain, us: hit.us, general: arts };
 }
 
 /* ---- scoring ------------------------------------------------------------ */
@@ -192,6 +194,7 @@ exports.handler = async function () {
         china:  summarize("china", b.china),
         india:  summarize("india", b.india),
         feedgrain: summarize("feedgrain", b.feedgrain),
+        us: summarize("us", b.us),
         general: summarize("general", b.general),
       };
       return { statusCode: 200, headers: HEAD_OK, body: JSON.stringify({ ok: true, src: "gdelt", areas, ts: Date.now() }) };

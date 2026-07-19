@@ -1,6 +1,13 @@
-# netlify.toml — place at the root of your repo
-[functions]
-  directory = "netlify/functions"
-
+# Publish the whole `site/` folder as the site root.
 [build]
   publish = "."
+  # Fetch the slow GDELT conflict feed at build time and write conflict.json.
+  # (Node 18+ provides global fetch.) Never fails the build.
+  command = "node scripts/prefetch-conflict.js"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[functions]
+  node_bundler = "esbuild"

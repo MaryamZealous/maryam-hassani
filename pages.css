@@ -1,4 +1,8 @@
 /* pages.css — shared chrome for Learn & Build (paper & ink, mono+serif) */
+/* motion layer (motion.js) — initial hidden states, gated on <html class="motion"> */
+.m-word{display:inline-block;will-change:transform,opacity}
+html.motion [data-reveal],html.motion [data-split]{opacity:0}
+html.motion-done [data-reveal],html.motion-done [data-split]{opacity:1!important;transform:none!important}
 :root{
   --paper:#FAF9F5; --paper-2:#F3F1EA; --paper-3:#ECE9E0;
   --ink:#15140F; --ink-2:#3A382F; --muted:#6E6B60; --faint:#9A9789;

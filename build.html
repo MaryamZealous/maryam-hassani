@@ -8,7 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="pages.css" />
-<link rel="stylesheet" href="build.css" />
+<link rel="stylesheet" href="build.css?v=2" />
+<script>if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('motion')</script>
 <template id="__bundler_thumbnail">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
     <rect width="100" height="100" fill="#FAF9F5"/>
@@ -32,18 +33,18 @@
   </header>
 
   <main class="page">
-    <section class="build-hero" data-sec="Intro">
-      <div class="eyebrow">Build · stuff I built with AI</div>
-      <h1 class="build-h1">I build tools that make <span class="em">complex</span> systems easy to understand.</h1>
-      <p class="build-lede">Working with AI, I turn messy, high-stakes problems into things you can see, question, and steer. Less dashboard, more instrument.</p>
+    <section class="build-hero" data-sec="Intro" data-reveal-group>
+      <div class="eyebrow" data-reveal>Build · stuff I built with AI</div>
+      <h1 class="build-h1" data-split>I build tools that make <span class="em">complex</span> systems easy to understand.</h1>
+      <p class="build-lede" data-reveal>Working with AI, I turn messy, high-stakes problems into things you can see, question, and steer. Less dashboard, more instrument.</p>
     </section>
 
-    <div class="sec-label">
+    <div class="sec-label" data-reveal>
       <span class="t">Featured</span>
       <span class="n">01 / 01</span>
     </div>
 
-    <section class="feat" data-sec="Featured — RIS">
+    <section class="feat" data-sec="Featured — RIS" data-reveal="scale">
       <a class="feat-frame" href="resilience-intelligence-system/" aria-label="Open the Resilience Intelligence System">
         <div class="feat-chrome">
           <span class="d"></span><span class="d"></span><span class="d"></span>
@@ -67,22 +68,22 @@
       </div>
     </section>
 
-    <div class="sec-label">
+    <div class="sec-label" data-reveal>
       <span class="t">In the workshop</span>
       <span class="n">more coming</span>
     </div>
-    <section class="soon" data-sec="In the workshop">
-      <div class="soon-card">
+    <section class="soon" data-sec="In the workshop" data-reveal-group>
+      <div class="soon-card" data-reveal>
         <div class="s-k">Learning</div>
         <div class="s-t">tools for thinking &amp; spaced practice</div>
         <div class="s-n">in progress</div>
       </div>
-      <div class="soon-card">
+      <div class="soon-card" data-reveal>
         <div class="s-k">Mathematics</div>
         <div class="s-t">visual explainers, built to be played with</div>
         <div class="s-n">in progress</div>
       </div>
-      <div class="soon-card">
+      <div class="soon-card" data-reveal>
         <div class="s-k">Experiments</div>
         <div class="s-t">small AI-built things, documented as I go</div>
         <div class="s-n">soon</div>
@@ -94,5 +95,21 @@
     <span><span class="dot"></span>you are what you consume</span>
     <span><a href="index.html">← back home</a></span>
   </footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="motion.js?v=2"></script>
+  <script>
+  /* Scale the RIS preview iframe to its card width — plain-number scale,
+     robust across browsers that don't support length/length in calc(). */
+  (function(){
+    var shots = document.querySelectorAll('.feat-shot');
+    function fit(el){ el.style.setProperty('--feat-scale', (el.clientWidth / 1280).toFixed(5)); }
+    shots.forEach(function(el){
+      fit(el);
+      if (window.ResizeObserver) new ResizeObserver(function(){ fit(el); }).observe(el);
+    });
+    window.addEventListener('resize', function(){ shots.forEach(fit); });
+  })();
+  </script>
 </body>
 </html>
