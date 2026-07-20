@@ -318,7 +318,14 @@ async function askClaude(system, messages, maxTokens = 1200) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ system, messages, max_tokens: maxTokens }),
   });
-  const data = await res.json();
+  let data = null;
+  try { data = await res.json(); } catch {}
+  if (!res.ok || !data || data.type === "error" || data.error) {
+    const detail = data
+      ? (typeof data.error === "string" ? data.error : (data.error && data.error.message) || "unknown error")
+      : "HTTP " + res.status;
+    throw new Error(detail);
+  }
   return (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
 }
 const parseJSON = (t) => JSON.parse(t.replace(/```json|```/g, "").trim());
@@ -634,7 +641,7 @@ function AddWord({ state, setState, onBack }) {
       );
       const c = parseJSON(text);
       setPreview({ ...c, id: "u" + Date.now(), src: "notes", custom: true });
-    } catch (e) { setErr("Couldn't generate the card — try again."); }
+    } catch (e) { setErr("Couldn't generate the card: " + (e.message || "try again")); }
     setBusy(false);
   };
 
@@ -919,7 +926,7 @@ If her writing is already correct, issues should be an empty array and corrected
         const s = { ...state, mistakes: [entry, ...(state.mistakes || [])].slice(0, 60) };
         setState(s); saveState(s);
       }
-    } catch (e) { setErr("Couldn't check it — try again."); }
+    } catch (e) { setErr("Couldn't check it: " + (e.message || "try again")); }
     setBusy(false);
   };
 
@@ -1055,7 +1062,7 @@ Rules:
       );
       setMsgs([...history, { role: "assistant", content: reply || "…" }]);
     } catch (e) {
-      setMsgs([...history, { role: "assistant", content: "Connection issue — try sending again." }]);
+      setMsgs([...history, { role: "assistant", content: "⚠️ " + (e.message || "Connection issue — try sending again.") }]);
     }
     setBusy(false);
   };
