@@ -15,6 +15,7 @@
 .pb-2{padding-bottom:8px}.pt-2{padding-top:8px}
 .text-center{text-align:center}
 .overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}
+select{appearance:none;-webkit-appearance:none}
 </style>
 <script>
 window.addEventListener("error", function (e) {
@@ -292,7 +293,7 @@ const STORE_KEY = "arabic-coach-state-v1";
 const dayStr = (d = new Date()) => d.toISOString().slice(0, 10);
 const shuffle = (a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 
-const defaultState = () => ({ srs: {}, streak: { last: null, count: 0 }, learnedToday: { day: null, ids: [] }, reviewsDone: 0, customCards: [], mistakes: [], ttsVoice: null });
+const defaultState = () => ({ srs: {}, streak: { last: null, count: 0 }, learnedToday: { day: null, ids: [] }, reviewsDone: 0, customCards: [], mistakes: [], ttsVoice: null, notebook: null });
 
 async function loadState() {
   try {
@@ -306,6 +307,11 @@ async function saveState(s) {
 }
 
 const allCards = (state) => [...CARDS, ...(state.customCards || [])];
+const mineFor = (state, card) => {
+  const list = (state.notebook && state.notebook.entries) || [];
+  const bare = stripHarakat(card.ar);
+  return list.filter((e) => stripHarakat(e.word || "") === bare || stripHarakat(e.text || "").includes(bare)).slice(0, 3);
+};
 const dueCards = (state) => { const t = dayStr(); return allCards(state).filter((c) => state.srs[c.id] && state.srs[c.id].due <= t); };
 const newCards = (state) => {
   const list = allCards(state).filter((c) => !state.srs[c.id]);
@@ -506,7 +512,7 @@ const BackBtn = ({ onClick, label = "Back" }) => (
 );
 
 /* ================= FLASHCARD ================= */
-function Flashcard({ card, onGrade, learnMode }) {
+function Flashcard({ card, onGrade, learnMode, mine = [] }) {
   const [flipped, setFlipped] = useState(false);
   useEffect(() => setFlipped(false), [card.id]);
   return (
@@ -540,6 +546,19 @@ function Flashcard({ card, onGrade, learnMode }) {
               <div className="ar" style={{ fontSize: 16, color: T.ink, lineHeight: 1.8 }}>{card.exE}</div>
               <div className="ltr" style={{ fontSize: 13, color: T.inkSoft, marginTop: 3 }}>{card.exEn}</div>
             </div>
+            {mine.length > 0 && (
+              <div style={{ borderTop: `1px dashed ${T.cardLine}`, paddingTop: 10 }}>
+                <div className="ltr" style={{ fontSize: 10, letterSpacing: 1, color: "#5E7A5C", fontWeight: 700, marginBottom: 5 }}>MY SENTENCE{mine.length > 1 ? "S" : ""} ✍️</div>
+                {mine.map((m) => (
+                  <div key={m.id} style={{ marginBottom: 8 }}>
+                    <div className="ar" style={{ fontSize: 15.5, color: m.teacherNote ? T.inkSoft : T.ink, lineHeight: 1.8, textDecoration: m.teacherNote ? "line-through" : "none", textDecorationColor: "#B9A98A" }}>{m.text}</div>
+                    {m.teacherNote && (
+                      <div className="ar" style={{ fontSize: 16, color: "#2E6B4F", lineHeight: 1.8, fontWeight: 500 }}>✓ {m.teacherNote}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
             <PronounceCheck target={card.ar} />
           </div>
         )}
@@ -617,7 +636,7 @@ function ReviewSession({ state, setState, mode, onDone }) {
         <BackBtn onClick={onDone} />
         <span style={{ color: T.soft, fontSize: 13 }}>{queue.length} left</span>
       </div>
-      <Flashcard card={card} onGrade={grade} learnMode={mode === "learn"} />
+      <Flashcard card={card} onGrade={grade} learnMode={mode === "learn"} mine={mineFor(state, card)} />
     </div>
   );
 }
@@ -713,6 +732,12 @@ function Browse({ state, onBack }) {
               {c.note && <div className="ar" style={{ color: T.soft, fontSize: 13 }}>{c.note}</div>}
               <div className="ar" style={{ color: T.text, fontSize: 14.5, lineHeight: 1.8 }}>{c.exE}</div>
               <div className="ltr" style={{ color: T.soft, fontSize: 12.5 }}>{c.exEn}</div>
+              {mineFor(state, c).map((m) => (
+                <div key={m.id} style={{ borderTop: `1px solid ${T.line}`, paddingTop: 8 }}>
+                  <div className="ar" style={{ color: m.teacherNote ? T.soft : T.text, fontSize: 14.5, lineHeight: 1.8, textDecoration: m.teacherNote ? "line-through" : "none" }}>{m.text}</div>
+                  {m.teacherNote && <div className="ar" style={{ color: T.green, fontSize: 15, lineHeight: 1.8 }}>✓ {m.teacherNote}</div>}
+                </div>
+              ))}
             </div>
           </details>
         ))}
@@ -1211,6 +1236,217 @@ const Stat = ({ label, value, icon }) => (
   </div>
 );
 
+/* ================= NOTEBOOK (shared with teacher) ================= */
+async function nbApi(body) {
+  const r = await fetch("/.netlify/functions/notebook", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  let d = null;
+  try { d = await r.json(); } catch {}
+  if (!r.ok || !d || d.error) throw new Error((d && d.error) || "HTTP " + r.status);
+  return d;
+}
+
+function Notebook({ state, setState, onBack }) {
+  const nb = state.notebook || { id: null, ownerKey: null, teacherKey: null, entries: [] };
+  const [entries, setEntries] = useState(nb.entries || []);
+  const [word, setWord] = useState("");
+  const [text, setText] = useState("");
+  const [status, setStatus] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const cards = allCards(state);
+  const wordOptions = [...cards.filter((c) => c.custom), ...cards.filter((c) => !c.custom)];
+
+  const persist = (next, extra) => {
+    const s = { ...state, notebook: { ...nb, ...(extra || {}), entries: next } };
+    // file any newly corrected sentence into the corrections log too
+    const known = new Set((s.mistakes || []).map((m) => m.src).filter(Boolean));
+    const fresh = next
+      .filter((e) => e.teacherNote && !known.has(e.id))
+      .map((e) => ({
+        d: dayStr(new Date(e.teacherAt || Date.now())),
+        orig: e.text,
+        corrected: e.teacherNote,
+        lessons: "تصحيح الأستاذ",
+        src: e.id,
+      }));
+    if (fresh.length) s.mistakes = [...fresh, ...(s.mistakes || [])].slice(0, 60);
+    setState(s); saveState(s);
+  };
+
+  // pull the latest from the server on open (picks up teacher comments)
+  useEffect(() => {
+    if (!nb.id || !nb.ownerKey) return;
+    nbApi({ action: "get", id: nb.id, key: nb.ownerKey })
+      .then((d) => { setEntries(d.entries || []); persist(d.entries || []); })
+      .catch(() => {});
+  }, []);
+
+  const add = () => {
+    if (!text.trim()) return;
+    const e = { id: "s" + Date.now(), word: word || "—", text: text.trim(), updated: Date.now() };
+    const next = [e, ...entries];
+    setEntries(next); persist(next); setText("");
+    if (nb.id) sync(next);
+  };
+
+  const edit = (id, v) => {
+    const next = entries.map((e) => (e.id === id ? { ...e, text: v, updated: Date.now() } : e));
+    setEntries(next); persist(next);
+  };
+
+  const remove = (id) => {
+    const next = entries.filter((e) => e.id !== id);
+    setEntries(next); persist(next);
+    if (nb.id) sync(next);
+  };
+
+  const sync = async (list) => {
+    if (!nb.id) return;
+    setBusy(true); setStatus("Saving…");
+    try {
+      const d = await nbApi({ action: "save", id: nb.id, key: nb.ownerKey, entries: list || entries });
+      setEntries(d.entries || []); persist(d.entries || []);
+      setStatus("Saved · your teacher sees this now");
+    } catch (e) { setStatus("Couldn't save: " + e.message); }
+    setBusy(false);
+  };
+
+  const createLink = async () => {
+    setBusy(true); setStatus("Creating your teacher link…");
+    try {
+      const d = await nbApi({ action: "create" });
+      const s = { ...state, notebook: { id: d.id, ownerKey: d.ownerKey, teacherKey: d.teacherKey, entries } };
+      setState(s); saveState(s);
+      await nbApi({ action: "save", id: d.id, key: d.ownerKey, entries });
+      setStatus("Link ready — send it to your teacher");
+    } catch (e) { setStatus("Couldn't create the link: " + e.message); }
+    setBusy(false);
+  };
+
+  const link = nb.id ? `${location.origin}${location.pathname}#t=${nb.id}.${nb.teacherKey}` : "";
+  const copy = () => {
+    try { navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch {}
+  };
+
+  return (
+    <div className="fade-in flex flex-col gap-3">
+      <BackBtn onClick={onBack} />
+      <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>My sentence notebook</div>
+      <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>Write your own sentences with the words you're learning. Edit them any time. Your teacher opens one link on his own device, reads them, and writes corrections back — they appear here.</div>
+
+      <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 16, padding: "13px 15px" }} className="flex flex-col gap-2">
+        <select value={word} onChange={(e) => setWord(e.target.value)} className="ar" style={{ ...inputStyle, fontSize: 15 }}>
+          <option value="">اختاري كلمة (اختياري) · pick a word</option>
+          {wordOptions.map((c) => (
+            <option key={c.id} value={c.ar}>{c.ar} — {c.en}{c.custom ? " ★" : ""}</option>
+          ))}
+        </select>
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="اكتبي جملتك هنا…" className="ar" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.9 }} />
+        <Btn full onClick={add} disabled={!text.trim()}>Add sentence</Btn>
+      </div>
+
+      {nb.id ? (
+        <div style={{ background: T.surface2, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }}>
+          <div style={{ color: T.gold, fontSize: 11, letterSpacing: 1, fontWeight: 700 }}>TEACHER LINK</div>
+          <div className="ltr" style={{ color: T.soft, fontSize: 11.5, wordBreak: "break-all", marginTop: 5, lineHeight: 1.5 }}>{link}</div>
+          <div className="flex gap-2 mt-2">
+            <Btn small onClick={copy}>{copied ? "Copied ✓" : "Copy link"}</Btn>
+            <Btn small kind="ghost" onClick={() => sync()} disabled={busy}>Sync now</Btn>
+          </div>
+        </div>
+      ) : (
+        <Btn full kind="green" onClick={createLink} disabled={busy}>Create a link for my teacher</Btn>
+      )}
+      {status && <div style={{ color: status.startsWith("Couldn't") ? T.red : T.soft, fontSize: 12.5, lineHeight: 1.6 }}>{status}</div>}
+
+      {entries.length === 0 && <div style={{ color: T.soft, fontSize: 13.5 }}>No sentences yet — write your first one above.</div>}
+      {entries.map((e) => (
+        <div key={e.id} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }} className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span style={{ color: T.soft, fontSize: 11 }}>{new Date(e.updated || Date.now()).toLocaleDateString()}</span>
+            <span className="ar" style={{ color: T.gold, fontSize: 15, fontWeight: 700 }}>{e.word}</span>
+          </div>
+          <textarea value={e.text} onChange={(ev) => edit(e.id, ev.target.value)} onBlur={() => nb.id && sync()} rows={2} className="ar" style={{ ...inputStyle, resize: "vertical", fontSize: 16, lineHeight: 1.9 }} />
+          {e.teacherNote && (
+            <div style={{ background: "#1F3A2E", border: `1px solid ${T.green}55`, borderRadius: 12, padding: "10px 13px" }}>
+              <div style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>TEACHER'S CORRECTION</div>
+              <div className="ar" style={{ color: T.text, fontSize: 15.5, lineHeight: 1.9 }}>{e.teacherNote}</div>
+            </div>
+          )}
+          <button onClick={() => remove(e.id)} style={{ background: "none", border: "none", color: T.soft, fontSize: 12, cursor: "pointer", alignSelf: "flex-start", padding: 0 }}>Delete</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ================= TEACHER VIEW (read-only + comments) ================= */
+function TeacherView({ id, key0 }) {
+  const [data, setData] = useState(null);
+  const [err, setErr] = useState(null);
+  const [drafts, setDrafts] = useState({});
+  const [savingId, setSavingId] = useState(null);
+
+  const load = () => {
+    nbApi({ action: "get", id, key: key0 })
+      .then((d) => setData(d))
+      .catch((e) => setErr(e.message));
+  };
+  useEffect(load, []);
+
+  const send = async (entryId) => {
+    setSavingId(entryId);
+    try {
+      const d = await nbApi({ action: "comment", id, key: key0, entryId, comment: drafts[entryId] || "" });
+      setData({ ...data, entries: d.entries });
+      setDrafts({ ...drafts, [entryId]: undefined });
+    } catch (e) { setErr(e.message); }
+    setSavingId(null);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'IBM Plex Sans', sans-serif" }}>
+      <style>{FONT_CSS}</style>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "22px 16px 60px" }} className="flex flex-col gap-3">
+        <div>
+          <div className="ar-display" style={{ color: T.gold, fontSize: 26 }}>دفتر مريم</div>
+          <div style={{ color: T.soft, fontSize: 12.5, marginTop: 3 }}>Her practice sentences. Write a correction under any sentence and press Send — she'll see it in her app.</div>
+        </div>
+        {err && <div style={{ color: T.red, fontSize: 13.5 }}>{err}</div>}
+        {!data && !err && <div style={{ color: T.soft, fontSize: 14 }}>Loading…</div>}
+        {data && (data.entries || []).length === 0 && <div style={{ color: T.soft, fontSize: 14 }}>No sentences yet.</div>}
+        {data && (data.entries || []).map((e) => (
+          <div key={e.id} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 16, padding: "14px 16px" }} className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span style={{ color: T.soft, fontSize: 11 }}>{new Date(e.updated || Date.now()).toLocaleDateString()}</span>
+              <span className="ar" style={{ color: T.gold, fontSize: 15, fontWeight: 700 }}>{e.word}</span>
+            </div>
+            <div className="ar" style={{ color: T.text, fontSize: 17, lineHeight: 2 }}>{e.text}</div>
+            {e.teacherNote && drafts[e.id] === undefined && (
+              <div style={{ background: "#1F3A2E", border: `1px solid ${T.green}55`, borderRadius: 12, padding: "10px 13px" }}>
+                <div style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>YOUR CORRECTION</div>
+                <div className="ar" style={{ color: T.text, fontSize: 15.5, lineHeight: 1.9 }}>{e.teacherNote}</div>
+                <button onClick={() => setDrafts({ ...drafts, [e.id]: e.teacherNote })} style={{ background: "none", border: "none", color: T.soft, fontSize: 12, cursor: "pointer", padding: "6px 0 0" }}>Edit</button>
+              </div>
+            )}
+            {(drafts[e.id] !== undefined || !e.teacherNote) && (
+              <div className="flex flex-col gap-2">
+                <textarea value={drafts[e.id] || ""} onChange={(ev) => setDrafts({ ...drafts, [e.id]: ev.target.value })} rows={2} placeholder="التصحيح والملاحظة…" className="ar" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.9 }} />
+                <Btn small onClick={() => send(e.id)} disabled={savingId === e.id}>{savingId === e.id ? "Sending…" : "Send correction"}</Btn>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ================= VOICE PICKER ================= */
 function VoicePicker({ state, setState, onBack }) {
   const [voices, setVoices] = useState([]);
@@ -1276,6 +1512,7 @@ function CardsHub({ state, setState, forcedMode, clearForced }) {
   if (mode === "browse") return <Browse state={state} onBack={() => setMode(null)} />;
   if (mode === "add") return <AddWord state={state} setState={setState} onBack={() => setMode(null)} />;
   if (mode === "voice") return <VoicePicker state={state} setState={setState} onBack={() => setMode(null)} />;
+  if (mode === "notebook") return <Notebook state={state} setState={setState} onBack={() => setMode(null)} />;
   return (
     <div className="fade-in flex flex-col gap-3">
       <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Flashcards</div>
@@ -1283,6 +1520,7 @@ function CardsHub({ state, setState, forcedMode, clearForced }) {
       <Btn full onClick={() => setMode("review")} disabled={due === 0}>Review due · {due}</Btn>
       <Btn full kind="dark" onClick={() => setMode("learn")} disabled={newLeft === 0}>Learn new · {newLeft} left today</Btn>
       <Btn full kind="green" onClick={() => setMode("add")}>+ Add a word I came across</Btn>
+      <Btn full kind="dark" onClick={() => setMode("notebook")}>📓 My sentence notebook{state.notebook && state.notebook.entries && state.notebook.entries.length ? ` · ${state.notebook.entries.length}` : ""}</Btn>
       <Btn full kind="ghost" onClick={() => setMode("browse")}>Browse all {allCards(state).length} cards</Btn>
       <button onClick={() => setMode("voice")} style={{ background: "none", border: "none", color: T.soft, fontSize: 13, cursor: "pointer", padding: "4px 0", textDecoration: "underline" }}>🔊 Audio not working? Voice settings</button>
     </div>
@@ -1293,6 +1531,8 @@ function CardsHub({ state, setState, forcedMode, clearForced }) {
 function App() {
   const [state, setState] = useState(null);
   const [tab, setTab] = useState("today");
+  const hash = typeof location !== "undefined" ? location.hash : "";
+  const tMatch = hash.match(/^#t=([a-zA-Z0-9-]+)\.([a-zA-Z0-9]+)$/);
   const [forcedCards, setForcedCards] = useState(null);
   const [forcedPractice, setForcedPractice] = useState(null);
 
@@ -1310,6 +1550,8 @@ function App() {
     if (t === "cards" && mode) setForcedCards(mode);
     if (t === "practice" && mode) setForcedPractice(mode);
   };
+
+  if (tMatch) return <TeacherView id={tMatch[1]} key0={tMatch[2]} />;
 
   if (!state) return (
     <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
