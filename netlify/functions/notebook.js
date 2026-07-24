@@ -1,6 +1,8 @@
 // netlify/functions/notebook.js
-// Stores Maryam's sentence notebook in Netlify Blobs so her teacher can open it
-// from his own device. Two keys: ownerKey (write sentences) and teacherKey (read + comment).
+// Stores Maryam's sentence notebook so her teacher can read it from his own device.
+// Dependency-free: talks to Netlify Blobs over its REST API using the
+// NETLIFY_BLOBS_CONTEXT / site env vars that Netlify injects automatically.
+// If Blobs is unavailable it fails clearly instead of 502-ing.
 
 const STORE = "ramsati-notebooks";
 
@@ -8,36 +10,25 @@ exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return res(204, null);
   if (event.httpMethod !== "POST") return res(405, { error: "POST only" });
 
-  let getStore;
-  try {
-    ({ getStore } = await import("@netlify/blobs"));
-  } catch (e) {
-    return res(500, { error: "The @netlify/blobs package isn't installed. Add package.json to the repo root and redeploy." });
-  }
-
   let body;
   try { body = JSON.parse(event.body || "{}"); } catch { return res(400, { error: "Bad JSON" }); }
 
-  const store = getStore(STORE);
+  const blob = makeBlob();
+  if (!blob) return res(500, { error: "Storage is not configured on this site (Netlify Blobs unavailable)." });
+
   const id = typeof body.id === "string" ? body.id.replace(/[^a-zA-Z0-9-]/g, "") : "";
   const key = typeof body.key === "string" ? body.key : "";
 
   try {
     if (body.action === "create") {
       const newId = rand(10);
-      const doc = {
-        ownerKey: rand(16),
-        teacherKey: rand(16),
-        title: typeof body.title === "string" ? body.title.slice(0, 80) : "دفتر مريم",
-        entries: [],
-        updated: Date.now(),
-      };
-      await store.setJSON(newId, doc);
+      const doc = { ownerKey: rand(16), teacherKey: rand(16), title: "دفتر مريم", entries: [], updated: Date.now() };
+      await blob.set(newId, doc);
       return res(200, { id: newId, ownerKey: doc.ownerKey, teacherKey: doc.teacherKey });
     }
 
     if (!id) return res(400, { error: "Missing notebook id" });
-    const doc = await store.get(id, { type: "json" });
+    const doc = await blob.get(id);
     if (!doc) return res(404, { error: "Notebook not found" });
 
     const role = key && key === doc.ownerKey ? "owner" : key && key === doc.teacherKey ? "teacher" : null;
@@ -57,12 +48,11 @@ exports.handler = async (event) => {
         word: String(e.word || "").slice(0, 60),
         text: String(e.text || "").slice(0, 1200),
         updated: Number(e.updated) || Date.now(),
-        // teacher comments are never overwritten by the owner's save
         teacherNote: existing[e.id] ? existing[e.id].teacherNote : undefined,
         teacherAt: existing[e.id] ? existing[e.id].teacherAt : undefined,
       }));
       doc.updated = Date.now();
-      await store.setJSON(id, doc);
+      await blob.set(id, doc);
       return res(200, { ok: true, entries: doc.entries, updated: doc.updated });
     }
 
@@ -74,7 +64,7 @@ exports.handler = async (event) => {
       entry.teacherNote = comment;
       entry.teacherAt = Date.now();
       doc.updated = Date.now();
-      await store.setJSON(id, doc);
+      await blob.set(id, doc);
       return res(200, { ok: true, entries: doc.entries });
     }
 
@@ -83,6 +73,43 @@ exports.handler = async (event) => {
     return res(500, { error: String((e && e.message) || e) });
   }
 };
+
+// Minimal Netlify Blobs REST client — no npm package required.
+function makeBlob() {
+  let ctx = null;
+  if (process.env.NETLIFY_BLOBS_CONTEXT) {
+    try { ctx = JSON.parse(Buffer.from(process.env.NETLIFY_BLOBS_CONTEXT, "base64").toString("utf8")); } catch {}
+  }
+  const siteID = (ctx && ctx.siteID) || process.env.SITE_ID || process.env.NETLIFY_SITE_ID;
+  const token = (ctx && ctx.token) || process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN;
+  const edgeURL = ctx && ctx.edgeURL;
+  if (!siteID || !token) return null;
+
+  const base = edgeURL
+    ? `${edgeURL}/${siteID}/${STORE}`
+    : `https://api.netlify.com/api/v1/blobs/${siteID}/${STORE}`;
+  const headers = { authorization: `Bearer ${token}` };
+
+  return {
+    async get(k) {
+      const r = await fetch(`${base}/${encodeURIComponent(k)}`, { headers });
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error("blob get " + r.status);
+      const t = await r.text();
+      if (!t) return null;
+      try { return JSON.parse(t); } catch { return null; }
+    },
+    async set(k, v) {
+      const r = await fetch(`${base}/${encodeURIComponent(k)}`, {
+        method: "PUT",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify(v),
+      });
+      if (!r.ok) throw new Error("blob set " + r.status);
+      return true;
+    },
+  };
+}
 
 function rand(n) {
   const a = "abcdefghijkmnpqrstuvwxyz23456789";
