@@ -312,6 +312,26 @@ const mineFor = (state, card) => {
   const bare = stripHarakat(card.ar);
   return list.filter((e) => stripHarakat(e.word || "") === bare || stripHarakat(e.text || "").includes(bare)).slice(0, 3);
 };
+
+// word-level diff: returns the corrected sentence split into tokens,
+// each flagged changed:true if it differs from the student's version
+const diffWords = (orig, corrected) => {
+  const norm = (w) => stripHarakat(w).replace(/[.,،؛!؟?]/g, "");
+  const o = (orig || "").trim().split(/\s+/).map(norm).filter(Boolean);
+  const oset = new Set(o);
+  return (corrected || "").trim().split(/\s+/).map((w) => ({
+    w,
+    changed: !oset.has(norm(w)),
+  }));
+};
+
+const DiffText = ({ orig, corrected, base }) => (
+  <span dir="rtl">
+    {diffWords(orig, corrected).map((t, i) => (
+      <span key={i} style={{ color: t.changed ? "#C0655A" : (base || "inherit"), fontWeight: t.changed ? 700 : "inherit" }}>{t.w}{" "}</span>
+    ))}
+  </span>
+);
 const dueCards = (state) => { const t = dayStr(); return allCards(state).filter((c) => state.srs[c.id] && state.srs[c.id].due <= t); };
 const newCards = (state) => {
   const list = allCards(state).filter((c) => !state.srs[c.id]);
@@ -553,7 +573,7 @@ function Flashcard({ card, onGrade, learnMode, mine = [] }) {
                   <div key={m.id} style={{ marginBottom: 8 }}>
                     <div className="ar" style={{ fontSize: 15.5, color: m.teacherNote ? T.inkSoft : T.ink, lineHeight: 1.8, textDecoration: m.teacherNote ? "line-through" : "none", textDecorationColor: "#B9A98A" }}>{m.text}</div>
                     {m.teacherNote && (
-                      <div className="ar" style={{ fontSize: 16, color: "#2E6B4F", lineHeight: 1.8, fontWeight: 500 }}>✓ {m.teacherNote}</div>
+                      <div className="ar" style={{ fontSize: 16, lineHeight: 1.8, fontWeight: 500 }}>✓ <DiffText orig={m.text} corrected={m.teacherNote} base="#2E6B4F" /></div>
                     )}
                   </div>
                 ))}
@@ -706,17 +726,31 @@ const inputStyle = { background: T.surface, border: `1px solid ${T.line}`, borde
 /* ================= BROWSE ================= */
 function Browse({ state, onBack }) {
   const [topic, setTopic] = useState("All");
+  const [q, setQ] = useState("");
   const cards = allCards(state);
   const topics = ["All", "My words", ...new Set(cards.map((c) => c.topic))];
-  const list = topic === "All" ? cards : topic === "My words" ? cards.filter((c) => c.custom) : cards.filter((c) => c.topic === topic);
+  const byTopic = topic === "All" ? cards : topic === "My words" ? cards.filter((c) => c.custom) : cards.filter((c) => c.topic === topic);
+  const query = q.trim().toLowerCase();
+  const queryAr = stripHarakat(q.trim());
+  const list = !query ? byTopic : byTopic.filter((c) => {
+    return (
+      c.en.toLowerCase().includes(query) ||
+      (c.tr || "").toLowerCase().includes(query) ||
+      (c.note || "").toLowerCase().includes(query) ||
+      stripHarakat(c.ar).includes(queryAr) ||
+      stripHarakat(c.em || "").includes(queryAr)
+    );
+  });
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 10 }}><BackBtn onClick={onBack} /></div>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 Search by word or meaning · ابحثي بالكلمة أو المعنى" style={{ ...inputStyle, marginBottom: 10, fontSize: 14 }} />
       <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
         {topics.map((t) => (
           <button key={t} onClick={() => setTopic(t)} style={{ whiteSpace: "nowrap", background: topic === t ? T.gold : T.surface, color: topic === t ? "#221A0C" : T.soft, border: `1px solid ${topic === t ? T.gold : T.line}`, borderRadius: 20, padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{t}</button>
         ))}
       </div>
+      {list.length === 0 && <div style={{ color: T.soft, fontSize: 14, padding: "20px 4px" }}>No matches for “{q}”.</div>}
       <div className="flex flex-col gap-2">
         {list.map((c) => (
           <details key={c.id} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }}>
@@ -735,7 +769,7 @@ function Browse({ state, onBack }) {
               {mineFor(state, c).map((m) => (
                 <div key={m.id} style={{ borderTop: `1px solid ${T.line}`, paddingTop: 8 }}>
                   <div className="ar" style={{ color: m.teacherNote ? T.soft : T.text, fontSize: 14.5, lineHeight: 1.8, textDecoration: m.teacherNote ? "line-through" : "none" }}>{m.text}</div>
-                  {m.teacherNote && <div className="ar" style={{ color: T.green, fontSize: 15, lineHeight: 1.8 }}>✓ {m.teacherNote}</div>}
+                  {m.teacherNote && <div className="ar" style={{ color: T.green, fontSize: 15, lineHeight: 1.8 }}>✓ <DiffText orig={m.text} corrected={m.teacherNote} base={T.green} /></div>}
                 </div>
               ))}
             </div>
@@ -1259,7 +1293,9 @@ function Notebook({ state, setState, onBack }) {
   const [copied, setCopied] = useState(false);
 
   const cards = allCards(state);
-  const wordOptions = [...cards.filter((c) => c.custom), ...cards.filter((c) => !c.custom)];
+  const usedWords = new Set(entries.map((e) => stripHarakat(e.word || "")));
+  const available = cards.filter((c) => !usedWords.has(stripHarakat(c.ar)));
+  const wordOptions = [...available.filter((c) => c.custom), ...available.filter((c) => !c.custom)];
 
   const persist = (next, extra) => {
     const s = { ...state, notebook: { ...nb, ...(extra || {}), entries: next } };
@@ -1375,7 +1411,7 @@ function Notebook({ state, setState, onBack }) {
           {e.teacherNote && (
             <div style={{ background: "#1F3A2E", border: `1px solid ${T.green}55`, borderRadius: 12, padding: "10px 13px" }}>
               <div style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>TEACHER'S CORRECTION</div>
-              <div className="ar" style={{ color: T.text, fontSize: 15.5, lineHeight: 1.9 }}>{e.teacherNote}</div>
+              <div className="ar" style={{ fontSize: 15.5, lineHeight: 1.9 }}><DiffText orig={e.text} corrected={e.teacherNote} base={T.text} /></div>
             </div>
           )}
           <button onClick={() => remove(e.id)} style={{ background: "none", border: "none", color: T.soft, fontSize: 12, cursor: "pointer", alignSelf: "flex-start", padding: 0 }}>Delete</button>
@@ -1430,7 +1466,7 @@ function TeacherView({ id, key0 }) {
             {e.teacherNote && drafts[e.id] === undefined && (
               <div style={{ background: "#1F3A2E", border: `1px solid ${T.green}55`, borderRadius: 12, padding: "10px 13px" }}>
                 <div style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>YOUR CORRECTION</div>
-                <div className="ar" style={{ color: T.text, fontSize: 15.5, lineHeight: 1.9 }}>{e.teacherNote}</div>
+                <div className="ar" style={{ color: T.text, fontSize: 15.5, lineHeight: 1.9 }}><DiffText orig={e.text} corrected={e.teacherNote} base={T.text} /></div>
                 <button onClick={() => setDrafts({ ...drafts, [e.id]: e.teacherNote })} style={{ background: "none", border: "none", color: T.soft, fontSize: 12, cursor: "pointer", padding: "6px 0 0" }}>Edit</button>
               </div>
             )}
