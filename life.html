@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="My Protocol">
+<meta name="theme-color" content="#EFE7DA">
+<meta name="robots" content="noindex, nofollow">
+<title>My Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EFE7DA; --card:#F7F1E7; --card2:#EAE0D0; --line:#DBCEB9;
+  --ink:#3A322A; --dim:#8A7D6B; --tan:#B07B4F; --sage:#96794F;
+  --amber:#C08A3E; --brick:#B5654A; --r:16px;
+  --serif:"Fraunces",Georgia,serif; --sans:"Outfit",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);min-height:100%}
+body{background:var(--bg);min-height:100vh;color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.app{max-width:440px;margin:0 auto;padding:20px 18px 96px;background:var(--bg);min-height:100vh}
+h1{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:.2px}
+h2{font-family:var(--serif);font-weight:500;font-size:20px;margin-bottom:10px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tan);font-weight:600}
+.sub{color:var(--dim);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:14px}
+.card.acc{border-left:3px solid var(--tan)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+button{font-family:var(--sans);cursor:pointer;border:none}
+.pills{display:flex;gap:8px;margin-top:10px}
+.pill{flex:1;padding:11px 6px;border-radius:12px;background:var(--card2);color:var(--dim);border:1px solid var(--line);font-weight:600;font-size:13px;transition:all .18s}
+.pill.g.on{background:#E4EAD9;color:#4F6B3A;border-color:#7E9B5B}
+.pill.a.on{background:#F5E6C8;color:#9A6B1E;border-color:var(--amber)}
+.pill.r.on{background:#F3D9CF;color:#9E4A32;border-color:var(--brick)}
+.check{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.check:last-child{border-bottom:none}
+.box{width:22px;height:22px;min-width:22px;border-radius:7px;border:1.5px solid var(--dim);margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--bg);transition:all .15s}
+.check.done .box{background:var(--sage);border-color:var(--sage)}
+.check.done .t{color:var(--dim);text-decoration:line-through}
+.check .d{font-size:12.5px;color:var(--dim)}
+.ex{padding:9px 0;border-bottom:1px solid var(--line)}
+.ex:last-child{border-bottom:none}
+.ex .s{color:var(--tan);font-size:13px;font-weight:600}
+.watch{color:var(--sage);font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap;border:1px solid var(--line);border-radius:99px;padding:3px 9px;background:var(--card2);cursor:pointer}
+.ex.tap{cursor:pointer;display:block;text-decoration:none;color:inherit}
+.tag{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);border-radius:99px;padding:3px 10px;margin-top:6px}
+.note{background:var(--card2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--dim);margin-top:12px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(239,231,218,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;max-width:440px;margin:0 auto;padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+.nav button{flex:1;background:none;color:var(--dim);font-size:12px;font-weight:600;padding:9px 0;border-radius:10px}
+.nav button.on{color:var(--tan)}
+.nav .ic{font-size:17px;display:block;margin-bottom:2px}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;font-family:var(--sans);font-size:14px;margin-top:5px}
+label{font-size:12.5px;color:var(--dim);display:block;margin-top:11px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.btn{width:100%;background:var(--tan);color:#1A130B;font-weight:600;font-size:14px;padding:13px;border-radius:12px;margin-top:14px;transition:opacity .15s}
+.btn:active{opacity:.8}
+.btn.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
+.ring{position:relative;width:76px;height:76px;min-width:76px}
+.ring svg{transform:rotate(-90deg)}
+.ring .n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px}
+.pick{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--card2)}
+.pick a{color:var(--tan);font-weight:600;text-decoration:none;font-size:14px}
+.lookrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);text-decoration:none}
+.lookrow:last-child{border-bottom:none}
+.sw{width:44px;height:56px;min-width:44px;border-radius:8px;border:1px solid var(--line);box-shadow:inset 0 -8px 14px rgba(0,0,0,.25)}
+.lookmeta{display:flex;flex-direction:column;gap:3px}
+.lookt{color:var(--ink);font-weight:600;font-size:14px}
+.looksub{color:var(--dim);font-size:12px}
+.pick .m{font-size:12.5px;color:var(--dim);margin-top:3px}
+.del{background:none;color:var(--dim);font-size:12px;margin-top:6px;text-decoration:underline}
+.hist{font-size:13px;color:var(--dim);padding:8px 0;border-bottom:1px solid var(--line)}
+.hist b{color:var(--ink);font-weight:600}
+.fade{animation:fd .25s ease}
+@keyframes fd{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #1A130B;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<nav class="nav" id="nav"></nav>
+
+<script>
+/* ---------- state ---------- */
+const KEY='orchestrator-state-v1';
+let S={
+  settings:{week:{0:'mobility',1:'glutes',2:'padel',3:'waist',4:'taichi',5:'sculpt',6:'rest'}},
+  profile:{w:"63.3",bf:"27.7",wa:"75",hi:"97",th:"53",ar:"30",rhr:"61",hrv:"64",se:"94",sl:"6.8",cycleStart:"2026-07-13",cycleLen:28,history:[{d:"2026-07-25",w:"63.3",bf:"27.7",wa:"75",hi:"97",th:"53",ar:"30",ff:"",sq:"",hrv:"64",rhr:"61",se:"94",sl:"6.8"}]},
+  style:{picks:[],cs:"Winter Deep-Dark (cool base)",bt:"Balanced hourglass (B97/W75/H97, WHR 0.77)",ds:"UK 12 / EU 40 / IT 44",ss:"EU 39",sn:"HOURGLASS: show the waist, don't fake it. Belted, wrap, high-waisted, fitted silhouettes. Avoid boxy/oversized/straight cuts that hide the waist. Bust 97, underbust 78 (C cup), waist 75, hips 97, shoulder 47. Size fitted blouses to the bust + check shoulder seams. Colours worn as colour not black: emerald, burgundy, wine, navy, deep teal, snow white, camel. Silk + fitted blouses. V/scoop/sweetheart necklines. Gold or silver."},
+  logs:{}
+};
+let mem=false, tab='today';
+
+function load(){
+  try{const v=localStorage.getItem(KEY); if(v) S=Object.assign(S,JSON.parse(v));}
+  catch(e){/* first run or storage unavailable */}
+  migrate();
+  render();
+}
+// upgrade any schedule saved under the old session keys so lookups never break
+function migrate(){
+  const map={lower:'glutes',upper:'waist',full:'sculpt',recovery:'rest',intervals:'rest',polo:'rest'};
+  if(S.settings&&S.settings.week){
+    for(const d in S.settings.week){
+      let k=S.settings.week[d];
+      if(map[k]) S.settings.week[d]=map[k];
+      if(!SESSIONS[S.settings.week[d]]) S.settings.week[d]='rest';
+    }
+  }
+}
+let saveT=null;
+function save(){
+  clearTimeout(saveT);
+  saveT=setTimeout(()=>{
+    try{localStorage.setItem(KEY,JSON.stringify(S));}
+    catch(e){mem=true;}
+  },400);
+}
+
+/* ---------- content ---------- */
+const MOBILITY=[
+  ["Cat-cow + thoracic reach x8","wake the spine, warm up"],
+  ["World's greatest stretch, 5/side","hips, hamstrings, thoracic in one"],
+  ["90/90 hip switches x10, hold 45s/side","the key hip-rotation opener"],
+  ["Ankle dorsiflexion rock, 10/side","knee-over-toe, THIS is why your heels lift"],
+  ["Deep goblet squat hold, 90s","hold a light weight at chest to counterbalance, heels down"],
+  ["Deep squat hold, 2 min (heels down, support if needed)","sink lower each week, chase heels-flat depth"],
+  ["Couch stretch, 90s/side","opens tight hip flexors from sitting"],
+  ["Frog stretch, 2 min","inner thigh + hip opening, breathe into it"],
+  ["Seated forward fold, 2 min","hamstrings + spine, aim closer to floor weekly"],
+  ["Wall slides x10 + doorway pec 45s/side","undo rounded shoulders"],
+  ["Bar hang or overhead reach, 3 x 20s","decompression, lengthens the spine"],
+  ["Neck: chin tucks x10 + ear-to-shoulder 30s/side","releases the neck tightness"]
+];
+const NN=[
+  ["Morning flexibility flow","the daily driver, ~15 min, full routine below"],
+  ["Sleep 7.5h in bed tonight","your #1 recovery lever"],
+  ["Protein target on track","125-130g today, breakfast covers 30g"],
+  ["8,000+ steps","biggest Whoop Age leak, walk it anywhere"]
+];
+const SESSIONS={
+  glutes:{t:"Glutes & Waist",tag:"gym, ~45 min, builds the lower hourglass",ex:[
+    ["Hip thrust","4 x 12, squeeze hard at top"],
+    ["Romanian deadlift","3 x 10, hamstrings + glutes, no quad"],
+    ["Cable glute kickback","3 x 15 / side"],
+    ["Hip abduction (machine or band)","3 x 20, upper glute shelf"],
+    ["Deep core: dead bug","3 x 10 / side, slow"],
+    ["Stomach vacuum hold","4 x 20s, cinches the waist"]]},
+  waist:{t:"Posture & lean arms",tag:"gym, ~40 min, tone not width",ex:[
+    ["Face pulls","3 x 15, opens the chest = less boxy"],
+    ["Band pull-aparts","3 x 20, posture"],
+    ["Straight-arm pulldown (light)","3 x 15, tones back, no width"],
+    ["Triceps rope pushdown (light)","3 x 15, arm definition"],
+    ["Bicep curl (light, high rep)","3 x 15"],
+    ["Light incline dumbbell press","3 x 12, supports the bust"],
+    ["Deep core: hollow hold","3 x 20s"]]},
+  sculpt:{t:"Waist-focused core & glutes",tag:"gym, ~45 min, deepens the hourglass",ex:[
+    ["Cable pull-through","3 x 12, glute hinge, no quad"],
+    ["Glute bridge march","3 x 12 / side"],
+    ["Pallof press","3 x 10 / side, anti-rotation cinch"],
+    ["Cable / band waist rotation","3 x 12 / side, controlled"],
+    ["Bird dog","3 x 10 / side"],
+    ["Side plank (hold, no dips)","3 x 30s / side"],
+    ["Vacuum + breathing cooldown","3 x 20s"]]},
+  padel:{t:"Padel",tag:"cardio when in season",ex:[
+    ["Play your match","great rotational + interval work"],
+    ["After: 90/90 holds + doorway pec","5 min to cool down"]]},
+  polo:{t:"Polo",tag:"in season only",ex:[
+    ["Ride","enjoy it"],
+    ["After: couch stretch 1 min/side","undo the saddle tightness"]]},
+  mobility:{t:"Extended flexibility",tag:"~30 min deep stretch day",ex:[
+    ["Full morning flow","15 min"],
+    ["Couch stretch","2 min / side"],
+    ["Frog stretch","2 min"],
+    ["Seated + standing forward fold","3 min each"],
+    ["Pigeon pose","90s / side, deep hip opener"],
+    ["Thread the needle","1 min / side"]]},
+  taichi:{t:"Tai chi",tag:"calm the nervous system, moving meditation",ex:[
+    ["Every-morning Tai Chi, 15-min beginner flow","https://www.youtube.com/watch?v=G5R44CPQf6Q"],
+    ["Or a 10-min daily beginner routine","https://www.youtube.com/watch?v=aLRRYm6W4uw"],
+    ["Move slow, breathe deep, let the movement do you","best on red-recovery + luteal days"]]},
+  rotation:{t:"Rotational power",tag:"optional, for padel/polo season",ex:[
+    ["Wall-supported hip airplane","8-10 / side, hip control"],
+    ["Split-stance banded rotational pull-apart","8-10 / side"],
+    ["Swiss ball cable rotation","8-10 / side, power"],
+    ["Add on a gym day when sport is active","builds the swing, not for red days"]]},
+  rest:{t:"Rest & walk",tag:"active recovery",ex:[
+    ["Easy walk toward your step goal","30-45 min"],
+    ["Morning flow only","15 min"],
+    ["Sauna or hot bath","if available"]]}
+};
+const DOW=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const MIDDAY=[
+  ["Stand + doorway pec stretch, 30s/side","reverses the forward hunch"],
+  ["Standing hip flexor lunge, 30s/side","undoes the seated hips"],
+  ["10 shoulder rolls back + 5 wall angels","resets the shoulders"],
+  ["Chin tucks x10 + look up 10s","releases the tech-neck"],
+  ["Stand and walk 2-3 min","get the blood moving"]
+];
+
+/* ---------- helpers ---------- */
+// tighten a movement name into a good search phrase
+function demoQuery(name){
+  return name.replace(/\d+\s*(min|sec|x|reps?|\/side| total| each).*$/i,'')
+    .replace(/[()]/g,'').replace(/:.*/,'').replace(/&/g,'and').trim()+" exercise proper form";
+}
+function demoURL(name){
+  return "https://www.youtube.com/results?search_query="+encodeURIComponent(demoQuery(name));
+}
+// pull a youtube video id out of a full url
+function ytId(url){
+  const m=url.match(/[?&]v=([\w-]{11})/)||url.match(/youtu\.be\/([\w-]{11})/);
+  return m?m[1]:null;
+}
+// movements that are just "play your match" / sauna etc shouldn't get a demo
+function hasDemo(name){
+  return !/^(ride|play|sauna|bike, incline|log it|enjoy|recover fully|add on|add a|move slow)/i.test(name.trim());
+}
+// each row is a single tap that opens the right video/search directly (embeds are blocked in-app)
+function exRow(e){
+  const isURL=/^https?:\/\//.test(e[1]);
+  if(isURL){
+    return `<a class="ex tap" href="${e[1]}" target="_blank" rel="noopener"><div class="row"><div>${e[0]}</div><span class="watch">play &#9654;</span></div></a>`;
+  }
+  if(hasDemo(e[0])){
+    return `<a class="ex tap" href="${demoURL(e[0])}" target="_blank" rel="noopener"><div class="row"><div>${e[0]}</div><span class="watch">demo &#9654;</span></div><div class="s">${e[1]}</div></a>`;
+  }
+  return `<div class="ex"><div class="row"><div>${e[0]}</div></div><div class="s">${e[1]}</div></div>`;
+}
+const todayKey=()=>new Date().toISOString().slice(0,10);
+// compute current cycle day + phase from the stored anchor
+function cyclePhase(){
+  const p=S.profile; if(!p.cycleStart) return null;
+  const len=p.cycleLen||28;
+  const start=new Date(p.cycleStart+"T00:00:00");
+  const today=new Date(new Date().toISOString().slice(0,10)+"T00:00:00");
+  let day=Math.floor((today-start)/86400000)%len; if(day<0) day+=len; day+=1;
+  let phase,note,push;
+  if(day<=5){phase="Menstrual";note="Everything optional except the non-negotiables. Rest is training now.";push=false;}
+  else if(day<=13){phase="Follicular";note="Your peak window. Push load and chase PRs, if recovery isn't red.";push=true;}
+  else if(day<=16){phase="Ovulatory";note="Still strong, but this is when strains/sprains cluster. Warm up fully.";push=true;}
+  else {phase="Luteal";note="Ease off. Moderate weights, protect sleep. Expect recovery to dip, don't fight it.";push=false;}
+  return {day,len,phase,note,push};
+}
+function log(){ const k=todayKey(); if(!S.logs[k]) S.logs[k]={rec:null,nn:[false,false,false,false],mob:[],done:false}; if(S.logs[k].nn.length<4){while(S.logs[k].nn.length<4)S.logs[k].nn.push(false);} return S.logs[k]; }
+function esc(s){return String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function planFor(day,rec){
+  let key=S.settings.week[day]; if(!SESSIONS[key]) key='rest';
+  let sw=false;
+  if(rec==='red' && ['glutes','waist','sculpt','padel'].includes(key)){key='taichi';sw=true;}
+  return {key,sw,s:SESSIONS[key]};
+}
+function weekScore(){
+  // score is built on daily habits now, not logged workouts
+  const now=new Date(); let flow=0,sleep=0,prot=0,steps=0;
+  for(let i=0;i<7;i++){
+    const d=new Date(now); d.setDate(now.getDate()-i);
+    const l=S.logs[d.toISOString().slice(0,10)];
+    if(!l) continue;
+    if(l.nn[0]) flow++; if(l.nn[1]) sleep++; if(l.nn[2]) prot++; if(l.nn[3]) steps++;
+  }
+  let sc=flow;               // morning flexibility, up to 7
+  if(sleep>=5) sc+=1;
+  if(prot>=6) sc+=1;
+  if(steps>=5) sc+=1;
+  return Math.min(sc,10);
+}
+
+/* ---------- views ---------- */
+function render(){
+  document.getElementById('nav').innerHTML=[
+    ['today','Today','&#9728;'],['plan','Plan','&#9633;'],['stats','Stats','&#9651;'],['style','Style','&#9670;']
+  ].map(([id,l,ic])=>`<button class="${tab===id?'on':''}" onclick="go('${id}')"><span class="ic">${ic}</span>${l}</button>`).join('');
+  const v={today:vToday,plan:vPlan,stats:vStats,style:vStyle}[tab];
+  document.getElementById('app').innerHTML=`<div class="fade">${v()}</div>`;
+}
+window.go=t=>{tab=t;render();window.scrollTo(0,0);};
+
+function vToday(){
+  const d=new Date(), l=log(), p=planFor(d.getDay(),l.rec), sc=weekScore();
+  const recNote={green:"Green. Plan as written, push where planned.",
+    amber:"Amber. Cap lifting at 2 hard sets per exercise, keep the rest.",
+    red:"Red. Training swapped for mobility. This counts as adherence, not failure."}[l.rec];
+  const circ=2*Math.PI*32, off=circ*(1-sc/10);
+  return `
+  <div class="eyebrow">${DOW[d.getDay()]} &middot; ${d.toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</div>
+  <div class="row" style="margin-top:6px">
+    <h1>Today</h1>
+    <div class="ring"><svg width="76" height="76"><circle cx="38" cy="38" r="32" fill="none" stroke="var(--line)" stroke-width="5"/>
+    <circle cx="38" cy="38" r="32" fill="none" stroke="${sc>=7?'var(--sage)':'var(--tan)'}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg>
+    <div class="n">${sc}</div></div>
+  </div>
+  <div class="sub" style="margin-top:-4px">Weekly score. 7+ means the system is working.</div>
+
+  <div class="card">
+    <div class="eyebrow">Whoop recovery this morning</div>
+    <div class="pills">
+      <button class="pill g ${l.rec==='green'?'on':''}" onclick="setRec('green')">Green</button>
+      <button class="pill a ${l.rec==='amber'?'on':''}" onclick="setRec('amber')">Amber</button>
+      <button class="pill r ${l.rec==='red'?'on':''}" onclick="setRec('red')">Red</button>
+    </div>
+    ${recNote?`<div class="note">${recNote}</div>`:`<div class="note">Tap your recovery colour and the day adjusts itself.</div>`}
+  </div>
+
+  ${(()=>{const c=cyclePhase(); if(!c) return ''; return `<div class="card" style="border-left:3px solid ${c.push?'var(--sage)':'var(--amber)'}">
+    <div class="eyebrow">Cycle &middot; day ${c.day} of ${c.len}</div>
+    <div style="margin-top:4px"><b>${c.phase} phase</b>${c.push?' &middot; push window':' &middot; ease window'}</div>
+    <div class="sub" style="margin-top:4px">${c.note}</div></div>`;})()}
+
+  <div class="card acc">
+    <div class="eyebrow">${p.sw?'Swapped by recovery rule':(['glutes','waist','sculpt'].includes(p.key)?'Gym session':'Session')}</div>
+    <h2 style="margin-top:4px">${p.s.t}</h2>
+    <span class="tag">${p.s.tag}</span>
+    <div style="margin-top:8px">${p.s.ex.map(exRow).join('')}</div>
+    ${l.rec==='amber'&&['glutes','waist','sculpt'].includes(p.key)?`<div class="note">Amber today: keep it light, drop to 2 sets per move.</div>`:''}
+    ${['glutes','waist','sculpt'].includes(p.key)?`<div class="note">Hourglass rules: build glutes, keep shoulders + arms lean (light + high-rep, never heavy laterals/lat width), grow the muscle behind the bust with light incline work, and never load quads (no heavy squats/lunges). Deep core cinches the waist; the cut reveals it. Posture work is your fastest anti-boxy win.</div>`:''}
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">The daily non-negotiables</div>
+    ${NN.map((n,i)=>`<div class="check ${l.nn[i]?'done':''}" onclick="tglNN(${i})">
+      <div class="box">${l.nn[i]?'&#10003;':''}</div>
+      <div><div class="t">${n[0]}</div><div class="d">${n[1]}</div></div></div>`).join('')}
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">Morning flexibility flow &middot; ~15 min</div>
+    <div class="sub" style="margin-bottom:6px">Undoes 8 hours at a desk: opens tight hips, unrounds shoulders, releases the neck. Do it every day, sport or no sport.</div>
+    ${MOBILITY.map((m,i)=>`<div class="check ${l.mob.includes(i)?'done':''}">
+        <div class="box" onclick="tglMob(${i})">${l.mob.includes(i)?'&#10003;':''}</div>
+        <a style="flex:1;text-decoration:none;color:inherit" href="${demoURL(m[0])}" target="_blank" rel="noopener"><div class="t">${m[0]}</div><div class="d">${m[1]}</div></a>
+        <a class="watch" href="${demoURL(m[0])}" target="_blank" rel="noopener">demo &#9654;</a>
+      </div>`).join('')}
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">Midday desk reset &middot; ~4 min, optional</div>
+    <div class="sub" style="margin-bottom:6px">Around 2-3pm. The hunch builds through the day, so one reset now beats the morning flow alone.</div>
+    ${MIDDAY.map(exRow).join('')}
+  </div>`;
+}
+window.setRec=r=>{const l=log(); l.rec=(l.rec===r?null:r); save(); render();};
+window.tglNN=i=>{const l=log(); l.nn[i]=!l.nn[i]; save(); render();};
+window.tglMob=i=>{const l=log(); const x=l.mob.indexOf(i); x>-1?l.mob.splice(x,1):l.mob.push(i); save(); render();};
+
+function vPlan(){
+  const opts=Object.keys(SESSIONS);
+  return `
+  <div class="eyebrow">Weekly template</div><h1>Plan</h1>
+  <div class="sub">Flexibility runs every morning no matter what. Set the rest to your real week. Today adjusts automatically.</div>
+  ${DOW.map((d,i)=>{const k=SESSIONS[S.settings.week[i]]?S.settings.week[i]:'rest'; return `<div class="card"><div class="row">
+    <div><b>${d}</b><div class="sub">${SESSIONS[k].tag}</div></div>
+    <select style="width:52%;margin:0" onchange="setDay(${i},this.value)">
+      ${opts.map(o=>`<option value="${o}" ${k===o?'selected':''}>${SESSIONS[o].t}</option>`).join('')}
+    </select></div></div>`;}).join('')}
+  <div class="note">How it's built: the morning flexibility flow is the backbone, done daily to undo desk posture. Three gym days (glutes, waist/back, legs+core) shape the hourglass. Add padel or polo when they're in season. On a red-recovery day any gym session auto-swaps to flexibility.</div>
+
+  <div class="eyebrow" style="margin-top:22px">Your 3 gym workouts</div>
+  <div class="sub" style="margin-bottom:4px">The full exercises, viewable anytime. Tap watch for a form demo.</div>
+  ${['glutes','waist','sculpt'].map(k=>{const s=SESSIONS[k]; return `<div class="card">
+    <h2 style="margin-bottom:2px">${s.t}</h2><span class="tag">${s.tag}</span>
+    <div style="margin-top:8px">${s.ex.map(exRow).join('')}</div>
+  </div>`;}).join('')}
+  <div class="note">Hourglass rules: grow glutes, keep shoulders and arms lean with light high-rep work (no heavy lateral raises or wide-lat pulldowns, those square you off), a little light incline press supports the bust, and every lower move is a hip-hinge or glute isolation, never a heavy squat or lunge, so legs stay lean and quads don't grow. Deep core cinches the waist; the fat-loss cut reveals the definition. Posture work is the fastest fix for feeling boxy.</div>`;
+}
+window.setDay=(i,v)=>{S.settings.week[i]=v; save(); render();};
+
+function vStats(){
+  const p=S.profile, entries=(p.history||[]).slice(-6).reverse();
+  return `
+  <div class="eyebrow">Measurements &amp; benchmarks</div><h1>Stats</h1>
+  ${p.bf?`<div class="card acc"><div class="eyebrow">Goal</div><div style="margin-top:6px"><b>Body fat: ${p.bf}%</b> &rarr; target 18-20%</div><div class="sub">Retest monthly on the same device. 0.4-0.8% per month is the healthy pace.</div></div>`:`<div class="card acc"><div class="eyebrow">Goal</div><div style="margin-top:6px"><b>18-20% body fat</b></div><div class="sub">Enter your current body fat below to start tracking against the target.</div></div>`}
+  <div class="card acc"><div class="eyebrow">Goal &middot; deep squat</div>
+    <div style="margin-top:6px"><b>Sit in a flat-heel deep squat</b></div>
+    <div class="sub">Now: ~90&deg;, heels lift past that. The block: ankle dorsiflexion + deep hip flexion. Daily ankle rocks and heels-down squat holds are the fix. Track your level below and depth in the fold/squat fields.</div>
+    <label style="margin-top:8px">Squat depth level</label>
+    <select id="sd" style="margin-top:5px">
+      ${['','1 - to ~90&deg;, heels lift below','2 - below 90&deg; with heels up','3 - deep with support, heels down','4 - deep unsupported, heels flat 30s','5 - comfortable 60s+ resting squat'].map(o=>`<option ${((p.sd||'')===o)?'selected':''}>${o}</option>`).join('')}
+    </select>
+  </div>
+  <div class="card acc"><div class="eyebrow">Bloods &middot; 26 Jul 2026</div>
+    <div class="sub" style="margin-top:6px"><b style="color:#4F6B3A">Excellent:</b> CRP 0.5 (no inflammation), HbA1c 5.5 + insulin 7.5 (great metabolic health), thyroid normal, liver/kidney/lipids clean.</div>
+    <div class="sub" style="margin-top:8px"><b style="color:#9A6B1E">Action with your GP:</b></div>
+    <div class="sub">&bull; <b>Iron:</b> low-normal (iron 61, ferritin 34.6) with small pale red cells (MCV 79.9, MCH 26.2) = early iron deficiency. Likely behind the fatigue + foggy focus + dipping recovery. Ask about supplementing; aim ferritin 70-100.</div>
+    <div class="sub">&bull; <b>Magnesium:</b> just low (1.85). Start the evening magnesium glycinate already in your plan.</div>
+    <div class="sub" style="margin-top:6px;font-size:11px">Not medical advice, discuss with your doctor. Retest iron in ~3 months.</div>
+  </div>
+      <div><label>Body fat %</label><input id="bf" inputmode="decimal" value="${p.bf||''}"></div>
+      <div><label>Waist (cm)</label><input id="wa" inputmode="decimal" value="${p.wa||''}"></div>
+      <div><label>Hips (cm)</label><input id="hi" inputmode="decimal" value="${p.hi||''}"></div>
+      <div><label>Thigh (cm)</label><input id="th" inputmode="decimal" value="${p.th||''}"></div>
+      <div><label>Arm (cm)</label><input id="ar" inputmode="decimal" value="${p.ar||''}"></div>
+    </div>
+    <div class="eyebrow" style="margin-top:16px">Flexibility benchmarks</div>
+    <div class="grid2">
+      <div><label>Forward fold: fingertips to floor (cm)</label><input id="ff" inputmode="decimal" value="${p.ff||''}"></div>
+      <div><label>Deep squat hold (seconds)</label><input id="sq" inputmode="decimal" value="${p.sq||''}"></div>
+    </div>
+    <div class="eyebrow" style="margin-top:16px">Whoop 30-day averages</div>
+    <div class="grid2">
+      <div><label>HRV (ms)</label><input id="hrv" inputmode="decimal" value="${p.hrv||''}"></div>
+      <div><label>Resting HR</label><input id="rhr" inputmode="decimal" value="${p.rhr||''}"></div>
+      <div><label>Sleep efficiency %</label><input id="se" inputmode="decimal" value="${p.se||''}"></div>
+      <div><label>Sleep (h avg)</label><input id="sl" inputmode="decimal" value="${p.sl||''}"></div>
+    </div>
+    <button class="btn" onclick="saveStats()">Save today's numbers</button>
+  </div>
+  ${entries.length?`<div class="card"><div class="eyebrow">History</div>
+    ${entries.map(e=>`<div class="hist"><b>${e.d}</b> &middot; ${e.w?e.w+'kg':''} ${e.wa?'&middot; waist '+e.wa:''} ${e.ff!==undefined&&e.ff!==''?'&middot; fold '+e.ff+'cm':''} ${e.sq?'&middot; squat '+e.sq+'s':''}</div>`).join('')}</div>`:''}
+  <div class="note">Unlock rule: 60s unsupported deep squat + palms near floor unlocks full-depth loaded squats. Update monthly, share with Claude at each fortnightly review.</div>`;
+}
+window.saveStats=()=>{
+  const g=id=>document.getElementById(id).value.trim();
+  const sd=document.getElementById('sd')?document.getElementById('sd').value:(S.profile.sd||'');
+  const e={d:todayKey(),w:g('w'),bf:g('bf'),wa:g('wa'),hi:g('hi'),th:g('th'),ar:g('ar'),ff:g('ff'),sq:g('sq'),hrv:g('hrv'),rhr:g('rhr'),se:g('se'),sl:g('sl')};
+  Object.assign(S.profile,e); S.profile.sd=sd;
+  S.profile.history=(S.profile.history||[]).filter(h=>h.d!==e.d); S.profile.history.push(e);
+  save(); render();
+};
+
+function vStyle(){
+  const st=S.style;
+  return `
+  <div class="eyebrow">Your outfits</div><h1>Style</h1>
+  <div class="card acc">
+    <div class="eyebrow">Your brief</div>
+    <div class="sub" style="margin-top:6px"><b>Winter Deep-Dark, cool, worn as COLOUR not black.</b> Balanced hourglass (B97 / W75 / H97, C cup) &mdash; you have a real waist, so <b>show it, don't fake it</b>: belted, wrap, high-waisted, fitted. Avoid boxy or oversized. Size ~UK12 / EU40 / IT44; size fitted silk blouses to the bust. Hero colours: emerald, burgundy, wine, navy, deep teal, snow white, camel neutral. V / scoop / sweetheart necklines. Silk, wool, cashmere. Shoe EU39.</div>
+  </div>
+
+  <div class="sub" style="margin:14px 2px 2px">Summer + your September South-of-France trip: linen and lightweight silk, breathable for the heat, deep colours worn light plus crisp white for the coast. Tap the name to open a piece; "similar" gives the same colour in your size if one sells out.</div>
+  ${OUTFITS.map(o=>`<div class="card">
+    <h2 style="margin-bottom:2px">${o.name}</h2>
+    <div class="sub" style="margin-bottom:10px">${o.note}</div>
+    ${o.items.map(it=>`<div class="lookrow">
+      <a href="${it.url}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;flex:1;text-decoration:none">
+        <span class="sw" style="background:${it.sw}"></span>
+        <span class="lookmeta"><span class="lookt">${it.t} &#8599;</span>
+        <span class="looksub">${it.c} &middot; ${it.fab} &middot; <span style="color:var(--sage)">${it.price}</span></span></span>
+      </a>
+      ${it.fb?`<a class="watch" href="${it.fb}" target="_blank" rel="noopener">similar</a>`:''}
+    </div>`).join('')}
+  </div>`).join('')}
+
+  <div class="eyebrow" style="margin-top:22px">Individual pieces · across brands</div>
+  <div class="sub" style="margin-bottom:4px">All ship to the UAE, all fabric-screened for you. Reformation comes via Ounass (2hr Dubai) and The Outnet UAE, so it's on rails you trust.</div>
+  <div class="card">
+    ${BRANDPICKS.map(it=>`<a class="lookrow" href="${it.url}" target="_blank" rel="noopener">
+      <span class="sw" style="background:${it.sw}"></span>
+      <span class="lookmeta"><span class="lookt">${it.t} &#8599;</span>
+      <span class="looksub" style="color:var(--tan)">${it.brand}</span>
+      <span class="looksub">${it.c} &middot; ${it.fab}</span></span>
+    </a>`).join('')}
+  </div>
+
+  <div class="eyebrow" style="margin-top:18px">Gym sets</div>
+  <div class="card">
+    ${GYMSETS.map(it=>`<a class="lookrow" href="${it.url}" target="_blank" rel="noopener">
+      <span class="sw" style="background:${it.sw}"></span>
+      <span class="lookmeta"><span class="lookt">${it.t} &#8599;</span>
+      <span class="looksub" style="color:var(--tan)">${it.brand}</span>
+      <span class="looksub">${it.c} &middot; ${it.fab}</span></span>
+    </a>`).join('')}
+    <div class="note">Honest note on activewear: truly natural-fibre gym wear barely exists, it needs stretch, so it's the one place synthetics are the sensible pick. The realistic rule: choose recycled nylon, wash before first wear, and skip anything marketed "anti-odour" or "antimicrobial" (those finishes are the endocrine concern, not the nylon itself).</div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">More for the trip</div>
+    <div class="sub" style="margin-top:6px">Want me to turn this into a full France packing capsule, a few tops, two bottoms, one dress, sandals and a bag that all mix together? Say "build my France capsule" and I'll lay out every piece and how they combine.</div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">Want a specific occasion?</div>
+    <div class="sub" style="margin-top:6px">Tell me in chat, e.g. "a look for a beach wedding" or "gym-to-lunch outfit", and I'll build a new set here with specific pieces and prices.</div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">My sizing</div>
+    <div class="grid2">
+      <div><label>Dress size</label><input id="ds" placeholder="add once you measure" value="${esc(st.ds)}"></div>
+      <div><label>Shoe size</label><input id="ss" value="${esc(st.ss||'EU 39')}"></div>
+    </div>
+    <label>Notes</label>
+    <textarea id="sn" rows="2" placeholder="occasions coming up, colours you avoid, budget per piece">${esc(st.sn)}</textarea>
+    <button class="btn ghost" onclick="saveStyle()">Save</button>
+  </div>
+  <div class="note">Fibre rule: silk, cotton, linen, wool, cashmere. Wash new pieces before first wear. Prices move, so treat them as a guide and confirm on Ounass.</div>`;
+}
+window.saveStyle=()=>{
+  const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
+  Object.assign(S.style,{ds:g('ds'),ss:g('ss'),sn:g('sn')});
+  save(); render();
+};
+
+// SUMMER + South of France (September) capsule. Linen and lightweight silk, breathable in Dubai
+// heat and Riviera-warm evenings. No wool. Deep colours worn light, plus crisp white for the coast.
+const OUTFITS=[
+  {name:"Riviera day · white linen + emerald silk",note:"The Slim Aarons look: crisp white wide-leg linen, a colourful silk top, flat sandals, gold jewellery. Cool in Dubai AC and perfect for a warm September lunch in France.",
+   items:[
+    {t:"Vince Cap-Sleeved Silk Blouse, Green",c:"Emerald",fab:"100% silk, short sleeve · true to size (M/EU40)",price:"see Ounass",sw:"#1f5c46",url:"https://www.ounass.ae/shop-vince-cap-sleeved-silk-blouse-for-women-213854261_20.html",fb:"https://www.ounass.ae/women/clothing"},
+    {t:"Zimmermann white wide-leg linen trousers",c:"Snow white",fab:"100% linen, high-waist, belted · size to waist",price:"AED, see Ounass",sw:"#f2efe9",url:"https://www.ounass.ae/shop-zimmermann-wide-leg-pants-in-linen-for-women-217082389_26.html",fb:"https://www.ounass.ae/women/edits/linen-edit"},
+    {t:"Flat leather sandal",c:"Tan",fab:"leather · EU39",price:"see Ounass",sw:"#a06a3c",url:"https://www.ounass.ae/women/shoes",fb:"https://www.ounass.ae/women/shoes"},
+    {t:"Straw / raffia tote",c:"Natural",fab:"woven · the Riviera bag",price:"see Ounass",sw:"#cdb280",url:"https://www.ounass.ae/women/bags",fb:"https://www.ounass.ae/women/bags"}
+   ]},
+  {name:"Riviera evening · silk slip",note:"Warm coastal evenings call for a silk slip in a deep colour, not black. Add a light silk layer if the sea breeze picks up. Strappy heel or elegant flat.",
+   items:[
+    {t:"Silk slip / bias midi dress",c:"Wine / deep berry",fab:"silk · browse the silk dresses",price:"see Ounass",sw:"#4d1a2b",url:"https://www.ounass.ae/women/clothing/dresses",fb:"https://www.ounass.ae/women/clothing/dresses"},
+    {t:"Zimmermann silk maxi (alt, verified)",c:"Deep tone",fab:"100% silk, if you want a fuller dress",price:"AED 6,000",sw:"#3a2130",url:"https://www.ounass.ae/women/clothing",fb:"https://www.ounass.ae/women/clothing/dresses"},
+    {t:"Strappy heeled sandal",c:"Metallic or berry",fab:"leather · EU39",price:"see Ounass",sw:"#b8b2a6",url:"https://www.ounass.ae/women/shoes",fb:"https://www.ounass.ae/women/shoes"}
+   ]},
+  {name:"Dubai summer day · linen + linen",note:"For 40°C: head-to-toe breathable linen. A deep-teal or navy linen shirt half-tucked over wide white or camel linen. Survives the heat, works in cold restaurants.",
+   items:[
+    {t:"Relaxed linen shirt",c:"Deep teal or navy",fab:"linen, half-tuck · from the linen edit",price:"see Ounass",sw:"#155255",url:"https://www.ounass.ae/women/edits/linen-edit",fb:"https://www.ounass.ae/women/clothing"},
+    {t:"Wide-leg linen trousers",c:"White or camel",fab:"linen, high-waist · from the linen edit",price:"see Ounass",sw:"#e8e0d0",url:"https://www.ounass.ae/women/edits/linen-edit",fb:"https://www.ounass.ae/women/clothing"},
+    {t:"Flat leather slide",c:"Tan",fab:"leather · EU39",price:"see Ounass",sw:"#a06a3c",url:"https://www.ounass.ae/women/shoes",fb:"https://www.ounass.ae/women/shoes"}
+   ]}
+];
+
+// Individual verified pieces across brands that ship to the UAE, screened for fabric + your palette/cut.
+const BRANDPICKS=[
+  {t:"Reformation silk slip / bias dress",brand:"Reformation · via Ounass (2hr Dubai)",c:"Deep colour, not black",fab:"100% silk · true to size (M/EU40) · figure-skimming",sw:"#4d1a2b",url:"https://www.ounass.ae/women/designers/reformation/clothing/dresses"},
+  {t:"Reformation on sale (silk, linen, Tencel)",brand:"Reformation · via The Outnet UAE",c:"Various",fab:"their core fabrics are silk / linen / Tencel · up to 70% off",sw:"#3f6b4e",url:"https://www.theoutnet.com/en-ae/shop/designers/reformation"},
+  {t:"MO&Co. Tie Detail Silk Shirt",brand:"MO&Co. (ships UAE)",c:"Choose a deep colour, not their default black",fab:"100% mulberry silk · relaxed, tie collar · half-tuck to mark waist",sw:"#1f5c46",url:"https://en.moco.com/products/tie-detail-silk-shirt"},
+  {t:"MO&Co. Wrap Cotton-Silk Blouse",brand:"MO&Co. (ships UAE)",c:"Deep tone if available",fab:"71% cotton 29% silk · WRAP + V-neck = ideal hourglass cut",sw:"#5a1f2e",url:"https://en.moco.com/products/wrap-cotton-silk-blouse"},
+  {t:"Reformation Lilibeth silk dress",brand:"Reformation · via Ounass",c:"Deep colour",fab:"silk · cowl neck follows the figure · true to size",sw:"#12474a",url:"https://www.ounass.ae/women/designers/reformation/clothing/dresses"}
+];
+// Activewear sets. Honest note: truly natural-fibre gym wear barely exists (needs stretch), so the
+// realistic rule is recycled nylon + wash before wear + skip "anti-odour" finishes.
+const GYMSETS=[
+  {t:"Ounass activewear edit",brand:"Ounass (2hr Dubai)",c:"Deep teal, navy, wine, forest",fab:"pick recycled-nylon sets; avoid anti-odour/antimicrobial finishes",sw:"#155255",url:"https://www.ounass.ae/women/activewear"},
+  {t:"Girlfriend Collective set",brand:"recycled nylon, ships UAE",c:"They carry deep jewel tones",fab:"recycled nylon · squat-proof · the sustainable-activewear benchmark",sw:"#1c2438",url:"https://www.thereformation.com/"},
+  {t:"Organic Basics Active Flow",brand:"certified recycled nylon, ships UAE",c:"Deep tones + a colour pop",fab:"recycled nylon bra + legging · high-impact support",sw:"#4d1a2b",url:"https://www.thegoodtrade.com/features/best-sustainable-activewear/"}
+];
+
+load();
+</script>
+</body>
+</html>
