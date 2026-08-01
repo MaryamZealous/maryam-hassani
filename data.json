@@ -1,0 +1,309 @@
+{
+  "outfits": [
+    {
+      "name": "Riviera day · white linen + emerald silk",
+      "note": "The Slim Aarons look: crisp white wide-leg linen, a colourful silk top, flat sandals, gold jewellery. Cool in Dubai AC and perfect for a warm September lunch in France.",
+      "items": [
+        {
+          "t": "Vince Cap-Sleeved Silk Blouse, Green",
+          "c": "Emerald",
+          "fab": "100% silk, short sleeve · true to size (M/EU40)",
+          "price": "see Ounass",
+          "sw": "#1f5c46",
+          "url": "https://www.ounass.ae/shop-vince-cap-sleeved-silk-blouse-for-women-213854261_20.html",
+          "fb": "https://www.ounass.ae/women/clothing"
+        },
+        {
+          "t": "Zimmermann white wide-leg linen trousers",
+          "c": "Snow white",
+          "fab": "100% linen, high-waist, belted · size to waist",
+          "price": "AED, see Ounass",
+          "sw": "#f2efe9",
+          "url": "https://www.ounass.ae/shop-zimmermann-wide-leg-pants-in-linen-for-women-217082389_26.html",
+          "fb": "https://www.ounass.ae/women/edits/linen-edit"
+        },
+        {
+          "t": "Flat leather sandal",
+          "c": "Tan",
+          "fab": "leather · EU39",
+          "price": "see Ounass",
+          "sw": "#a06a3c",
+          "url": "https://www.ounass.ae/women/shoes",
+          "fb": "https://www.ounass.ae/women/shoes"
+        },
+        {
+          "t": "Straw / raffia tote",
+          "c": "Natural",
+          "fab": "woven · the Riviera bag",
+          "price": "see Ounass",
+          "sw": "#cdb280",
+          "url": "https://www.ounass.ae/women/bags",
+          "fb": "https://www.ounass.ae/women/bags"
+        }
+      ]
+    },
+    {
+      "name": "Riviera evening · silk slip",
+      "note": "Warm coastal evenings call for a silk slip in a deep colour, not black. Add a light silk layer if the sea breeze picks up. Strappy heel or elegant flat.",
+      "items": [
+        {
+          "t": "Silk slip / bias midi dress",
+          "c": "Wine / deep berry",
+          "fab": "silk · browse the silk dresses",
+          "price": "see Ounass",
+          "sw": "#4d1a2b",
+          "url": "https://www.ounass.ae/women/clothing/dresses",
+          "fb": "https://www.ounass.ae/women/clothing/dresses"
+        },
+        {
+          "t": "Zimmermann silk maxi (alt, verified)",
+          "c": "Deep tone",
+          "fab": "100% silk, if you want a fuller dress",
+          "price": "AED 6,000",
+          "sw": "#3a2130",
+          "url": "https://www.ounass.ae/women/clothing",
+          "fb": "https://www.ounass.ae/women/clothing/dresses"
+        },
+        {
+          "t": "Strappy heeled sandal",
+          "c": "Metallic or berry",
+          "fab": "leather · EU39",
+          "price": "see Ounass",
+          "sw": "#b8b2a6",
+          "url": "https://www.ounass.ae/women/shoes",
+          "fb": "https://www.ounass.ae/women/shoes"
+        }
+      ]
+    },
+    {
+      "name": "Dubai summer day · linen + linen",
+      "note": "For 40°C: head-to-toe breathable linen. A deep-teal or navy linen shirt half-tucked over wide white or camel linen. Survives the heat, works in cold restaurants.",
+      "items": [
+        {
+          "t": "Relaxed linen shirt",
+          "c": "Deep teal or navy",
+          "fab": "linen, half-tuck · from the linen edit",
+          "price": "see Ounass",
+          "sw": "#155255",
+          "url": "https://www.ounass.ae/women/edits/linen-edit",
+          "fb": "https://www.ounass.ae/women/clothing"
+        },
+        {
+          "t": "Wide-leg linen trousers",
+          "c": "White or camel",
+          "fab": "linen, high-waist · from the linen edit",
+          "price": "see Ounass",
+          "sw": "#e8e0d0",
+          "url": "https://www.ounass.ae/women/edits/linen-edit",
+          "fb": "https://www.ounass.ae/women/clothing"
+        },
+        {
+          "t": "Flat leather slide",
+          "c": "Tan",
+          "fab": "leather · EU39",
+          "price": "see Ounass",
+          "sw": "#a06a3c",
+          "url": "https://www.ounass.ae/women/shoes",
+          "fb": "https://www.ounass.ae/women/shoes"
+        }
+      ]
+    }
+  ],
+  "brandpicks": [
+    {
+      "t": "Reformation silk slip / bias dress",
+      "brand": "Reformation · via Ounass (2hr Dubai)",
+      "c": "Deep colour, not black",
+      "fab": "100% silk · true to size (M/EU40) · figure-skimming",
+      "sw": "#4d1a2b",
+      "url": "https://www.ounass.ae/women/designers/reformation/clothing/dresses"
+    },
+    {
+      "t": "Reformation on sale (silk, linen, Tencel)",
+      "brand": "Reformation · via The Outnet UAE",
+      "c": "Various",
+      "fab": "their core fabrics are silk / linen / Tencel · up to 70% off",
+      "sw": "#3f6b4e",
+      "url": "https://www.theoutnet.com/en-ae/shop/designers/reformation"
+    },
+    {
+      "t": "MO&Co. Tie Detail Silk Shirt",
+      "brand": "MO&Co. (ships UAE)",
+      "c": "Choose a deep colour, not their default black",
+      "fab": "100% mulberry silk · relaxed, tie collar · half-tuck to mark waist",
+      "sw": "#1f5c46",
+      "url": "https://en.moco.com/products/tie-detail-silk-shirt"
+    },
+    {
+      "t": "MO&Co. Wrap Cotton-Silk Blouse",
+      "brand": "MO&Co. (ships UAE)",
+      "c": "Deep tone if available",
+      "fab": "71% cotton 29% silk · WRAP + V-neck = ideal hourglass cut",
+      "sw": "#5a1f2e",
+      "url": "https://en.moco.com/products/wrap-cotton-silk-blouse"
+    },
+    {
+      "t": "Reformation Lilibeth silk dress",
+      "brand": "Reformation · via Ounass",
+      "c": "Deep colour",
+      "fab": "silk · cowl neck follows the figure · true to size",
+      "sw": "#12474a",
+      "url": "https://www.ounass.ae/women/designers/reformation/clothing/dresses"
+    }
+  ],
+  "gymsets": [
+    {
+      "t": "Vuori matching set (Halo tank + legging)",
+      "brand": "Vuori · via Ounass (2hr Dubai)",
+      "c": "Deep teal, navy, wine, forest",
+      "fab": "BreatheInterlock / DreamKnit · premium, flattering high-waist · buy your size (M)",
+      "sw": "#155255",
+      "url": "https://www.ounass.ae/women/designers/vuori/clothing/active-wear"
+    },
+    {
+      "t": "Wiskii Scrunch Sculpt set",
+      "brand": "Wiskii Active · ships UAE (7-16 days)",
+      "c": "Mulled Wine, Velvet Fig, Midnight Blue",
+      "fab": "thick sculpting fabric, holds you in · size M · duties on delivery",
+      "sw": "#4d1a2b",
+      "url": "https://wiskiiactive.com/"
+    },
+    {
+      "t": "Ounass activewear edit",
+      "brand": "Ounass (2hr Dubai)",
+      "c": "Deep teal, navy, wine, forest",
+      "fab": "pick recycled-nylon sets; avoid anti-odour/antimicrobial finishes",
+      "sw": "#1c2438",
+      "url": "https://www.ounass.ae/women/activewear"
+    },
+    {
+      "t": "Organic Basics Active Flow",
+      "brand": "certified recycled nylon, ships UAE",
+      "c": "Deep tones + a colour pop",
+      "fab": "recycled nylon bra + legging · high-impact support",
+      "sw": "#3f6b4e",
+      "url": "https://www.thegoodtrade.com/features/best-sustainable-activewear/"
+    }
+  ],
+  "polokit": [
+    {
+      "t": "Arc Short Sleeve Polo, Cranberry",
+      "brand": "Maximilian Equestrian · size M (EU40)",
+      "c": "Cranberry (deep berry-red, your best colour here)",
+      "fab": "technical stretch · collar+placket flatters, not skin-tight · wash before wear",
+      "sw": "#7a1f35",
+      "url": "https://maximilianequestrian.com/collections/all-short-sleeve-tops"
+    },
+    {
+      "t": "Arc Short Sleeve Polo, Rosewood",
+      "brand": "Maximilian Equestrian · size M (EU40)",
+      "c": "Rosewood (muted deep rose, cool-toned)",
+      "fab": "technical stretch · structured fitted polo",
+      "sw": "#7c4a52",
+      "url": "https://maximilianequestrian.com/collections/all-short-sleeve-tops"
+    },
+    {
+      "t": "Frame Base Layer (V-neck), if you want sleeveless",
+      "brand": "Maximilian Equestrian · size M-L",
+      "c": "deep tone",
+      "fab": "V-neck is the one base-layer cut that flatters your C cup · size up for looser",
+      "sw": "#3a2130",
+      "url": "https://maximilianequestrian.com/collections/all-short-sleeve-tops"
+    }
+  ],
+  "capsule": {
+    "intro": "9 pieces that all mix together for your September trip. Deep colours + white + camel, all linen and light silk. Roll to pack; a hot-shower steam drops the creases.",
+    "groups": [
+      {
+        "h": "Tops (3)",
+        "items": [
+          {
+            "t": "Emerald silk cap-sleeve blouse",
+            "c": "Emerald",
+            "fab": "100% silk · verified",
+            "sw": "#1f5c46",
+            "url": "https://www.ounass.ae/shop-vince-cap-sleeved-silk-blouse-for-women-213854261_20.html"
+          },
+          {
+            "t": "Deep-teal linen shirt",
+            "c": "Teal",
+            "fab": "linen · from the linen edit",
+            "sw": "#155255",
+            "url": "https://www.ounass.ae/women/edits/linen-edit"
+          },
+          {
+            "t": "White fitted cotton/silk tee or cami",
+            "c": "White",
+            "fab": "cotton or silk · the neutral base",
+            "sw": "#f2efe9",
+            "url": "https://www.ounass.ae/women/clothing/tops"
+          }
+        ]
+      },
+      {
+        "h": "Bottoms (2)",
+        "items": [
+          {
+            "t": "Zimmermann white wide-leg linen trousers",
+            "c": "White",
+            "fab": "100% linen, high-waist, belted · verified",
+            "sw": "#f2efe9",
+            "url": "https://www.ounass.ae/shop-zimmermann-wide-leg-pants-in-linen-for-women-217082389_26.html"
+          },
+          {
+            "t": "Camel linen wide-leg trousers",
+            "c": "Camel",
+            "fab": "linen · from the linen edit",
+            "sw": "#b28f63",
+            "url": "https://www.ounass.ae/women/edits/linen-edit"
+          }
+        ]
+      },
+      {
+        "h": "Dress (1)",
+        "items": [
+          {
+            "t": "Wine silk slip / bias midi",
+            "c": "Wine",
+            "fab": "silk · Reformation via Ounass, figure-skimming",
+            "sw": "#4d1a2b",
+            "url": "https://www.ounass.ae/women/designers/reformation/clothing/dresses"
+          }
+        ]
+      },
+      {
+        "h": "Shoes + bag (3)",
+        "items": [
+          {
+            "t": "Flat tan leather sandals",
+            "c": "Tan",
+            "fab": "leather · EU39, day",
+            "sw": "#a06a3c",
+            "url": "https://www.ounass.ae/women/shoes"
+          },
+          {
+            "t": "Strappy heeled sandals",
+            "c": "Metallic/berry",
+            "fab": "leather · EU39, evening",
+            "sw": "#b8b2a6",
+            "url": "https://www.ounass.ae/women/shoes"
+          },
+          {
+            "t": "Straw / raffia tote",
+            "c": "Natural",
+            "fab": "woven · the Riviera bag",
+            "sw": "#cdb280",
+            "url": "https://www.ounass.ae/women/bags"
+          }
+        ]
+      }
+    ],
+    "outfits": [
+      "Day 1 lunch: emerald silk + white linen trousers + flat sandals + tote",
+      "Day 2 explore: teal linen shirt (half-tuck) + camel linen + flat sandals",
+      "Evening: wine silk slip + strappy heels",
+      "Smart-casual: white tee + camel linen + tote, or + emerald silk knotted over",
+      "Cooler night: teal linen shirt open over the wine slip"
+    ]
+  }
+}

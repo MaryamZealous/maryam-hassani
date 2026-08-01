@@ -46,6 +46,8 @@ button{font-family:var(--sans);cursor:pointer;border:none}
 .ex .s{color:var(--tan);font-size:13px;font-weight:600}
 .watch{color:var(--sage);font-size:11px;font-weight:600;text-decoration:none;white-space:nowrap;border:1px solid var(--line);border-radius:99px;padding:3px 9px;background:var(--card2);cursor:pointer}
 .ex.tap{cursor:pointer;display:block;text-decoration:none;color:inherit}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:88px;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:200;max-width:80%;text-align:center}
+#toast.show{opacity:.95}
 .tag{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);border-radius:99px;padding:3px 10px;margin-top:6px}
 .note{background:var(--card2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--dim);margin-top:12px}
 .nav{position:fixed;bottom:0;left:0;right:0;background:rgba(239,231,218,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;max-width:440px;margin:0 auto;padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
@@ -83,6 +85,7 @@ label{font-size:12.5px;color:var(--dim);display:block;margin-top:11px}
 <body>
 <div class="app" id="app"></div>
 <nav class="nav" id="nav"></nav>
+<div id="toast"></div>
 
 <script>
 /* ---------- state ---------- */
@@ -426,14 +429,15 @@ window.saveStats=()=>{
 function vStyle(){
   const st=S.style;
   return `
-  <div class="eyebrow">Your outfits</div><h1>Style</h1>
+  <div class="row"><div><div class="eyebrow">Your outfits</div><h1>Style</h1></div>
+  <button class="watch" style="padding:8px 14px;font-size:13px" onclick="refreshStyle()">&#8635; Refresh</button></div>
   <div class="card acc">
     <div class="eyebrow">Your brief</div>
     <div class="sub" style="margin-top:6px"><b>Winter Deep-Dark, cool, worn as COLOUR not black.</b> Balanced hourglass (B97 / W75 / H97, C cup) &mdash; you have a real waist, so <b>show it, don't fake it</b>: belted, wrap, high-waisted, fitted. Avoid boxy or oversized. Size ~UK12 / EU40 / IT44; size fitted silk blouses to the bust. Hero colours: emerald, burgundy, wine, navy, deep teal, snow white, camel neutral. V / scoop / sweetheart necklines. Silk, wool, cashmere. Shoe EU39.</div>
   </div>
 
   <div class="sub" style="margin:14px 2px 2px">Summer + your September South-of-France trip: linen and lightweight silk, breathable for the heat, deep colours worn light plus crisp white for the coast. Tap the name to open a piece; "similar" gives the same colour in your size if one sells out.</div>
-  ${OUTFITS.map(o=>`<div class="card">
+  ${STYLE.outfits.map(o=>`<div class="card">
     <h2 style="margin-bottom:2px">${o.name}</h2>
     <div class="sub" style="margin-bottom:10px">${o.note}</div>
     ${o.items.map(it=>`<div class="lookrow">
@@ -449,7 +453,7 @@ function vStyle(){
   <div class="eyebrow" style="margin-top:22px">Individual pieces · across brands</div>
   <div class="sub" style="margin-bottom:4px">All ship to the UAE, all fabric-screened for you. Reformation comes via Ounass (2hr Dubai) and The Outnet UAE, so it's on rails you trust.</div>
   <div class="card">
-    ${BRANDPICKS.map(it=>`<a class="lookrow" href="${it.url}" target="_blank" rel="noopener">
+    ${STYLE.brandpicks.map(it=>`<a class="lookrow" href="${it.url}" target="_blank" rel="noopener">
       <span class="sw" style="background:${it.sw}"></span>
       <span class="lookmeta"><span class="lookt">${it.t} &#8599;</span>
       <span class="looksub" style="color:var(--tan)">${it.brand}</span>
@@ -459,7 +463,7 @@ function vStyle(){
 
   <div class="eyebrow" style="margin-top:18px">Gym sets</div>
   <div class="card">
-    ${GYMSETS.map(it=>`<a class="lookrow" href="${it.url}" target="_blank" rel="noopener">
+    ${STYLE.gymsets.map(it=>`<a class="lookrow" href="${it.url}" target="_blank" rel="noopener">
       <span class="sw" style="background:${it.sw}"></span>
       <span class="lookmeta"><span class="lookt">${it.t} &#8599;</span>
       <span class="looksub" style="color:var(--tan)">${it.brand}</span>
@@ -468,9 +472,32 @@ function vStyle(){
     <div class="note">Honest note on activewear: truly natural-fibre gym wear barely exists, it needs stretch, so it's the one place synthetics are the sensible pick. The realistic rule: choose recycled nylon, wash before first wear, and skip anything marketed "anti-odour" or "antimicrobial" (those finishes are the endocrine concern, not the nylon itself).</div>
   </div>
 
+  <div class="eyebrow" style="margin-top:18px">Polo season · for when it returns</div>
   <div class="card">
-    <div class="eyebrow">More for the trip</div>
-    <div class="sub" style="margin-top:6px">Want me to turn this into a full France packing capsule, a few tops, two bottoms, one dress, sandals and a bag that all mix together? Say "build my France capsule" and I'll lay out every piece and how they combine.</div>
+    ${STYLE.polokit.map(it=>`<a class="lookrow" href="${it.url}" target="_blank" rel="noopener">
+      <span class="sw" style="background:${it.sw}"></span>
+      <span class="lookmeta"><span class="lookt">${it.t} &#8599;</span>
+      <span class="looksub" style="color:var(--tan)">${it.brand}</span>
+      <span class="looksub">${it.c} &middot; ${it.fab}</span></span>
+    </a>`).join('')}
+    <div class="note">Structured polos beat skin-tight base layers on your frame, the collar defines the neckline and skims rather than grips across the bust. Cranberry is your standout colour here.</div>
+  </div>
+
+  <div class="eyebrow" style="margin-top:22px">France capsule &middot; September</div>
+  <div class="card acc">
+    <div class="sub">${STYLE.capsule.intro}</div>
+  </div>
+  ${STYLE.capsule.groups.map(g=>`<div class="card">
+    <div class="eyebrow">${g.h}</div>
+    ${g.items.map(it=>`<a class="lookrow" href="${it.url}" target="_blank" rel="noopener">
+      <span class="sw" style="background:${it.sw}"></span>
+      <span class="lookmeta"><span class="lookt">${it.t} &#8599;</span>
+      <span class="looksub">${it.c} &middot; ${it.fab}</span></span>
+    </a>`).join('')}
+  </div>`).join('')}
+  <div class="card acc">
+    <div class="eyebrow">How they combine</div>
+    ${STYLE.capsule.outfits.map(o=>`<div class="sub" style="margin-top:5px">&bull; ${o}</div>`).join('')}
   </div>
 
   <div class="card">
@@ -498,7 +525,11 @@ window.saveStyle=()=>{
 
 // SUMMER + South of France (September) capsule. Linen and lightweight silk, breathable in Dubai
 // heat and Riviera-warm evenings. No wool. Deep colours worn light, plus crisp white for the coast.
-const OUTFITS=[
+// ---- STYLE RECOMMENDATIONS ----
+// These live in data.json on the live site so you can update them without touching this file.
+// This copy is the built-in fallback used if data.json is missing or has a typo.
+const DEFAULT_STYLE={
+outfits:[
   {name:"Riviera day · white linen + emerald silk",note:"The Slim Aarons look: crisp white wide-leg linen, a colourful silk top, flat sandals, gold jewellery. Cool in Dubai AC and perfect for a warm September lunch in France.",
    items:[
     {t:"Vince Cap-Sleeved Silk Blouse, Green",c:"Emerald",fab:"100% silk, short sleeve · true to size (M/EU40)",price:"see Ounass",sw:"#1f5c46",url:"https://www.ounass.ae/shop-vince-cap-sleeved-silk-blouse-for-women-213854261_20.html",fb:"https://www.ounass.ae/women/clothing"},
@@ -518,25 +549,88 @@ const OUTFITS=[
     {t:"Wide-leg linen trousers",c:"White or camel",fab:"linen, high-waist · from the linen edit",price:"see Ounass",sw:"#e8e0d0",url:"https://www.ounass.ae/women/edits/linen-edit",fb:"https://www.ounass.ae/women/clothing"},
     {t:"Flat leather slide",c:"Tan",fab:"leather · EU39",price:"see Ounass",sw:"#a06a3c",url:"https://www.ounass.ae/women/shoes",fb:"https://www.ounass.ae/women/shoes"}
    ]}
-];
+],
 
 // Individual verified pieces across brands that ship to the UAE, screened for fabric + your palette/cut.
-const BRANDPICKS=[
+brandpicks:[
   {t:"Reformation silk slip / bias dress",brand:"Reformation · via Ounass (2hr Dubai)",c:"Deep colour, not black",fab:"100% silk · true to size (M/EU40) · figure-skimming",sw:"#4d1a2b",url:"https://www.ounass.ae/women/designers/reformation/clothing/dresses"},
   {t:"Reformation on sale (silk, linen, Tencel)",brand:"Reformation · via The Outnet UAE",c:"Various",fab:"their core fabrics are silk / linen / Tencel · up to 70% off",sw:"#3f6b4e",url:"https://www.theoutnet.com/en-ae/shop/designers/reformation"},
   {t:"MO&Co. Tie Detail Silk Shirt",brand:"MO&Co. (ships UAE)",c:"Choose a deep colour, not their default black",fab:"100% mulberry silk · relaxed, tie collar · half-tuck to mark waist",sw:"#1f5c46",url:"https://en.moco.com/products/tie-detail-silk-shirt"},
   {t:"MO&Co. Wrap Cotton-Silk Blouse",brand:"MO&Co. (ships UAE)",c:"Deep tone if available",fab:"71% cotton 29% silk · WRAP + V-neck = ideal hourglass cut",sw:"#5a1f2e",url:"https://en.moco.com/products/wrap-cotton-silk-blouse"},
   {t:"Reformation Lilibeth silk dress",brand:"Reformation · via Ounass",c:"Deep colour",fab:"silk · cowl neck follows the figure · true to size",sw:"#12474a",url:"https://www.ounass.ae/women/designers/reformation/clothing/dresses"}
-];
+],
 // Activewear sets. Honest note: truly natural-fibre gym wear barely exists (needs stretch), so the
 // realistic rule is recycled nylon + wash before wear + skip "anti-odour" finishes.
-const GYMSETS=[
-  {t:"Ounass activewear edit",brand:"Ounass (2hr Dubai)",c:"Deep teal, navy, wine, forest",fab:"pick recycled-nylon sets; avoid anti-odour/antimicrobial finishes",sw:"#155255",url:"https://www.ounass.ae/women/activewear"},
-  {t:"Girlfriend Collective set",brand:"recycled nylon, ships UAE",c:"They carry deep jewel tones",fab:"recycled nylon · squat-proof · the sustainable-activewear benchmark",sw:"#1c2438",url:"https://www.thereformation.com/"},
-  {t:"Organic Basics Active Flow",brand:"certified recycled nylon, ships UAE",c:"Deep tones + a colour pop",fab:"recycled nylon bra + legging · high-impact support",sw:"#4d1a2b",url:"https://www.thegoodtrade.com/features/best-sustainable-activewear/"}
-];
+gymsets:[
+  {t:"Vuori matching set (Halo tank + legging)",brand:"Vuori · via Ounass (2hr Dubai)",c:"Deep teal, navy, wine, forest",fab:"BreatheInterlock / DreamKnit · premium, flattering high-waist · buy your size (M)",sw:"#155255",url:"https://www.ounass.ae/women/designers/vuori/clothing/active-wear"},
+  {t:"Wiskii Scrunch Sculpt set",brand:"Wiskii Active · ships UAE (7-16 days)",c:"Mulled Wine, Velvet Fig, Midnight Blue",fab:"thick sculpting fabric, holds you in · size M · duties on delivery",sw:"#4d1a2b",url:"https://wiskiiactive.com/"},
+  {t:"Ounass activewear edit",brand:"Ounass (2hr Dubai)",c:"Deep teal, navy, wine, forest",fab:"pick recycled-nylon sets; avoid anti-odour/antimicrobial finishes",sw:"#1c2438",url:"https://www.ounass.ae/women/activewear"},
+  {t:"Organic Basics Active Flow",brand:"certified recycled nylon, ships UAE",c:"Deep tones + a colour pop",fab:"recycled nylon bra + legging · high-impact support",sw:"#3f6b4e",url:"https://www.thegoodtrade.com/features/best-sustainable-activewear/"}
+],
+// Polo season: equestrian tops in your palette. Technical fabric (synthetic stretch) is correct for sport.
+polokit:[
+  {t:"Arc Short Sleeve Polo, Cranberry",brand:"Maximilian Equestrian · size M (EU40)",c:"Cranberry (deep berry-red, your best colour here)",fab:"technical stretch · collar+placket flatters, not skin-tight · wash before wear",sw:"#7a1f35",url:"https://maximilianequestrian.com/collections/all-short-sleeve-tops"},
+  {t:"Arc Short Sleeve Polo, Rosewood",brand:"Maximilian Equestrian · size M (EU40)",c:"Rosewood (muted deep rose, cool-toned)",fab:"technical stretch · structured fitted polo",sw:"#7c4a52",url:"https://maximilianequestrian.com/collections/all-short-sleeve-tops"},
+  {t:"Frame Base Layer (V-neck), if you want sleeveless",brand:"Maximilian Equestrian · size M-L",c:"deep tone",fab:"V-neck is the one base-layer cut that flatters your C cup · size up for looser",sw:"#3a2130",url:"https://maximilianequestrian.com/collections/all-short-sleeve-tops"}
+],
 
+// France packing capsule: a tight mix-and-match set. Everything pairs so ~9 pieces = many outfits.
+capsule:{
+  intro:"9 pieces that all mix together for your September trip. Deep colours + white + camel, all linen and light silk. Roll to pack; a hot-shower steam drops the creases.",
+  groups:[
+    {h:"Tops (3)",items:[
+      {t:"Emerald silk cap-sleeve blouse",c:"Emerald",fab:"100% silk · verified",sw:"#1f5c46",url:"https://www.ounass.ae/shop-vince-cap-sleeved-silk-blouse-for-women-213854261_20.html"},
+      {t:"Deep-teal linen shirt",c:"Teal",fab:"linen · from the linen edit",sw:"#155255",url:"https://www.ounass.ae/women/edits/linen-edit"},
+      {t:"White fitted cotton/silk tee or cami",c:"White",fab:"cotton or silk · the neutral base",sw:"#f2efe9",url:"https://www.ounass.ae/women/clothing/tops"}
+    ]},
+    {h:"Bottoms (2)",items:[
+      {t:"Zimmermann white wide-leg linen trousers",c:"White",fab:"100% linen, high-waist, belted · verified",sw:"#f2efe9",url:"https://www.ounass.ae/shop-zimmermann-wide-leg-pants-in-linen-for-women-217082389_26.html"},
+      {t:"Camel linen wide-leg trousers",c:"Camel",fab:"linen · from the linen edit",sw:"#b28f63",url:"https://www.ounass.ae/women/edits/linen-edit"}
+    ]},
+    {h:"Dress (1)",items:[
+      {t:"Wine silk slip / bias midi",c:"Wine",fab:"silk · Reformation via Ounass, figure-skimming",sw:"#4d1a2b",url:"https://www.ounass.ae/women/designers/reformation/clothing/dresses"}
+    ]},
+    {h:"Shoes + bag (3)",items:[
+      {t:"Flat tan leather sandals",c:"Tan",fab:"leather · EU39, day",sw:"#a06a3c",url:"https://www.ounass.ae/women/shoes"},
+      {t:"Strappy heeled sandals",c:"Metallic/berry",fab:"leather · EU39, evening",sw:"#b8b2a6",url:"https://www.ounass.ae/women/shoes"},
+      {t:"Straw / raffia tote",c:"Natural",fab:"woven · the Riviera bag",sw:"#cdb280",url:"https://www.ounass.ae/women/bags"}
+    ]}
+  ],
+  outfits:[
+    "Day 1 lunch: emerald silk + white linen trousers + flat sandals + tote",
+    "Day 2 explore: teal linen shirt (half-tuck) + camel linen + flat sandals",
+    "Evening: wine silk slip + strappy heels",
+    "Smart-casual: white tee + camel linen + tote, or + emerald silk knotted over",
+    "Cooler night: teal linen shirt open over the wine slip"
+  ]
+}
+};
+
+// live copy the app renders from; starts as the built-in fallback, then tries to load data.json
+let STYLE=JSON.parse(JSON.stringify(DEFAULT_STYLE));
+let dataStatus="built-in";
+// fetch data.json (cache-busted so edits show immediately). On any failure, keep last good data.
+async function loadStyleData(showToast){
+  try{
+    const res=await fetch("data.json?t="+Date.now(),{cache:"no-store"});
+    if(!res.ok) throw new Error("no file");
+    const d=await res.json();
+    // basic validation: must have the expected shape or we keep the fallback
+    if(d && Array.isArray(d.outfits) && Array.isArray(d.gymsets)){
+      STYLE=d; dataStatus="live";
+    } else { throw new Error("bad shape"); }
+  }catch(e){
+    // data.json missing (e.g. in preview) or malformed -> keep whatever STYLE already holds
+    if(dataStatus!=="live") dataStatus="built-in";
+  }
+  if(tab==='style') render();
+  if(showToast){ const t=document.getElementById('toast'); if(t){ t.textContent = dataStatus==="live" ? "Recommendations updated" : "Using saved recommendations (data.json not found)"; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); } }
+}
+window.refreshStyle=()=>loadStyleData(true);
+
+// start the app, then try to pull live recommendations from data.json
 load();
+loadStyleData(false);
 </script>
 </body>
 </html>
