@@ -307,6 +307,11 @@ async function saveState(s) {
 }
 
 const allCards = (state) => [...CARDS, ...(state.customCards || [])];
+const cardForWord = (state, word) => {
+  const bare = stripHarakat(word || "");
+  if (!bare) return null;
+  return allCards(state).find((c) => stripHarakat(c.ar) === bare) || null;
+};
 const mineFor = (state, card) => {
   const list = (state.notebook && state.notebook.entries) || [];
   const bare = stripHarakat(card.ar);
@@ -571,7 +576,10 @@ function Flashcard({ card, onGrade, learnMode, mine = [] }) {
                 <div className="ltr" style={{ fontSize: 10, letterSpacing: 1, color: "#5E7A5C", fontWeight: 700, marginBottom: 5 }}>MY SENTENCE{mine.length > 1 ? "S" : ""} ✍️</div>
                 {mine.map((m) => (
                   <div key={m.id} style={{ marginBottom: 8 }}>
-                    <div className="ar" style={{ fontSize: 15.5, color: m.teacherNote ? T.inkSoft : T.ink, lineHeight: 1.8, textDecoration: m.teacherNote ? "line-through" : "none", textDecorationColor: "#B9A98A" }}>{m.text}</div>
+                    <div className="flex items-start gap-1">
+                      <SpeakBtn text={m.teacherNote || m.text} size={14} slow />
+                      <div className="ar" style={{ fontSize: 15.5, color: m.teacherNote ? T.inkSoft : T.ink, lineHeight: 1.8, textDecoration: m.teacherNote ? "line-through" : "none", textDecorationColor: "#B9A98A", flex: 1 }}>{m.text}</div>
+                    </div>
                     {m.teacherNote && (
                       <div className="ar" style={{ fontSize: 16, lineHeight: 1.8, fontWeight: 500 }}>✓ <DiffText orig={m.text} corrected={m.teacherNote} base="#2E6B4F" /></div>
                     )}
@@ -1401,22 +1409,34 @@ function Notebook({ state, setState, onBack }) {
       {status && <div style={{ color: status.startsWith("Couldn't") ? T.red : T.soft, fontSize: 12.5, lineHeight: 1.6 }}>{status}</div>}
 
       {entries.length === 0 && <div style={{ color: T.soft, fontSize: 13.5 }}>No sentences yet — write your first one above.</div>}
-      {entries.map((e) => (
+      {entries.map((e) => {
+        const wc = cardForWord(state, e.word);
+        return (
         <div key={e.id} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }} className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span style={{ color: T.soft, fontSize: 11 }}>{new Date(e.updated || Date.now()).toLocaleDateString()}</span>
-            <span className="ar" style={{ color: T.gold, fontSize: 15, fontWeight: 700 }}>{e.word}</span>
+            <span className="flex items-center gap-1">
+              {wc && <SpeakBtn text={wc.ar} dark size={15} />}
+              <span className="ar" style={{ color: T.gold, fontSize: 15, fontWeight: 700 }}>{e.word}</span>
+            </span>
           </div>
-          <textarea value={e.text} onChange={(ev) => edit(e.id, ev.target.value)} onBlur={() => nb.id && sync()} rows={2} className="ar" style={{ ...inputStyle, resize: "vertical", fontSize: 16, lineHeight: 1.9 }} />
+          {wc && <div className="ltr" style={{ color: T.soft, fontSize: 12.5, marginTop: -4 }}>{wc.en}</div>}
+          <div className="flex items-start gap-1">
+            <SpeakBtn text={e.text} dark size={15} slow />
+            <textarea value={e.text} onChange={(ev) => edit(e.id, ev.target.value)} onBlur={() => nb.id && sync()} rows={2} className="ar" style={{ ...inputStyle, resize: "vertical", fontSize: 16, lineHeight: 1.9, flex: 1 }} />
+          </div>
           {e.teacherNote && (
             <div style={{ background: "#1F3A2E", border: `1px solid ${T.green}55`, borderRadius: 12, padding: "10px 13px" }}>
-              <div style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>TEACHER'S CORRECTION</div>
+              <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+                <span style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700 }}>TEACHER'S CORRECTION</span>
+                <SpeakBtn text={e.teacherNote} dark size={15} slow />
+              </div>
               <div className="ar" style={{ fontSize: 15.5, lineHeight: 1.9 }}><DiffText orig={e.text} corrected={e.teacherNote} base={T.text} /></div>
             </div>
           )}
           <button onClick={() => remove(e.id)} style={{ background: "none", border: "none", color: T.soft, fontSize: 12, cursor: "pointer", alignSelf: "flex-start", padding: 0 }}>Delete</button>
         </div>
-      ))}
+      ); })}
     </div>
   );
 }
