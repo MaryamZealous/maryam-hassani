@@ -203,7 +203,113 @@ const PHRASE_GROUPS = [
 ];
 
 /* ================= GRAMMAR (from her Arabic Grammar + المضاف إليه والصفة tabs) ================= */
+/* tiny markdown renderer: #/## headings, | tables |, **bold**, paragraphs — RTL-friendly */
+function mdInline(text, keyBase) {
+  const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) =>
+    p.startsWith("**") && p.endsWith("**")
+      ? <strong key={keyBase + "-" + i} style={{ color: T.gold }}>{p.slice(2, -2)}</strong>
+      : <span key={keyBase + "-" + i}>{p}</span>
+  );
+}
+function Markdown({ md, light }) {
+  const ink = light ? T.ink : T.text;
+  const soft = light ? T.inkSoft : T.soft;
+  const line = light ? T.cardLine : T.line;
+  const lines = String(md || "").replace(/\r/g, "").split("\n");
+  const blocks = [];
+  let i = 0;
+  while (i < lines.length) {
+    const ln = lines[i];
+    if (/^\s*#{1,6}\s/.test(ln)) {
+      const level = ln.match(/^\s*(#{1,6})/)[1].length;
+      const txt = ln.replace(/^\s*#{1,6}\s/, "");
+      blocks.push(<div key={i} className="ar" style={{ color: T.gold, fontSize: level <= 1 ? 20 : 17, fontWeight: 700, margin: "12px 0 6px", lineHeight: 1.5 }}>{mdInline(txt, "h" + i)}</div>);
+      i++; continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(ln)) {
+      const rows = [];
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { rows.push(lines[i]); i++; }
+      const cells = (r) => r.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+      const isSep = (r) => /^\s*\|?[\s:|-]+\|?\s*$/.test(r) && r.includes("-");
+      const header = cells(rows[0]);
+      const bodyRows = rows.slice(1).filter((r) => !isSep(r)).map(cells);
+      blocks.push(
+        <div key={i} style={{ overflowX: "auto", margin: "8px 0" }}>
+          <table dir="rtl" style={{ borderCollapse: "collapse", width: "100%", fontSize: 13.5 }}>
+            <thead><tr>{header.map((h, hi) => <th key={hi} className="ar" style={{ border: `1px solid ${line}`, padding: "7px 9px", background: light ? "#EAE2CF" : T.surface2, color: T.gold, fontWeight: 700, textAlign: "right" }}>{mdInline(h, "th" + i + hi)}</th>)}</tr></thead>
+            <tbody>{bodyRows.map((r, ri) => <tr key={ri}>{r.map((c, ci) => <td key={ci} className="ar" style={{ border: `1px solid ${line}`, padding: "7px 9px", color: ink, textAlign: "right", lineHeight: 1.8, verticalAlign: "top" }}>{mdInline(c, "td" + i + ri + ci)}</td>)}</tr>)}</tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+    if (ln.trim() === "") { i++; continue; }
+    // paragraph: gather until blank/heading/table
+    const para = [];
+    while (i < lines.length && lines[i].trim() !== "" && !/^\s*#{1,6}\s/.test(lines[i]) && !/^\s*\|.*\|\s*$/.test(lines[i])) { para.push(lines[i]); i++; }
+    blocks.push(<div key={i} className="ar" style={{ color: ink, fontSize: 14.5, lineHeight: 1.9, margin: "5px 0" }}>{mdInline(para.join(" "), "p" + i)}</div>);
+  }
+  return <div dir="rtl">{blocks}</div>;
+}
+
 const LESSONS = [
+  {
+    id: "hamza", title: "الهمزة المتوسطة والمتطرفة", en: "Spelling the hamza (middle & end of a word)",
+    md: `# الهمزة المتوسطة (في وسط الكلمة)
+
+القاعدة: تُكتب الهمزة على الحرف الذي يناسب **أقوى الحركتين** (حركتها وحركة ما قبلها)، بهذا الترتيب: الكسرة > الضمة > الفتحة > السكون.
+
+| الحالة | تُكتب على | مثال |
+|---|---|---|
+| مكسورة، أو ما قبلها مكسور | ياء (ئ) | سُئِل، فِئَة، رِئَة، مُتفائِل |
+| مضمومة، أو ما قبلها مضموم (وليست مكسورة ولا قبلها كسر) | واو (ؤ) | يُؤَدِّي، سُؤَال، لُؤْلُؤ |
+| مفتوحة، أو ما قبلها مفتوح (وليست مما سبق) | ألف (أ) | سَأَل، رَأَس، فَجْأَة |
+| ساكنة وما قبلها متحرك | حرف حركة ما قبلها | بِئْر (كسر)، مُؤْمِن (ضم)، رَأْس (فتح) |
+| ما قبلها ساكن وهي متحركة | على السطر مفردة | مَسْأَلة، جُزْأَين، قِرَاءَة |
+
+# الهمزة المتطرفة (في آخر الكلمة)
+
+القاعدة: تُكتب حسب حركة **الحرف الذي قبلها فقط** (بغض النظر عن حركة الهمزة نفسها):
+
+| ما قبل الهمزة | تُكتب على | مثال |
+|---|---|---|
+| مكسور | ياء (ئ) | قارِئ، شاطِئ، مُنشِئ |
+| مضموم | واو (ؤ) | تباطُؤ، لُؤْلُؤ، امرُؤ |
+| مفتوح | ألف (أ) | قرَأ، بدَأ، ملجَأ |
+| ساكن (حرف صحيح) | على السطر مفردة | عِبْء، دِفْء، جُزْء |
+| بعد حرف مد | على السطر مفردة | سماء، بريء، وُضوء، شيء |
+
+**خلاصة الفرق بينهما**: في المتوسطة تُقارَن حركة الهمزة نفسها بحركة ما قبلها (أقواهما يفوز)، أما في المتطرفة فالعبرة بحركة الحرف السابق وحده.`,
+  },
+  {
+    id: "qad", title: "قد + الفعل", en: "‘Qad’ with past vs present verbs",
+    md: `# قد + الماضي
+
+تعني: الفعل حدث **بالفعل**.
+
+| المثال | المعنى |
+|---|---|
+| قد وصلَ أحمدُ | Ahmad has already arrived |
+| قد بدأ الدرسُ | The lesson has already begun |
+| قد انتهى الفيلمُ | The film has already ended |
+| قد كتبتُ الواجبَ | I have already written the homework |
+
+الفكرة البسيطة: **قد + الماضي = حدث بالفعل**.
+
+# قد + المضارع
+
+تعني: **ربما** أو من الممكن.
+
+| المثال | المعنى |
+|---|---|
+| قد تمطرُ اليوم | It might rain today |
+| قد يأتي المعلمُ غدًا | The teacher may come tomorrow |
+| قد أنجحُ في الامتحان | I might pass the exam |
+| قد يسافرُ أبي الأسبوعَ القادم | My father may travel next week |
+
+الفكرة البسيطة: **قد + المضارع = ربما**.`,
+  },
   {
     id: "idafa", title: "الإضافة (المضاف إليه)", en: "The possessive chain (Idafa)",
     body: [
@@ -863,26 +969,50 @@ function Quiz({ state, onBack }) {
 }
 
 /* ================= GRAMMAR ================= */
-function Grammar({ onBack }) {
-  const [view, setView] = useState(null); // null | lesson id | "drill1" | "drill2"
+function Grammar({ onBack, state }) {
+  const [view, setView] = useState(null); // null | lesson id | "tl:<id>" | "drill1" | "drill2"
+  const teacherLessons = (state && state.notebook && state.notebook.lessons) || [];
 
   if (view === "drill1") return <GrammarDrill items={shuffle(DRILL_ID).slice(0, 10)} type="id" onBack={() => setView(null)} />;
   if (view === "drill2") return <GrammarDrill items={shuffle(DRILL_FIX).slice(0, 10)} type="fix" onBack={() => setView(null)} />;
+
+  if (view && view.startsWith("tl:")) {
+    const tl = teacherLessons.find((l) => l.id === view.slice(3));
+    if (tl) return (
+      <div className="fade-in flex flex-col gap-2">
+        <BackBtn onClick={() => setView(null)} label="Grammar" />
+        <div style={{ background: "#2A3F33", border: `1px solid ${T.green}55`, borderRadius: 8, padding: "4px 10px", alignSelf: "flex-start" }}>
+          <span style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700 }}>درس من الأستاذ · FROM YOUR TEACHER</span>
+        </div>
+        <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "14px 16px" }}>
+          <Markdown md={tl.md} />
+        </div>
+      </div>
+    );
+  }
 
   const lesson = LESSONS.find((l) => l.id === view);
   if (lesson) return (
     <div className="fade-in flex flex-col gap-3">
       <BackBtn onClick={() => setView(null)} label="Grammar" />
       <div className="ar" style={{ color: T.gold, fontSize: 24, fontWeight: 700 }}>{lesson.title}</div>
-      <div style={{ color: T.soft, fontSize: 13 }}>{lesson.en}</div>
-      {lesson.body.map((b, i) => (
-        <div key={i} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "13px 15px" }}>
-          <div style={{ color: T.text, fontSize: 14.5, fontWeight: 700 }}>{b.h}</div>
-          {b.t && <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6, marginTop: 4 }}>{b.t}</div>}
-          {b.ar && <div className="ar" style={{ color: T.gold, fontSize: 17, lineHeight: 2, marginTop: 6, background: T.surface2, borderRadius: 10, padding: "8px 12px" }}>{b.ar}</div>}
+      {lesson.en && <div style={{ color: T.soft, fontSize: 13 }}>{lesson.en}</div>}
+      {lesson.md ? (
+        <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "14px 16px" }}>
+          <Markdown md={lesson.md} />
         </div>
-      ))}
-      <Btn full onClick={() => setView(lesson.id === "basics" ? "drill2" : "drill1")}>Drill this</Btn>
+      ) : (
+        <>
+          {lesson.body.map((b, i) => (
+            <div key={i} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "13px 15px" }}>
+              <div style={{ color: T.text, fontSize: 14.5, fontWeight: 700 }}>{b.h}</div>
+              {b.t && <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6, marginTop: 4 }}>{b.t}</div>}
+              {b.ar && <div className="ar" style={{ color: T.gold, fontSize: 17, lineHeight: 2, marginTop: 6, background: T.surface2, borderRadius: 10, padding: "8px 12px" }}>{b.ar}</div>}
+            </div>
+          ))}
+          <Btn full onClick={() => setView(lesson.id === "basics" ? "drill2" : "drill1")}>Drill this</Btn>
+        </>
+      )}
     </div>
   );
 
@@ -891,6 +1021,17 @@ function Grammar({ onBack }) {
       <BackBtn onClick={onBack} />
       <div style={{ color: T.text, fontSize: 18, fontWeight: 700 }}>Grammar & structure</div>
       <div style={{ color: T.soft, fontSize: 13.5, lineHeight: 1.6 }}>Straight from your Arabic Grammar and المضاف إليه والصفة lessons — read short, then drill.</div>
+      {teacherLessons.length > 0 && (
+        <>
+          <div style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginTop: 4 }}>دروس الأستاذ · TEACHER'S LESSONS</div>
+          {teacherLessons.map((l) => (
+            <button key={l.id} onClick={() => setView("tl:" + l.id)} style={{ background: T.surface, border: `1px solid ${T.green}55`, borderRadius: 14, padding: "13px 15px", textAlign: "right", cursor: "pointer" }}>
+              <div className="ar" style={{ color: T.text, fontSize: 17, fontWeight: 700 }}>{l.title}</div>
+              <div className="ltr" style={{ color: T.soft, fontSize: 11, marginTop: 2, textAlign: "left" }}>{new Date(l.at).toLocaleDateString()}</div>
+            </button>
+          ))}
+        </>
+      )}
       <div style={{ color: T.gold, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginTop: 4 }}>LESSONS</div>
       {LESSONS.map((l) => (
         <button key={l.id} onClick={() => setView(l.id)} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "13px 15px", textAlign: "right", cursor: "pointer" }}>
@@ -1076,7 +1217,7 @@ function PracticeHub({ state, setState, forced, clearForced }) {
   useEffect(() => { if (forced) { setView(forced); clearForced(); } }, [forced]);
 
   if (view === "quiz") return <Quiz state={state} onBack={() => setView(null)} />;
-  if (view === "grammar") return <Grammar onBack={() => setView(null)} />;
+  if (view === "grammar") return <Grammar state={state} onBack={() => setView(null)} />;
   if (view === "write") return <Writing state={state} setState={setState} onBack={() => setView(null)} />;
 
   return (
@@ -1307,6 +1448,7 @@ function Notebook({ state, setState, onBack }) {
 
   const persist = (next, extra) => {
     const s = { ...state, notebook: { ...nb, ...(extra || {}), entries: next } };
+    if (extra && extra.lessons) s.notebook.lessons = extra.lessons;
     // file any newly corrected sentence into the corrections log too
     const known = new Set((s.mistakes || []).map((m) => m.src).filter(Boolean));
     const fresh = next
@@ -1326,7 +1468,7 @@ function Notebook({ state, setState, onBack }) {
   useEffect(() => {
     if (!nb.id || !nb.ownerKey) return;
     nbApi({ action: "get", id: nb.id, key: nb.ownerKey })
-      .then((d) => { setEntries(d.entries || []); persist(d.entries || []); })
+      .then((d) => { setEntries(d.entries || []); persist(d.entries || [], { lessons: d.lessons || [] }); })
       .catch(() => {});
   }, []);
 
@@ -1465,6 +1607,29 @@ function TeacherView({ id, key0 }) {
     setSavingId(null);
   };
 
+  const [lTitle, setLTitle] = useState("");
+  const [lMd, setLMd] = useState("");
+  const [lPreview, setLPreview] = useState(false);
+  const [lBusy, setLBusy] = useState(false);
+  const [showLesson, setShowLesson] = useState(false);
+
+  const addLesson = async () => {
+    if (!lMd.trim()) return;
+    setLBusy(true);
+    try {
+      const d = await nbApi({ action: "addLesson", id, key: key0, title: lTitle.trim() || "درس", md: lMd });
+      setData({ ...data, lessons: d.lessons });
+      setLTitle(""); setLMd(""); setLPreview(false); setShowLesson(false);
+    } catch (e) { setErr(e.message); }
+    setLBusy(false);
+  };
+  const delLesson = async (lessonId) => {
+    try {
+      const d = await nbApi({ action: "deleteLesson", id, key: key0, lessonId });
+      setData({ ...data, lessons: d.lessons });
+    } catch (e) { setErr(e.message); }
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'IBM Plex Sans', sans-serif" }}>
       <style>{FONT_CSS}</style>
@@ -1475,6 +1640,45 @@ function TeacherView({ id, key0 }) {
         </div>
         {err && <div style={{ color: T.red, fontSize: 13.5 }}>{err}</div>}
         {!data && !err && <div style={{ color: T.soft, fontSize: 14 }}>Loading…</div>}
+
+        {data && (
+          <div style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 16, padding: "13px 15px" }} className="flex flex-col gap-2">
+            {!showLesson ? (
+              <button onClick={() => setShowLesson(true)} style={{ background: "none", border: "none", color: T.gold, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "right", padding: 0 }}>➕ إضافة درس نحوي · Add a grammar lesson</button>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: T.gold, fontSize: 13, fontWeight: 700 }}>درس جديد · New lesson</span>
+                  <button onClick={() => { setShowLesson(false); setLPreview(false); }} style={{ background: "none", border: "none", color: T.soft, fontSize: 12, cursor: "pointer" }}>✕</button>
+                </div>
+                <input value={lTitle} onChange={(e) => setLTitle(e.target.value)} placeholder="عنوان الدرس · Lesson title" className="ar" style={{ ...inputStyle, fontSize: 15 }} />
+                <textarea value={lMd} onChange={(e) => setLMd(e.target.value)} rows={8} placeholder={"اكتب الدرس هنا (يدعم Markdown):\n\n# عنوان\nنص القاعدة **بالخط العريض**\n\n| عمود | عمود |\n|---|---|\n| خانة | خانة |"} className="ar" style={{ ...inputStyle, resize: "vertical", fontSize: 14.5, lineHeight: 1.8, direction: "rtl" }} />
+                <div className="flex gap-2">
+                  <Btn small kind="ghost" onClick={() => setLPreview(!lPreview)}>{lPreview ? "Hide preview" : "Preview"}</Btn>
+                  <Btn small onClick={addLesson} disabled={lBusy || !lMd.trim()}>{lBusy ? "Saving…" : "Publish to her app"}</Btn>
+                </div>
+                {lPreview && lMd.trim() && (
+                  <div style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 12, padding: "12px 14px", marginTop: 4 }}>
+                    <Markdown md={lMd} />
+                  </div>
+                )}
+                <div style={{ color: T.soft, fontSize: 11.5, lineHeight: 1.6 }}>Tip: use # for a heading, **word** for bold, and | a | b | rows with a |---|---| line under the header for tables.</div>
+              </>
+            )}
+            {(data.lessons || []).length > 0 && (
+              <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 8, marginTop: 4 }}>
+                <div style={{ color: T.soft, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 6 }}>PUBLISHED LESSONS</div>
+                {(data.lessons || []).map((l) => (
+                  <div key={l.id} className="flex items-center justify-between" style={{ padding: "4px 0" }}>
+                    <button onClick={() => delLesson(l.id)} style={{ background: "none", border: "none", color: T.red, fontSize: 11.5, cursor: "pointer" }}>Delete</button>
+                    <span className="ar" style={{ color: T.text, fontSize: 14 }}>{l.title}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {data && (data.entries || []).length === 0 && <div style={{ color: T.soft, fontSize: 14 }}>No sentences yet.</div>}
         {data && (data.entries || []).map((e) => (
           <div key={e.id} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 16, padding: "14px 16px" }} className="flex flex-col gap-2">
