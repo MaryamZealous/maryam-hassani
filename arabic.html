@@ -870,7 +870,7 @@ function Browse({ state, onBack }) {
           <details key={c.id} style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }}>
             <summary className="flex items-center justify-between" style={{ cursor: "pointer", listStyle: "none" }}>
               <span className="ltr" style={{ color: T.soft, fontSize: 13 }}>{c.en}</span>
-              <span className="ar" style={{ color: T.text, fontSize: 19, fontWeight: 600 }}>{c.ar}</span>
+              <span className="flex items-center gap-1"><SpeakBtn text={c.ar} dark size={16} /><span className="ar" style={{ color: T.text, fontSize: 19, fontWeight: 600 }}>{c.ar}</span></span>
             </summary>
             <div style={{ marginTop: 10, borderTop: `1px solid ${T.line}`, paddingTop: 10 }} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -878,8 +878,15 @@ function Browse({ state, onBack }) {
                 <RootChips root={c.root} dark />
               </div>
               {c.note && <div className="ar" style={{ color: T.soft, fontSize: 13 }}>{c.note}</div>}
-              <div className="ar" style={{ color: T.text, fontSize: 14.5, lineHeight: 1.8 }}>{c.exE}</div>
-              <div className="ltr" style={{ color: T.soft, fontSize: 12.5 }}>{c.exEn}</div>
+              <div>
+                <div className="ltr" style={{ fontSize: 10, letterSpacing: 1, color: T.gold, fontWeight: 700, marginBottom: 2 }}>MSA · فصحى <SpeakBtn text={c.exM} dark size={13} slow /></div>
+                <div className="ar" style={{ color: T.text, fontSize: 14.5, lineHeight: 1.8 }}>{c.exM}</div>
+              </div>
+              <div>
+                <div className="ltr" style={{ fontSize: 10, letterSpacing: 1, color: T.gold, fontWeight: 700, marginBottom: 2 }}>EMIRATI · إماراتي <SpeakBtn text={c.exE} dark size={13} slow /></div>
+                <div className="ar" style={{ color: T.text, fontSize: 14.5, lineHeight: 1.8 }}>{c.exE}</div>
+                <div className="ltr" style={{ color: T.soft, fontSize: 12.5 }}>{c.exEn}</div>
+              </div>
               {mineFor(state, c).map((m) => (
                 <div key={m.id} style={{ borderTop: `1px solid ${T.line}`, paddingTop: 8 }}>
                   <div className="ar" style={{ color: m.teacherNote ? T.soft : T.text, fontSize: 14.5, lineHeight: 1.8, textDecoration: m.teacherNote ? "line-through" : "none" }}>{m.text}</div>
@@ -1601,8 +1608,8 @@ function TeacherView({ id, key0 }) {
     setSavingId(entryId);
     try {
       const d = await nbApi({ action: "comment", id, key: key0, entryId, comment: drafts[entryId] || "" });
-      setData({ ...data, entries: d.entries });
-      setDrafts({ ...drafts, [entryId]: undefined });
+      setData((prev) => ({ ...prev, entries: d.entries }));
+      setDrafts((prev) => ({ ...prev, [entryId]: undefined }));
     } catch (e) { setErr(e.message); }
     setSavingId(null);
   };
@@ -1618,7 +1625,7 @@ function TeacherView({ id, key0 }) {
     setLBusy(true);
     try {
       const d = await nbApi({ action: "addLesson", id, key: key0, title: lTitle.trim() || "درس", md: lMd });
-      setData({ ...data, lessons: d.lessons });
+      setData((prev) => ({ ...prev, lessons: d.lessons }));
       setLTitle(""); setLMd(""); setLPreview(false); setShowLesson(false);
     } catch (e) { setErr(e.message); }
     setLBusy(false);
@@ -1626,7 +1633,7 @@ function TeacherView({ id, key0 }) {
   const delLesson = async (lessonId) => {
     try {
       const d = await nbApi({ action: "deleteLesson", id, key: key0, lessonId });
-      setData({ ...data, lessons: d.lessons });
+      setData((prev) => ({ ...prev, lessons: d.lessons }));
     } catch (e) { setErr(e.message); }
   };
 
@@ -1691,12 +1698,12 @@ function TeacherView({ id, key0 }) {
               <div style={{ background: "#1F3A2E", border: `1px solid ${T.green}55`, borderRadius: 12, padding: "10px 13px" }}>
                 <div style={{ color: T.green, fontSize: 11, letterSpacing: 1, fontWeight: 700, marginBottom: 4 }}>YOUR CORRECTION</div>
                 <div className="ar" style={{ color: T.text, fontSize: 15.5, lineHeight: 1.9 }}><DiffText orig={e.text} corrected={e.teacherNote} base={T.text} /></div>
-                <button onClick={() => setDrafts({ ...drafts, [e.id]: e.teacherNote })} style={{ background: "none", border: "none", color: T.soft, fontSize: 12, cursor: "pointer", padding: "6px 0 0" }}>Edit</button>
+                <button onClick={() => setDrafts((prev) => ({ ...prev, [e.id]: e.teacherNote }))} style={{ background: "none", border: "none", color: T.soft, fontSize: 12, cursor: "pointer", padding: "6px 0 0" }}>Edit</button>
               </div>
             )}
             {(drafts[e.id] !== undefined || !e.teacherNote) && (
               <div className="flex flex-col gap-2">
-                <textarea value={drafts[e.id] || ""} onChange={(ev) => setDrafts({ ...drafts, [e.id]: ev.target.value })} rows={2} placeholder="التصحيح والملاحظة…" className="ar" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.9 }} />
+                <textarea value={drafts[e.id] || ""} onChange={(ev) => { const v = ev.target.value; setDrafts((prev) => ({ ...prev, [e.id]: v })); }} rows={2} placeholder="التصحيح والملاحظة…" className="ar" style={{ ...inputStyle, resize: "vertical", lineHeight: 1.9 }} />
                 <Btn small onClick={() => send(e.id)} disabled={savingId === e.id}>{savingId === e.id ? "Sending…" : "Send correction"}</Btn>
               </div>
             )}
