@@ -1607,8 +1607,10 @@ function TeacherView({ id, key0 }) {
   const send = async (entryId) => {
     setSavingId(entryId);
     try {
-      const d = await nbApi({ action: "comment", id, key: key0, entryId, comment: drafts[entryId] || "" });
-      setData((prev) => ({ ...prev, entries: d.entries }));
+      await nbApi({ action: "comment", id, key: key0, entryId, comment: drafts[entryId] || "" });
+      // re-fetch the whole notebook so every saved correction is shown from the source of truth
+      const fresh = await nbApi({ action: "get", id, key: key0 });
+      setData(fresh);
       setDrafts((prev) => ({ ...prev, [entryId]: undefined }));
     } catch (e) { setErr(e.message); }
     setSavingId(null);
