@@ -1652,13 +1652,14 @@ function TeacherView({ id, key0 }) {
   useEffect(load, []);
 
   const send = async (entryId) => {
+    const text = drafts[entryId] || "";
+    if (!text.trim()) return;
     setSavingId(entryId);
     try {
-      await nbApi({ action: "comment", id, key: key0, entryId, comment: drafts[entryId] || "" });
-      // re-fetch the whole notebook so every saved correction is shown from the source of truth
-      const fresh = await nbApi({ action: "get", id, key: key0 });
-      setData(fresh);
-      setDrafts((prev) => ({ ...prev, [entryId]: undefined }));
+      const d = await nbApi({ action: "comment", id, key: key0, entryId, comment: text });
+      // the server returns ALL entries with their notes — trust it, and drop this draft in the same update
+      setData((prev) => ({ ...prev, entries: d.entries }));
+      setDrafts((prev) => { const n = { ...prev }; delete n[entryId]; return n; });
     } catch (e) { setErr(e.message); }
     setSavingId(null);
   };
