@@ -1656,8 +1656,8 @@ function TeacherView({ id, key0 }) {
     if (!text.trim()) return;
     setSavingId(entryId);
     try {
+      // the server returns ALL entries already merged with every saved correction — trust it directly
       const d = await nbApi({ action: "comment", id, key: key0, entryId, comment: text });
-      // the server returns ALL entries with their notes — trust it, and drop this draft in the same update
       setData((prev) => ({ ...prev, entries: d.entries }));
       setDrafts((prev) => { const n = { ...prev }; delete n[entryId]; return n; });
     } catch (e) { setErr(e.message); }
